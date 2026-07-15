@@ -2,8 +2,9 @@
 
 ## Phase and objective
 
-**Phase:** File-backed catalog foundation  
-**Objective:** Implement build-time catalog discovery and registry tests.
+**Phase:** Factory browsing foundation
+
+**Objective:** Replace the generated starter UI with the intentional empty catalog experience.
 
 ## Completed
 
@@ -11,10 +12,10 @@
 - Created the official SvelteKit baseline with the required toolchain.
 - Added concise project, product, design, architecture, and contribution context.
 - Defined and tested the version-1 design metadata schema.
+- Implemented tested file-backed catalog discovery with validation, public visibility, exact handoff preservation, and lazy previews.
 
 ## Next
 
-- Implement build-time catalog discovery and registry tests.
 - Replace the generated starter UI with the intentional empty catalog experience.
 
 ## Decisions
@@ -30,8 +31,8 @@ None.
 
 ## Last verified commands
 
-- `npm test -- src/lib/catalog/schema.test.ts`
+- `npm test -- src/lib/catalog/registry.test.ts`
 - `npm test`
 - `npm run check`
 - `npm run lint`
-- `git diff --check`
+- `npm run build`
