@@ -15,7 +15,7 @@
 | Entry metadata, files, or visibility | `docs/design-entry-contract.md`                                                         |
 | Add or review one design             | `docs/adding-a-design.md`, then that entry's files only                                 |
 | Scaffold intent or acceptance        | `docs/specs/2026-07-14-ui-factory-scaffold-design.md`                                   |
-| Setup and commands                   | `README.md`                                                                             |
+| Human setup                          | `README.md`                                                                             |
 
 Do not scan unrelated folders under `src/lib/designs/`. Do not duplicate linked guidance; update its canonical document instead.
 
