@@ -15,21 +15,9 @@
 | Entry metadata, files, or visibility | `docs/design-entry-contract.md`                                                         |
 | Add or review one design             | `docs/adding-a-design.md`, then that entry's files only                                 |
 | Scaffold intent or acceptance        | `docs/specs/2026-07-14-ui-factory-scaffold-design.md`                                   |
-| Human setup                          | `README.md`                                                                             |
+| Setup and commands                   | `README.md`                                                                             |
 
 Do not scan unrelated folders under `src/lib/designs/`. Do not duplicate linked guidance; update its canonical document instead.
-
-## Commands
-
-| Command            | Purpose                          |
-| ------------------ | -------------------------------- |
-| `npm run dev`      | Start local development          |
-| `npm run format`   | Format maintained files          |
-| `npm run lint`     | Check formatting and lint rules  |
-| `npm run check`    | Run Svelte and TypeScript checks |
-| `npm test`         | Run unit tests once              |
-| `npm run test:e2e` | Run browser tests                |
-| `npm run build`    | Build the production application |
 
 ## State updates
 

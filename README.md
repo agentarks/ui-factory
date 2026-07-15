@@ -13,6 +13,19 @@ npm run dev
 
 Open the local URL printed by Vite.
 
+## Commands
+
+| Command            | Purpose                          |
+| ------------------ | -------------------------------- |
+| `npm run dev`      | Start the development server     |
+| `npm run format`   | Format the repository            |
+| `npm run lint`     | Check formatting and lint rules  |
+| `npm run check`    | Run Svelte and TypeScript checks |
+| `npm test`         | Run unit tests once              |
+| `npm run test:e2e` | Run browser tests                |
+| `npm run build`    | Build for production             |
+| `npm run preview`  | Preview the production build     |
+
 ## Documentation
 
 | Document                                                                      | Purpose                                               |

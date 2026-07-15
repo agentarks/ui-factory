@@ -30,6 +30,5 @@ None.
 
 ## Last verified commands
 
-- `npx prettier --write AGENTS.md STATUS.md PRODUCT.md DESIGN.md README.md docs/architecture.md docs/design-entry-contract.md docs/adding-a-design.md`
 - `npm run lint`
-- Maintained-document hygiene audit (no matches)
+- `git diff --check`
