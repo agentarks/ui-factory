@@ -13,6 +13,7 @@ The scaffold will provide:
 - A validated metadata contract for future design entries
 - An intentional empty catalog experience
 - A detail route that returns 404 for unknown designs
+- An isolated iframe preview route that keeps factory styles out of design documents
 - Root Impeccable context for designing the UI Factory application
 - Progressive-disclosure documentation for agents and maintainers
 - Focused unit and browser smoke tests
@@ -52,6 +53,8 @@ A design folder must contain `metadata.json`, `DESIGN.md`, and `Preview.svelte`.
 `src/lib/catalog/registry.server.ts` will discover only published entry metadata and handoff files with `import.meta.glob`, validate each entry, reject any non-production published status, and expose read-only catalog queries to server loaders. The `DESIGN.md` content must be returned byte-for-byte except for text decoding; the registry must not generate or rewrite it. `src/lib/catalog/previews.ts` will be client-safe and contain only typed lazy globs for published `Preview.svelte` modules, with no metadata or handoff imports.
 
 The initial registry must work when no design folders exist. The home route will display an intentional empty state. The detail route will look up a slug and return SvelteKit's 404 response when no public entry exists.
+
+Published previews will render inside an iframe backed by `/designs/[slug]/preview`. Factory pages and preview documents will use separate SvelteKit route groups so Tailwind, factory resets, and browsing-shell styles are never loaded into the preview document. The preview route will lazy-load only the selected published `Preview.svelte` module and return 404 for unknown slugs.
 
 No generated registry, database, server process, plugin system, or repository-wide scan is needed.
 
@@ -115,7 +118,8 @@ Focused checks will prove:
 - Published-directory validation rejects non-production statuses
 - Runtime globs do not import workbench metadata, handoffs, or previews
 - The catalog page renders its empty state without search or filter controls
-- Unknown design routes return 404
+- Unknown detail and preview routes return 404
+- Tailwind applies to factory pages without leaking into isolated preview documents
 
 Documentation review will confirm that `AGENTS.md` routes tasks without duplicating linked guidance and that `STATUS.md` contains current state rather than historical narrative.
 
@@ -142,20 +146,24 @@ ui-factory/
 │   │   │   ├── registry.server.ts
 │   │   │   ├── registry.test.ts
 │   │   │   └── previews.ts
-│   │   ├── components/
 │   │   └── designs/
 │   │       ├── published/
 │   │       ├── workbench/
 │   │       └── README.md
 │   └── routes/
 │       ├── +layout.svelte
-│       ├── +page.server.ts
-│       ├── +page.svelte
-│       └── designs/[slug]/
+│       ├── (factory)/
+│       │   ├── +layout.svelte
+│       │   ├── +page.server.ts
+│       │   ├── +page.svelte
+│       │   └── designs/[slug]/
+│       │       ├── +page.server.ts
+│       │       └── +page.svelte
+│       └── (preview)/designs/[slug]/preview/
 │           ├── +page.server.ts
 │           └── +page.svelte
 ├── tests/
-│   └── catalog.spec.ts
+│   └── catalog.e2e.ts
 └── standard SvelteKit configuration
 ```
 
