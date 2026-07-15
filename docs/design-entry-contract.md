@@ -4,18 +4,22 @@ This is the canonical contract for catalog entry files, metadata, validation, an
 
 ## Folder and files
 
-Each entry lives at `src/lib/designs/<slug>/`.
+Every entry uses the same file shape in one of two locations:
+
+- `src/lib/designs/workbench/<slug>/` for unpublished authoring work
+- `src/lib/designs/published/<slug>/` for public, production-ready entries
 
 ```text
-<slug>/
-├── metadata.json  required
-├── DESIGN.md      required
-├── Preview.svelte required
-├── fixtures.ts    optional
-└── assets/        optional
+workbench/ or published/
+└── <slug>/
+    ├── metadata.json  required
+    ├── DESIGN.md      required
+    ├── Preview.svelte required
+    ├── fixtures.ts    optional
+    └── assets/        optional
 ```
 
-The folder name must equal `metadata.slug`. Slugs must be unique across all entries. Missing required files, folder-slug mismatches, and duplicate slugs fail catalog validation.
+The folder name must equal `metadata.slug`. Published slugs must be unique. Missing required files, folder-slug mismatches, duplicate published slugs, and non-production statuses under `published/` fail catalog validation.
 
 `Preview.svelte` is the working single-page specimen. Entry-owned fixtures and assets must not depend on another design folder.
 
@@ -45,11 +49,11 @@ The schema is implemented in `src/lib/catalog/schema.ts`. Change this document a
 
 ## Status and visibility
 
-| Status             | Public catalog and detail                               | Authoring use                              |
-| ------------------ | ------------------------------------------------------- | ------------------------------------------ |
-| `draft`            | Hidden                                                  | In progress                                |
-| `reviewed`         | Hidden                                                  | Available for review                       |
-| `production-ready` | Visible and eligible for unqualified `DESIGN.md` export | Published                                  |
-| `deprecated`       | Excluded from normal discovery and public lookup        | Retained only for maintenance or reference |
+| Status             | Required location | Public behavior                                     |
+| ------------------ | ----------------- | --------------------------------------------------- |
+| `draft`            | `workbench/`      | Never imported by runtime catalog or client code    |
+| `reviewed`         | `workbench/`      | Never imported by runtime catalog or client code    |
+| `production-ready` | `published/`      | Visible and eligible for unqualified handoff export |
+| `deprecated`       | `workbench/`      | Never imported by runtime catalog or public lookup  |
 
-Public queries expose only `production-ready` entries. A hidden or unknown slug therefore resolves as a public 404.
+The directory is the publication boundary, not a runtime status filter. Server registry queries and the client preview index glob only `published/`. Every entry there must be `production-ready`; any other status fails the production build. A workbench or unknown slug resolves as a public 404.

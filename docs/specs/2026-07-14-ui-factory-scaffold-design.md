@@ -21,7 +21,7 @@ The scaffold will not include sample designs, authentication, a database, a CMS,
 
 ## Architecture
 
-UI Factory will use a file-backed catalog. Future entries will live under `src/lib/designs/<slug>/` and contain:
+UI Factory will use a file-backed catalog. Future public entries will live under `src/lib/designs/published/<slug>/`; unpublished authoring work will live under `src/lib/designs/workbench/<slug>/`. Both use this file shape:
 
 ```text
 metadata.json
@@ -47,9 +47,9 @@ assets/
 - `status`: `draft`, `reviewed`, `production-ready`, or `deprecated`
 - `tags`: optional string array
 
-A design folder must contain `metadata.json`, `DESIGN.md`, and `Preview.svelte`. `fixtures.ts` and `assets/` are optional. The folder name must equal `metadata.slug`; duplicate slugs and mismatches fail validation. Public catalog queries expose only `production-ready` entries. Draft and reviewed entries remain available to authoring tools, while deprecated entries are excluded from normal discovery.
+A design folder must contain `metadata.json`, `DESIGN.md`, and `Preview.svelte`. `fixtures.ts` and `assets/` are optional. The folder name must equal `metadata.slug`; duplicate published slugs and mismatches fail validation. The directory is the publication boundary: only `production-ready` entries may live under `published/`; draft, reviewed, and deprecated work stays under `workbench/` and is never imported by runtime code.
 
-`src/lib/catalog/registry.ts` will discover entry metadata and handoff files with `import.meta.glob`, validate each entry, and expose read-only catalog queries. The `DESIGN.md` content must be returned byte-for-byte except for text decoding; the registry must not generate or rewrite it.
+`src/lib/catalog/registry.server.ts` will discover only published entry metadata and handoff files with `import.meta.glob`, validate each entry, reject any non-production published status, and expose read-only catalog queries to server loaders. The `DESIGN.md` content must be returned byte-for-byte except for text decoding; the registry must not generate or rewrite it. `src/lib/catalog/previews.ts` will be client-safe and contain only typed lazy globs for published `Preview.svelte` modules, with no metadata or handoff imports.
 
 The initial registry must work when no design folders exist. The home route will display an intentional empty state. The detail route will look up a slug and return SvelteKit's 404 response when no public entry exists.
 
@@ -112,7 +112,8 @@ Focused checks will prove:
 - Missing `metadata.json`, `DESIGN.md`, or `Preview.svelte` fails entry validation
 - Folder-slug mismatches and duplicate slugs fail validation
 - The curated test fixture's `DESIGN.md` is returned unchanged
-- Public queries exclude non-production statuses
+- Published-directory validation rejects non-production statuses
+- Runtime globs do not import workbench metadata, handoffs, or previews
 - The catalog page renders its empty state without search or filter controls
 - Unknown design routes return 404
 
@@ -138,17 +139,20 @@ ui-factory/
 │   ├── lib/
 │   │   ├── catalog/
 │   │   │   ├── schema.ts
-│   │   │   ├── registry.ts
-│   │   │   └── registry.test.ts
+│   │   │   ├── registry.server.ts
+│   │   │   ├── registry.test.ts
+│   │   │   └── previews.ts
 │   │   ├── components/
 │   │   └── designs/
+│   │       ├── published/
+│   │       ├── workbench/
 │   │       └── README.md
 │   └── routes/
 │       ├── +layout.svelte
-│       ├── +page.ts
+│       ├── +page.server.ts
 │       ├── +page.svelte
 │       └── designs/[slug]/
-│           ├── +page.ts
+│           ├── +page.server.ts
 │           └── +page.svelte
 ├── tests/
 │   └── catalog.spec.ts

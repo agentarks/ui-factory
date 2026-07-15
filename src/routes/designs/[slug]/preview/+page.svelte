@@ -1,18 +1,18 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { getPublished } from '$lib/catalog/registry';
+	import { getPublishedPreview } from '$lib/catalog/previews';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-	const entry = $derived(getPublished(data.slug));
+	const loadPreview = $derived(getPublishedPreview(data.slug));
 </script>
 
 <svelte:head>
 	<title>{data.title} preview</title>
 </svelte:head>
 
-{#if entry}
-	{#await entry.loadPreview()}
+{#if loadPreview}
+	{#await loadPreview()}
 		<p>Loading preview…</p>
 	{:then { default: Preview }}
 		<Preview />

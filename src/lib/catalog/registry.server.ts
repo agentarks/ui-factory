@@ -1,4 +1,3 @@
-import type { Component } from 'svelte';
 import { designMetadataSchema, type DesignMetadata } from './schema';
 
 type CatalogMetadata = {
@@ -6,19 +5,15 @@ type CatalogMetadata = {
 		? Readonly<DesignMetadata[Key]>
 		: DesignMetadata[Key];
 };
-type PreviewModule = { default: Component };
-type PreviewLoader = () => Promise<PreviewModule>;
-
 type CatalogMaps = {
 	metadata: Record<string, unknown>;
 	documents: Record<string, string>;
-	previews: Record<string, PreviewLoader>;
+	previews: Record<string, unknown>;
 };
 
 export type CatalogEntry = Readonly<{
 	metadata: CatalogMetadata;
 	document: string;
-	loadPreview: PreviewLoader;
 }>;
 
 export function createCatalog(maps: CatalogMaps) {
@@ -51,6 +46,11 @@ export function createCatalog(maps: CatalogMaps) {
 				.join('; ');
 			throw new Error(`${folder}: invalid metadata (${problems})`);
 		}
+		if (result.data.status !== 'production-ready') {
+			throw new Error(
+				`${folder}: published entries must be production-ready (received ${result.data.status})`
+			);
+		}
 		if (result.data.slug !== folder) {
 			throw new Error(`${folder}: metadata slug ${result.data.slug} does not match folder`);
 		}
@@ -65,16 +65,13 @@ export function createCatalog(maps: CatalogMaps) {
 		entries.push(
 			Object.freeze({
 				metadata,
-				document: maps.documents[paths.document],
-				loadPreview: maps.previews[paths.preview]
+				document: maps.documents[paths.document]
 			})
 		);
 	}
 
 	const all = Object.freeze(entries);
-	const published = Object.freeze(
-		entries.filter((entry) => entry.metadata.status === 'production-ready')
-	);
+	const published = Object.freeze(entries);
 	const byPublishedSlug = new Map(published.map((entry) => [entry.metadata.slug, entry]));
 
 	return Object.freeze({
@@ -85,16 +82,16 @@ export function createCatalog(maps: CatalogMaps) {
 }
 
 const productionCatalog = createCatalog({
-	metadata: import.meta.glob<unknown>('../designs/*/metadata.json', {
+	metadata: import.meta.glob<unknown>('../designs/published/*/metadata.json', {
 		eager: true,
 		import: 'default'
 	}),
-	documents: import.meta.glob<string>('../designs/*/DESIGN.md', {
+	documents: import.meta.glob<string>('../designs/published/*/DESIGN.md', {
 		eager: true,
 		query: '?raw',
 		import: 'default'
 	}),
-	previews: import.meta.glob<PreviewModule>('../designs/*/Preview.svelte')
+	previews: import.meta.glob('../designs/published/*/Preview.svelte')
 });
 
 export const { all, published, getPublished } = productionCatalog;

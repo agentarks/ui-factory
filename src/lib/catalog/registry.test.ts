@@ -1,19 +1,21 @@
 import type { Component } from 'svelte';
 import { describe, expect, expectTypeOf, it } from 'vitest';
-import { all, createCatalog, type CatalogEntry } from './registry';
+import { all, createCatalog, type CatalogEntry } from './registry.server';
 
 type PreviewModule = { default: Component };
 
-const fixtureMetadata = import.meta.glob<unknown>('./__fixtures__/*/metadata.json', {
+const fixtureMetadata = import.meta.glob<unknown>('./__fixtures__/published/*/metadata.json', {
 	eager: true,
 	import: 'default'
 });
-const fixtureDocuments = import.meta.glob<string>('./__fixtures__/*/DESIGN.md', {
+const fixtureDocuments = import.meta.glob<string>('./__fixtures__/published/*/DESIGN.md', {
 	eager: true,
 	query: '?raw',
 	import: 'default'
 });
-const fixturePreviews = import.meta.glob<PreviewModule>('./__fixtures__/*/Preview.svelte');
+const fixturePreviews = import.meta.glob<PreviewModule>(
+	'./__fixtures__/published/*/Preview.svelte'
+);
 
 const validMetadata = {
 	schemaVersion: 1,
@@ -45,16 +47,13 @@ describe('createCatalog', () => {
 		expect(all.map((entry) => entry.metadata.slug)).not.toContain('complete');
 	});
 
-	it('exposes readonly metadata arrays and component preview modules', () => {
+	it('exposes readonly metadata arrays', () => {
 		expectTypeOf<CatalogEntry['metadata']['applicationTypes']>().toEqualTypeOf<readonly string[]>();
 		expectTypeOf<CatalogEntry['metadata']['visualStyles']>().toEqualTypeOf<readonly string[]>();
 		expectTypeOf<CatalogEntry['metadata']['platforms']>().toEqualTypeOf<
 			readonly ('web' | 'desktop' | 'tablet' | 'mobile')[]
 		>();
 		expectTypeOf<CatalogEntry['metadata']['tags']>().toEqualTypeOf<readonly string[]>();
-		expectTypeOf<
-			Awaited<ReturnType<CatalogEntry['loadPreview']>>['default']
-		>().toEqualTypeOf<Component>();
 		expect(typeof TestPreview).toBe('function');
 	});
 
@@ -66,7 +65,7 @@ describe('createCatalog', () => {
 		expect(catalog.getPublished('missing')).toBeUndefined();
 	});
 
-	it('discovers a complete file-backed fixture with a lazy preview', async () => {
+	it('discovers a complete production-ready file-backed fixture', () => {
 		const catalog = createCatalog({
 			metadata: fixtureMetadata,
 			documents: fixtureDocuments,
@@ -77,8 +76,6 @@ describe('createCatalog', () => {
 		expect(catalog.all[0].metadata.slug).toBe('complete');
 		expect(catalog.published).toEqual(catalog.all);
 		expect(catalog.getPublished('complete')).toBe(catalog.all[0]);
-		const preview = await catalog.all[0].loadPreview();
-		expect(typeof preview.default).toBe('function');
 	});
 
 	it('preserves DESIGN.md exactly', () => {
@@ -93,14 +90,14 @@ describe('createCatalog', () => {
 		);
 	});
 
-	it('publishes only production-ready entries', () => {
-		const maps = mapsFor({ ...validMetadata, status: 'reviewed' });
-		const catalog = createCatalog(maps);
-
-		expect(catalog.all).toHaveLength(1);
-		expect(catalog.published).toEqual([]);
-		expect(catalog.getPublished('entry')).toBeUndefined();
-	});
+	it.each(['draft', 'reviewed', 'deprecated'])(
+		'rejects %s entries from the published directory',
+		(status) => {
+			expect(() => createCatalog(mapsFor({ ...validMetadata, status }))).toThrow(
+				/entry.*published.*production-ready/i
+			);
+		}
+	);
 
 	it.each(['metadata.json', 'DESIGN.md', 'Preview.svelte'])('names a missing %s', (file) => {
 		const maps = mapsFor();

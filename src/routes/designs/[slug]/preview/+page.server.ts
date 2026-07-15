@@ -1,8 +1,8 @@
-import { getPublished } from '$lib/catalog/registry';
+import { getPublished } from '$lib/catalog/registry.server';
 import { error } from '@sveltejs/kit';
-import type { PageLoad } from './$types';
+import type { PageServerLoad } from './$types';
 
-export const load: PageLoad = ({ params }) => {
+export const load: PageServerLoad = ({ params }) => {
 	const entry = getPublished(params.slug);
 	if (!entry) error(404, 'Design not found');
 
