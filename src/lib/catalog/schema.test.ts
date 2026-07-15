@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { designMetadataSchema } from './schema';
 
-const validMetadata = {
+const metadataWithoutTags = {
 	schemaVersion: 1,
 	slug: 'analytics-dashboard',
 	version: '1.0.0',
@@ -13,13 +13,26 @@ const validMetadata = {
 	theme: 'light',
 	density: 'comfortable',
 	platforms: ['web'],
-	status: 'production-ready',
-	tags: ['charts']
+	status: 'production-ready'
 };
+
+const validMetadata = { ...metadataWithoutTags, tags: ['charts'] };
 
 describe('designMetadataSchema', () => {
 	it('accepts complete version-1 metadata', () => {
 		expect(designMetadataSchema.safeParse(validMetadata).success).toBe(true);
+	});
+
+	it('normalizes string fields and defaults omitted tags', () => {
+		const result = designMetadataSchema.parse({
+			...metadataWithoutTags,
+			title: '  Analytics Dashboard  ',
+			summary: '  A dashboard for reviewing product analytics.  ',
+			applicationTypes: ['  analytics  '],
+			visualStyles: ['  minimal  ']
+		});
+
+		expect(result).toEqual({ ...metadataWithoutTags, tags: [] });
 	});
 
 	it('rejects a slug that is not lowercase kebab-case', () => {
