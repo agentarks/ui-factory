@@ -1,10 +1,8 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { getPublished } from '$lib/catalog/registry';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-	const entry = $derived(getPublished(data.metadata.slug));
 </script>
 
 <svelte:head>
@@ -23,14 +21,11 @@
 
 	<section class="preview-region" aria-labelledby="preview-title">
 		<h2 id="preview-title">Preview</h2>
-		{#if entry}
-			{#await entry.loadPreview()}
-				<p class="preview-status">Loading preview…</p>
-			{:then { default: Preview }}
-				<Preview />
-			{:catch}
-				<p class="preview-error">The preview could not be loaded.</p>
-			{/await}
-		{/if}
+		<iframe
+			class="design-preview"
+			title={`${data.metadata.title} preview`}
+			src={resolve(`/designs/${data.metadata.slug}/preview`)}
+			loading="lazy"
+		></iframe>
 	</section>
 </main>

@@ -35,7 +35,7 @@ entry files
   -> rendered preview and exact DESIGN.md export
 ```
 
-The catalog loader requests public summaries for browsing. The detail loader resolves a public slug and supplies its validated metadata, preview module, and published handoff. Copy and download use the stored `DESIGN.md` text exactly as decoded; the application does not generate or rewrite it.
+The catalog loader requests public summaries for browsing. The detail loader resolves a public slug and supplies its validated metadata and published handoff. An isolated preview route resolves the same public slug and lazy-loads its preview module inside the detail page's iframe. Copy and download use the stored `DESIGN.md` text exactly as decoded; the application does not generate or rewrite it.
 
 Because discovery is file-backed and bundled by Vite, adding a valid entry requires a rebuild but no application-code registration.
 
@@ -53,6 +53,7 @@ Public registry queries return only `production-ready` entries. Authoring states
 | Folder and metadata slug differ  | Catalog loading fails validation                                  |
 | Duplicate slug                   | Catalog loading fails validation                                  |
 | Unknown or non-public route slug | SvelteKit 404                                                     |
+| Preview module fails to load     | Isolated error with a reload link                                 |
 | No qualified handoff             | Copy and download controls are absent                             |
 
 Validation failures are authoring or build errors, not silently skipped entries. This prevents a partially broken catalog from appearing trustworthy.

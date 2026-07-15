@@ -1,36 +1,29 @@
-@import 'tailwindcss';
+html,
+body {
+	margin: 0;
+	min-height: 100%;
+}
 
-:root {
-	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+.factory-shell {
+	min-width: 20rem;
+	min-height: 100vh;
 	color: oklch(0.22 0.015 255);
 	background: oklch(0.98 0.006 255);
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 	font-synthesis: none;
 }
 
-* {
+.factory-shell *,
+.factory-shell *::before,
+.factory-shell *::after {
 	box-sizing: border-box;
 }
 
-html {
-	min-width: 20rem;
-	background: oklch(0.98 0.006 255);
-}
-
-body {
-	margin: 0;
-	min-width: 20rem;
-	min-height: 100vh;
-	background: oklch(0.98 0.006 255);
-}
-
-button,
-input,
-textarea,
-select {
+.factory-shell :where(button, input, textarea, select) {
 	font: inherit;
 }
 
-.skip-link {
+.factory-shell .skip-link {
 	position: fixed;
 	top: 0.5rem;
 	left: 0.5rem;
@@ -42,50 +35,53 @@ select {
 	transform: translateY(-150%);
 }
 
-.skip-link:focus {
+.factory-shell .skip-link:focus {
 	transform: translateY(0);
 }
 
-.factory-header {
+.factory-shell .factory-header {
 	border-bottom: 1px solid oklch(0.9 0.012 255);
 	background: oklch(0.995 0.003 255);
 }
 
-.factory-header__inner {
+.factory-shell .factory-header__inner {
+	display: flex;
+	align-items: center;
 	width: min(100% - 3rem, 72rem);
 	min-height: 4rem;
 	margin-inline: auto;
-	display: flex;
-	align-items: center;
 }
 
-.factory-brand {
+.factory-shell .factory-brand {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
 	color: oklch(0.22 0.015 255);
 	font-size: 1rem;
 	font-weight: 650;
 	text-decoration: none;
 }
 
-.factory-brand:hover {
+.factory-shell .factory-brand:hover {
 	color: oklch(0.55 0.16 255);
 }
 
-:where(a, button, input, textarea, select):focus-visible {
+.factory-shell :where(a, button, input, textarea, select):focus-visible {
 	outline: 3px solid oklch(0.55 0.16 255);
 	outline-offset: 3px;
 }
 
-.factory-main {
+.factory-shell .factory-main {
 	width: min(100% - 3rem, 72rem);
 	margin-inline: auto;
 	padding-block: 4rem;
 }
 
-.catalog-intro {
+.factory-shell .catalog-intro {
 	max-width: 44rem;
 }
 
-.factory-kicker {
+.factory-shell .factory-kicker {
 	margin: 0 0 0.75rem;
 	color: oklch(0.5 0.018 255);
 	font-size: 0.875rem;
@@ -94,8 +90,8 @@ select {
 	text-transform: uppercase;
 }
 
-.catalog-intro h1,
-.design-heading h1 {
+.factory-shell .catalog-intro h1,
+.factory-shell .design-heading h1 {
 	margin: 0;
 	font-size: 2rem;
 	font-weight: 700;
@@ -103,8 +99,8 @@ select {
 	line-height: 1.15;
 }
 
-.catalog-summary,
-.design-heading > p:last-child {
+.factory-shell .catalog-summary,
+.factory-shell .design-heading > p:last-child {
 	max-width: 65ch;
 	margin: 1rem 0 0;
 	color: oklch(0.5 0.018 255);
@@ -112,102 +108,102 @@ select {
 	line-height: 1.6;
 }
 
-.empty-catalog {
+.factory-shell .empty-catalog {
 	max-width: 44rem;
 	margin-top: 4rem;
 	padding-top: 2rem;
 	border-top: 1px solid oklch(0.9 0.012 255);
 }
 
-.empty-catalog h2,
-.preview-region > h2 {
+.factory-shell .empty-catalog h2,
+.factory-shell .preview-region > h2 {
 	margin: 0;
 	font-size: 1.25rem;
 	font-weight: 650;
 	line-height: 1.3;
 }
 
-.empty-catalog p {
+.factory-shell .empty-catalog p {
 	max-width: 65ch;
 	margin: 0.75rem 0 0;
 	color: oklch(0.5 0.018 255);
 	line-height: 1.6;
 }
 
-.catalog-list {
+.factory-shell .catalog-list {
 	margin: 4rem 0 0;
 	padding: 0;
 	border-top: 1px solid oklch(0.9 0.012 255);
 	list-style: none;
 }
 
-.catalog-list li {
+.factory-shell .catalog-list li {
 	padding-block: 1.5rem;
 	border-bottom: 1px solid oklch(0.9 0.012 255);
 }
 
-.catalog-list a,
-.back-link {
+.factory-shell .catalog-list a,
+.factory-shell .back-link {
 	color: oklch(0.42 0.15 255);
 	font-weight: 650;
 	text-underline-offset: 0.2em;
 }
 
-.catalog-list a:hover,
-.back-link:hover {
+.factory-shell .catalog-list a:hover,
+.factory-shell .back-link:hover {
 	color: oklch(0.32 0.15 255);
 }
 
-.catalog-list p {
+.factory-shell .catalog-list p {
 	max-width: 65ch;
 	margin: 0.5rem 0 0;
 	color: oklch(0.5 0.018 255);
 	line-height: 1.6;
 }
 
-.design-detail {
+.factory-shell .design-detail {
 	padding-top: 2rem;
 }
 
-.back-link {
+.factory-shell .back-link {
 	display: inline-block;
 	margin-bottom: 3rem;
 }
 
-.design-heading {
+.factory-shell .design-heading {
 	max-width: 44rem;
 }
 
-.preview-region {
+.factory-shell .preview-region {
 	margin-top: 3rem;
 	padding-top: 1.5rem;
 	border-top: 1px solid oklch(0.9 0.012 255);
 }
 
-.preview-region > h2 {
+.factory-shell .preview-region > h2 {
 	margin-bottom: 1rem;
 }
 
-.preview-status,
-.preview-error {
-	color: oklch(0.5 0.018 255);
-}
-
-.preview-error {
-	color: oklch(0.55 0.18 25);
+.factory-shell .design-preview {
+	display: block;
+	width: 100%;
+	min-height: 40rem;
+	border: 1px solid oklch(0.9 0.012 255);
+	border-radius: 0.75rem;
+	background: oklch(0.995 0.003 255);
 }
 
 @media (max-width: 40rem) {
-	.factory-header__inner,
-	.factory-main {
+	.factory-shell .factory-header__inner,
+	.factory-shell .factory-main {
 		width: min(100% - 2rem, 72rem);
 	}
 
-	.factory-main {
+	.factory-shell .factory-main {
 		padding-block: 3rem;
 	}
 
-	.empty-catalog {
+	.factory-shell .empty-catalog {
 		margin-top: 3rem;
 	}
 }
