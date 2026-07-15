@@ -13,18 +13,18 @@ A **Kanban board** for a small product team: 3–4 columns (e.g. Backlog → In 
 
 Each is one single-page specimen with a meaningfully distinct visual direction. Every style is adapted to keep a WCAG 2.2 AA baseline — styles with inherent contrast challenges (neumorphism, claymorphism, brutalism) raise text/background contrast and never rely on shape alone.
 
-| # | Slug | Style | Visual signature | Theme | Density |
-|---|------|-------|------------------|-------|---------|
-| 1 | `kanban-flat-material` | Flat / Material | Solid color blocks, crisp elevation shadows, bold accents, app-like chrome | light | comfortable |
-| 2 | `kanban-glassmorphism` | Glassmorphism | Frosted translucent panels over a vibrant gradient, light hairline borders, soft glow | light | comfortable |
-| 3 | `kanban-neumorphism` | Neumorphism | Soft extruded/inset monochrome surfaces, dual light+dark shadows, tactile, low-contrast lifted to AA | light | comfortable |
-| 4 | `kanban-claymorphism` | Claymorphism | Puffy pastel 3D shapes, rounded marshmallow cards, soft drop shadows, candy palette | light | comfortable |
-| 5 | `kanban-illustration` | Illustration / Playful | Chunky illustrated accents, stickers, rounded friendly shapes, doodles, bright palette | light | spacious |
-| 6 | `kanban-editorial` | Editorial / Typographic | Serif display type, generous whitespace, content-first, restrained print palette, big headings | light | spacious |
-| 7 | `kanban-swiss` | Swiss / Minimal | Strict grid, austere sans, monochrome with one accent, precise alignment, high craft | light | comfortable |
-| 8 | `kanban-brutalism` | Brutalism | Raw monospace, harsh borders, black/white + one accent, exposed grid, high contrast | light | compact |
-| 9 | `kanban-dark-neon` | Dark / Neon | Near-black canvas, glowing neon accents, monospace metrics, terminal/cyberpunk vibe | dark | compact |
-| 10 | `kanban-skeuomorphic` | Skeuomorphic | Realistic textures and depth, bevels, physical affordances, layered shadows, material metaphors | light | comfortable |
+| #   | Slug                   | Style                   | Visual signature                                                                                     | Theme | Density     |
+| --- | ---------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------- | ----- | ----------- |
+| 1   | `kanban-flat-material` | Flat / Material         | Solid color blocks, crisp elevation shadows, bold accents, app-like chrome                           | light | comfortable |
+| 2   | `kanban-glassmorphism` | Glassmorphism           | Frosted translucent panels over a vibrant gradient, light hairline borders, soft glow                | light | comfortable |
+| 3   | `kanban-neumorphism`   | Neumorphism             | Soft extruded/inset monochrome surfaces, dual light+dark shadows, tactile, low-contrast lifted to AA | light | comfortable |
+| 4   | `kanban-claymorphism`  | Claymorphism            | Puffy pastel 3D shapes, rounded marshmallow cards, soft drop shadows, candy palette                  | light | comfortable |
+| 5   | `kanban-illustration`  | Illustration / Playful  | Chunky illustrated accents, stickers, rounded friendly shapes, doodles, bright palette               | light | spacious    |
+| 6   | `kanban-editorial`     | Editorial / Typographic | Serif display type, generous whitespace, content-first, restrained print palette, big headings       | light | spacious    |
+| 7   | `kanban-swiss`         | Swiss / Minimal         | Strict grid, austere sans, monochrome with one accent, precise alignment, high craft                 | light | comfortable |
+| 8   | `kanban-brutalism`     | Brutalism               | Raw monospace, harsh borders, black/white + one accent, exposed grid, high contrast                  | light | compact     |
+| 9   | `kanban-dark-neon`     | Dark / Neon             | Near-black canvas, glowing neon accents, monospace metrics, terminal/cyberpunk vibe                  | dark  | compact     |
+| 10  | `kanban-skeuomorphic`  | Skeuomorphic            | Realistic textures and depth, bevels, physical affordances, layered shadows, material metaphors      | light | comfortable |
 
 ## Build order and why
 

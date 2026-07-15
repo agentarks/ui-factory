@@ -2,7 +2,7 @@
 
 Dispatch source for `/cmux-dispatch`. One Kanban board rendered in ten distinct visual styles; the same realistic board content is owned per entry. Order is user-adjusted (glassmorphism first). See `docs/catalog-roadmap.md` for the full direction.
 
-- [ ] `kanban-glassmorphism` — frosted translucent panels over a vibrant gradient, backdrop blur, hairline borders, soft glow. theme: light, density: comfortable
+- [x] `kanban-glassmorphism` — frosted translucent panels over a vibrant gradient, backdrop blur, hairline borders, soft glow. theme: light, density: comfortable
 - [ ] `kanban-flat-material` — solid color blocks, crisp elevation shadows, bold accents. light, comfortable
 - [ ] `kanban-neumorphism` — soft extruded/inset monochrome surfaces, dual shadows, tactile (AA-lifted). light, comfortable
 - [ ] `kanban-claymorphism` — puffy pastel 3D shapes, marshmallow cards, soft drop shadows. light, comfortable

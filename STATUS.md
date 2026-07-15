@@ -13,18 +13,19 @@
 - Established `published/` as the runtime publication boundary and `workbench/` as authoring-only: server catalog code imports only production-ready published metadata and handoffs, while client code imports only published preview modules.
 - Added a test-only incomplete workbench fixture plus unit and post-build gates that fail if server or client discovery widens across the publication boundary.
 - Made non-production entries under `published/` fail production builds; workbench, hidden, deprecated, and unknown slugs remain unavailable to public routes.
-- Added the responsive semantic factory shell, intentional empty catalog, published-design listing and detail routes, and isolated iframe preview route with reload recovery.
+- Added the responsive semantic factory shell, a graceful empty-catalog state, published-design listing and detail routes, and isolated iframe preview route with reload recovery.
 - Wired Tailwind through the factory route group while keeping preview documents outside its preflight and utilities.
-- Covered schema, registry, and preview lookup behavior with 32 unit tests and empty-catalog, detail 404, and isolated preview 404 behavior with 3 Chromium tests, including document-style isolation.
-- Kept the production catalog empty: there are no sample designs.
+- Covered schema, registry, and preview lookup behavior with 32 unit tests; Chromium tests cover the populated catalog listing, the published-design detail with its isolated preview, and unknown-design / unknown-preview 404 behavior, including document-style isolation.
+- Published the first production-ready design entry, `kanban-glassmorphism`, so the catalog is no longer empty.
 - Impeccable critique: the restrained hierarchy keeps attention on future previews and the publication message makes the empty state candid rather than promotional.
 - Impeccable audit: semantic landmarks, visible focus, AA-oriented tokens, and bounded line lengths cover the shell; Chromium checks at 375px and 1280px found no horizontal overflow and preserved skip-link focus.
 - Impeccable polish: removed starter UI and demo routes, used dividers instead of cards, and retained system type, a single cool accent, and concise product copy.
+- Published `kanban-glassmorphism`, the first of the ten planned Kanban styles: a frosted translucent board over a vibrant gradient mesh with backdrop blur, hairline borders, and soft glow, authored production-ready with its own `fixtures.ts`, self-contained `DESIGN.md` handoff, and WCAG 2.2 AA-verified contrast across every text role (checked against a conservative worst-case layer composite).
 
 ## Next
 
-- Build the ten-style Kanban catalog defined in `docs/catalog-roadmap.md`: one page type (Kanban board), ten distinct visual styles, implemented one entry at a time through the documented publication workflow.
-- Start with `kanban-flat-material` (cleanest reference style; locks the shared board content baseline every other style re-skins).
+- Build the remaining nine Kanban styles defined in `docs/catalog-roadmap.md`, one entry at a time through the documented publication workflow.
+- Build `kanban-flat-material` next as the cleanest reference style and lock the shared board content baseline from it; align `kanban-glassmorphism`'s fixtures to that baseline once it is set.
 
 ## Decisions
 
@@ -35,6 +36,7 @@
 - Iframe sandboxing is deferred while previews are trusted repository content; require it before accepting untrusted or community-authored previews.
 - Detail-page happy-path browser coverage is deferred until the first real published design provides a stable subject.
 - Catalog direction is set in `docs/catalog-roadmap.md`: one page type (Kanban board) rendered in ten distinct visual styles (flat, glass, neumorphism, claymorphism, illustration, editorial, Swiss, brutalism, dark-neon, skeuomorphic), built one at a time. Style comparison on a fixed subject is the primary value.
+- `kanban-glassmorphism` is the first published entry (dispatch priority). Its `fixtures.ts` is a concrete first instance of the shared board content; `kanban-flat-material` remains the intended reference baseline that confirms the canonical card/column/label data the other styles re-skin.
 
 ## Blockers
 
