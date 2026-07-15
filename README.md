@@ -1,42 +1,45 @@
-# sv
+# UI Factory
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A browsable catalog for evaluating polished single-page designs and exporting a curated `DESIGN.md` as implementation guidance. See the [product vision](ui-factory-product-vision.md) for the durable product model.
 
-## Creating a project
+## Setup
 
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project
-npx sv create my-app
-```
-
-To recreate this project with the same configuration:
+**Prerequisites:** Node.js and npm.
 
 ```sh
-# recreate this project
-npx sv@0.16.3 create --template minimal --types ts --add eslint prettier vitest="usages:unit" playwright tailwindcss="plugins:none" --install npm .
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
+npm install
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
+Open the local URL printed by Vite.
 
-To create a production version of your app:
+## Commands
 
-```sh
-npm run build
-```
+| Command            | Purpose                          |
+| ------------------ | -------------------------------- |
+| `npm run dev`      | Start the development server     |
+| `npm run format`   | Format the repository            |
+| `npm run lint`     | Check formatting and lint rules  |
+| `npm run check`    | Run Svelte and TypeScript checks |
+| `npm test`         | Run unit tests once              |
+| `npm run test:e2e` | Run browser tests                |
+| `npm run build`    | Build for production             |
+| `npm run preview`  | Preview the production build     |
 
-You can preview the production build with `npm run preview`.
+## Documentation
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+| Document                                                                      | Purpose                                               |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------- |
+| [STATUS.md](STATUS.md)                                                        | Current phase, next work, blockers, and verification  |
+| [AGENTS.md](AGENTS.md)                                                        | Task-based context routing and completion rules       |
+| [PRODUCT.md](PRODUCT.md)                                                      | Product-register context for the browsing application |
+| [DESIGN.md](DESIGN.md)                                                        | Visual rules for the browsing application             |
+| [Product vision](ui-factory-product-vision.md)                                | Durable product intent and scope                      |
+| [Architecture](docs/architecture.md)                                          | File-backed catalog boundaries and data flow          |
+| [Design entry contract](docs/design-entry-contract.md)                        | Canonical entry files, schema, and visibility rules   |
+| [Adding a design](docs/adding-a-design.md)                                    | Minimal contribution workflow                         |
+| [Approved scaffold spec](docs/specs/2026-07-14-ui-factory-scaffold-design.md) | Scaffold decisions and acceptance scope               |
+
+## Catalog status
+
+The catalog is intentionally empty: no sample designs are committed. Empty discovery is a valid state and the first catalog UI must explain it without fake cards, filters, or export actions.
