@@ -12,7 +12,7 @@
 - Created the official SvelteKit baseline with the required toolchain.
 - Added concise project, product, design, architecture, and contribution context.
 - Defined and tested the version-1 design metadata schema.
-- Implemented tested file-backed catalog discovery with validation, immutable entries and nested metadata arrays, public visibility, exact handoff preservation, and lazy previews.
+- Implemented tested file-backed catalog discovery with validation, runtime- and type-level immutable entries and nested metadata arrays, typed lazy previews, public visibility, and exact handoff preservation.
 
 ## Next
 

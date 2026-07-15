@@ -1,6 +1,13 @@
+import type { Component } from 'svelte';
 import { designMetadataSchema, type DesignMetadata } from './schema';
 
-type PreviewLoader = () => Promise<unknown>;
+type CatalogMetadata = {
+	readonly [Key in keyof DesignMetadata]: DesignMetadata[Key] extends unknown[]
+		? Readonly<DesignMetadata[Key]>
+		: DesignMetadata[Key];
+};
+type PreviewModule = { default: Component };
+type PreviewLoader = () => Promise<PreviewModule>;
 
 type CatalogMaps = {
 	metadata: Record<string, unknown>;
@@ -9,7 +16,7 @@ type CatalogMaps = {
 };
 
 export type CatalogEntry = Readonly<{
-	metadata: Readonly<DesignMetadata>;
+	metadata: CatalogMetadata;
 	document: string;
 	loadPreview: PreviewLoader;
 }>;
@@ -54,7 +61,7 @@ export function createCatalog(maps: CatalogMaps) {
 		Object.freeze(result.data.visualStyles);
 		Object.freeze(result.data.platforms);
 		Object.freeze(result.data.tags);
-		const metadata: Readonly<DesignMetadata> = Object.freeze(result.data);
+		const metadata: CatalogMetadata = Object.freeze(result.data);
 		entries.push(
 			Object.freeze({
 				metadata,
@@ -78,13 +85,16 @@ export function createCatalog(maps: CatalogMaps) {
 }
 
 const productionCatalog = createCatalog({
-	metadata: import.meta.glob('../designs/*/metadata.json', { eager: true, import: 'default' }),
-	documents: import.meta.glob('../designs/*/DESIGN.md', {
+	metadata: import.meta.glob<unknown>('../designs/*/metadata.json', {
+		eager: true,
+		import: 'default'
+	}),
+	documents: import.meta.glob<string>('../designs/*/DESIGN.md', {
 		eager: true,
 		query: '?raw',
 		import: 'default'
-	}) as Record<string, string>,
-	previews: import.meta.glob('../designs/*/Preview.svelte') as Record<string, PreviewLoader>
+	}),
+	previews: import.meta.glob<PreviewModule>('../designs/*/Preview.svelte')
 });
 
 export const { all, published, getPublished } = productionCatalog;

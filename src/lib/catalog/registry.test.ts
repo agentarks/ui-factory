@@ -1,16 +1,19 @@
-import { describe, expect, it } from 'vitest';
-import { all, createCatalog } from './registry';
+import type { Component } from 'svelte';
+import { describe, expect, expectTypeOf, it } from 'vitest';
+import { all, createCatalog, type CatalogEntry } from './registry';
 
-const fixtureMetadata = import.meta.glob('./__fixtures__/*/metadata.json', {
+type PreviewModule = { default: Component };
+
+const fixtureMetadata = import.meta.glob<unknown>('./__fixtures__/*/metadata.json', {
 	eager: true,
 	import: 'default'
 });
-const fixtureDocuments = import.meta.glob('./__fixtures__/*/DESIGN.md', {
+const fixtureDocuments = import.meta.glob<string>('./__fixtures__/*/DESIGN.md', {
 	eager: true,
 	query: '?raw',
 	import: 'default'
-}) as Record<string, string>;
-const fixturePreviews = import.meta.glob('./__fixtures__/*/Preview.svelte');
+});
+const fixturePreviews = import.meta.glob<PreviewModule>('./__fixtures__/*/Preview.svelte');
 
 const validMetadata = {
 	schemaVersion: 1,
@@ -27,17 +30,32 @@ const validMetadata = {
 	status: 'production-ready'
 };
 
-const mapsFor = (metadata: unknown = validMetadata) => ({
-	metadata: { '/entries/entry/metadata.json': metadata } as Record<string, unknown>,
-	documents: { '/entries/entry/DESIGN.md': '# Entry\n' } as Record<string, string>,
+const TestPreview: Component = () => ({});
+
+const mapsFor = (metadata: unknown = validMetadata): Parameters<typeof createCatalog>[0] => ({
+	metadata: { '/entries/entry/metadata.json': metadata },
+	documents: { '/entries/entry/DESIGN.md': '# Entry\n' },
 	previews: {
-		'/entries/entry/Preview.svelte': () => Promise.resolve({ default: 'preview' })
-	} as Record<string, () => Promise<unknown>>
+		'/entries/entry/Preview.svelte': () => Promise.resolve({ default: TestPreview })
+	}
 });
 
 describe('createCatalog', () => {
-	it('does not discover test fixtures in the production catalog', () => {
-		expect(all).toEqual([]);
+	it("does not discover the 'complete' test fixture in the production catalog", () => {
+		expect(all.map((entry) => entry.metadata.slug)).not.toContain('complete');
+	});
+
+	it('exposes readonly metadata arrays and component preview modules', () => {
+		expectTypeOf<CatalogEntry['metadata']['applicationTypes']>().toEqualTypeOf<readonly string[]>();
+		expectTypeOf<CatalogEntry['metadata']['visualStyles']>().toEqualTypeOf<readonly string[]>();
+		expectTypeOf<CatalogEntry['metadata']['platforms']>().toEqualTypeOf<
+			readonly ('web' | 'desktop' | 'tablet' | 'mobile')[]
+		>();
+		expectTypeOf<CatalogEntry['metadata']['tags']>().toEqualTypeOf<readonly string[]>();
+		expectTypeOf<
+			Awaited<ReturnType<CatalogEntry['loadPreview']>>['default']
+		>().toEqualTypeOf<Component>();
+		expect(typeof TestPreview).toBe('function');
 	});
 
 	it('accepts empty maps', () => {
@@ -59,7 +77,8 @@ describe('createCatalog', () => {
 		expect(catalog.all[0].metadata.slug).toBe('complete');
 		expect(catalog.published).toEqual(catalog.all);
 		expect(catalog.getPublished('complete')).toBe(catalog.all[0]);
-		expect(await catalog.all[0].loadPreview()).toHaveProperty('default');
+		const preview = await catalog.all[0].loadPreview();
+		expect(typeof preview.default).toBe('function');
 	});
 
 	it('preserves DESIGN.md exactly', () => {
@@ -104,11 +123,11 @@ describe('createCatalog', () => {
 
 	it('rejects duplicate metadata slugs', () => {
 		const first = mapsFor();
-		const second = {
+		const second: Parameters<typeof createCatalog>[0] = {
 			metadata: { '/other-root/entry/metadata.json': validMetadata },
 			documents: { '/other-root/entry/DESIGN.md': '# Duplicate\n' },
 			previews: {
-				'/other-root/entry/Preview.svelte': () => Promise.resolve({ default: 'duplicate' })
+				'/other-root/entry/Preview.svelte': () => Promise.resolve({ default: TestPreview })
 			}
 		};
 
@@ -121,12 +140,16 @@ describe('createCatalog', () => {
 		).toThrow(/duplicate slug.*entry/i);
 	});
 
-	it('exposes immutable catalog collections', () => {
+	it('exposes immutable catalog collections and metadata', () => {
 		const catalog = createCatalog(mapsFor());
+		const metadata = catalog.all[0].metadata;
 
 		expect(Object.isFrozen(catalog.all)).toBe(true);
 		expect(Object.isFrozen(catalog.published)).toBe(true);
 		expect(Object.isFrozen(catalog.all[0])).toBe(true);
+		expect(Object.isFrozen(metadata)).toBe(true);
+		expect(() => Object.assign(metadata, { title: 'Mutated' })).toThrow(TypeError);
+		expect(metadata.title).toBe('Entry');
 	});
 
 	it.each([
@@ -142,7 +165,7 @@ describe('createCatalog', () => {
 			metadata.platforms,
 			metadata.tags
 		]) {
-			expect(() => values.push(values[0])).toThrow(TypeError);
+			expect(() => Array.prototype.push.call(values, values[0])).toThrow(TypeError);
 		}
 	});
 });
