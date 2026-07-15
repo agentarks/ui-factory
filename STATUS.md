@@ -3,17 +3,17 @@
 ## Phase and objective
 
 **Phase:** File-backed catalog foundation  
-**Objective:** Define and test the design metadata schema.
+**Objective:** Implement build-time catalog discovery and registry tests.
 
 ## Completed
 
 - Approved the product vision and scaffold design.
 - Created the official SvelteKit baseline with the required toolchain.
 - Added concise project, product, design, architecture, and contribution context.
+- Defined and tested the version-1 design metadata schema.
 
 ## Next
 
-- Implement metadata validation with focused unit tests.
 - Implement build-time catalog discovery and registry tests.
 - Replace the generated starter UI with the intentional empty catalog experience.
 
@@ -30,5 +30,8 @@ None.
 
 ## Last verified commands
 
+- `npm test -- src/lib/catalog/schema.test.ts`
+- `npm test`
+- `npm run check`
 - `npm run lint`
 - `git diff --check`
