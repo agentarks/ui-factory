@@ -1,5 +1,5 @@
-html,
-body {
+html:has(.factory-shell),
+body:has(.factory-shell) {
 	margin: 0;
 	min-height: 100%;
 }

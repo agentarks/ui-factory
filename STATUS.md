@@ -12,8 +12,8 @@
 - Created the SvelteKit baseline and required toolchain.
 - Defined and tested the metadata schema and file-backed catalog registry.
 - Added the semantic application shell, serializable route data, intentional empty catalog, isolated lazy preview route, and unknown-design 404 behavior.
-- Scoped factory styling to its shell, embedded previews in titled iframes, and added reload recovery for preview failures.
-- Browser coverage verifies the empty catalog, 44px brand target, and detail and preview 404 behavior.
+- Scoped factory styling and document resets to pages containing its shell, embedded previews in titled iframes, and added reload recovery for preview failures.
+- Browser coverage verifies the empty catalog, 44px brand target, detail and preview 404 behavior, and native preview document margins outside the factory shell.
 - Impeccable critique: the restrained hierarchy keeps attention on future previews and the publication message makes the empty state candid rather than promotional.
 - Impeccable audit: semantic landmarks, visible focus, AA-oriented tokens, and bounded line lengths cover the shell; Chromium checks at 375px and 1280px found no horizontal overflow and preserved skip-link focus.
 - Impeccable polish: removed starter UI and demo routes, used dividers instead of cards, and retained system type, a single cool accent, and concise product copy.
@@ -37,7 +37,7 @@ None.
 ## Last verified commands
 
 - `npm run test:e2e`
-- `npm test`
+- `npm run test:unit -- --run`
 - `npm run check`
 - `npm run lint`
 - `npm run build`

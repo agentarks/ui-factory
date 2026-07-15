@@ -22,9 +22,11 @@ test('returns 404 for an unknown design', async ({ page }) => {
 	await expect(page.getByText('Design not found', { exact: true })).toBeVisible();
 });
 
-test('returns 404 for an unknown design preview', async ({ page }) => {
+test('returns an isolated 404 for an unknown design preview', async ({ page }) => {
 	const response = await page.goto('/designs/missing/preview');
 
 	expect(response?.status()).toBe(404);
 	await expect(page.getByText('Design not found', { exact: true })).toBeVisible();
+	await expect(page.locator('.factory-shell')).toHaveCount(0);
+	await expect(page.locator('body')).toHaveCSS('margin', '8px');
 });
