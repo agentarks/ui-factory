@@ -71,6 +71,7 @@ export function createCatalog(maps: CatalogMaps) {
 	}
 
 	const all = Object.freeze(entries);
+	// `all` and `published` match because the published directory is an enforced production-ready boundary.
 	const published = Object.freeze(entries);
 	const byPublishedSlug = new Map(published.map((entry) => [entry.metadata.slug, entry]));
 

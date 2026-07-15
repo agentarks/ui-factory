@@ -1,3 +1,5 @@
+@import 'tailwindcss';
+
 html:has(.factory-shell),
 body:has(.factory-shell) {
 	margin: 0;
