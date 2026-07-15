@@ -1,0 +1,15 @@
+{
+	"schemaVersion": 1,
+	"slug": "complete",
+	"version": "1.0.0",
+	"title": "Complete Fixture",
+	"summary": "A complete file-backed catalog fixture.",
+	"pageType": "dashboard",
+	"applicationTypes": ["analytics"],
+	"visualStyles": ["minimal"],
+	"theme": "light",
+	"density": "comfortable",
+	"platforms": ["web"],
+	"status": "production-ready",
+	"tags": ["fixture"]
+}
