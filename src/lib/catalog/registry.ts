@@ -50,6 +50,10 @@ export function createCatalog(maps: CatalogMaps) {
 		if (slugs.has(result.data.slug)) throw new Error(`duplicate slug: ${result.data.slug}`);
 		slugs.add(result.data.slug);
 
+		Object.freeze(result.data.applicationTypes);
+		Object.freeze(result.data.visualStyles);
+		Object.freeze(result.data.platforms);
+		Object.freeze(result.data.tags);
 		const metadata: Readonly<DesignMetadata> = Object.freeze(result.data);
 		entries.push(
 			Object.freeze({

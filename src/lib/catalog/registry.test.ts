@@ -128,4 +128,21 @@ describe('createCatalog', () => {
 		expect(Object.isFrozen(catalog.published)).toBe(true);
 		expect(Object.isFrozen(catalog.all[0])).toBe(true);
 	});
+
+	it.each([
+		['all', (catalog: ReturnType<typeof createCatalog>) => catalog.all[0]],
+		['published', (catalog: ReturnType<typeof createCatalog>) => catalog.published[0]],
+		['getPublished', (catalog: ReturnType<typeof createCatalog>) => catalog.getPublished('entry')!]
+	])('prevents mutation of nested metadata arrays returned by %s', (_name, getEntry) => {
+		const metadata = getEntry(createCatalog(mapsFor())).metadata;
+
+		for (const values of [
+			metadata.applicationTypes,
+			metadata.visualStyles,
+			metadata.platforms,
+			metadata.tags
+		]) {
+			expect(() => values.push(values[0])).toThrow(TypeError);
+		}
+	});
 });
