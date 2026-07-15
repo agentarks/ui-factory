@@ -23,7 +23,8 @@
 
 ## Next
 
-- Add the first independent design through the documented publication workflow.
+- Build the ten-style Kanban catalog defined in `docs/catalog-roadmap.md`: one page type (Kanban board), ten distinct visual styles, implemented one entry at a time through the documented publication workflow.
+- Start with `kanban-flat-material` (cleanest reference style; locks the shared board content baseline every other style re-skins).
 
 ## Decisions
 
@@ -33,6 +34,7 @@
 - Preview documents render in a separate route group without factory CSS so entry-owned styles remain isolated.
 - Iframe sandboxing is deferred while previews are trusted repository content; require it before accepting untrusted or community-authored previews.
 - Detail-page happy-path browser coverage is deferred until the first real published design provides a stable subject.
+- Catalog direction is set in `docs/catalog-roadmap.md`: one page type (Kanban board) rendered in ten distinct visual styles (flat, glass, neumorphism, claymorphism, illustration, editorial, Swiss, brutalism, dark-neon, skeuomorphic), built one at a time. Style comparison on a fixed subject is the primary value.
 
 ## Blockers
 
