@@ -2,21 +2,24 @@
 
 ## Phase and objective
 
-**Phase:** Factory browsing foundation
+**Phase:** Factory browsing foundation complete
 
-**Objective:** Replace the generated starter UI with the intentional empty catalog experience.
+**Objective:** Begin publishing independent, production-ready design entries.
 
 ## Completed
 
 - Approved the product vision and scaffold design.
-- Created the official SvelteKit baseline with the required toolchain.
-- Added concise project, product, design, architecture, and contribution context.
-- Defined and tested the version-1 design metadata schema.
-- Implemented tested file-backed catalog discovery with validation, runtime- and type-level immutable entries and nested metadata arrays, typed lazy previews, public visibility, and exact handoff preservation.
+- Created the SvelteKit baseline and required toolchain.
+- Defined and tested the metadata schema and file-backed catalog registry.
+- Added the semantic application shell, serializable route data, intentional empty catalog, lazy typed preview route, and unknown-design 404 behavior.
+- Replaced generated browser coverage with catalog and 404 acceptance tests.
+- Impeccable critique: the restrained hierarchy keeps attention on future previews and the publication message makes the empty state candid rather than promotional.
+- Impeccable audit: semantic landmarks, visible focus, AA-oriented tokens, and bounded line lengths cover the shell; Chromium checks at 375px and 1280px found no horizontal overflow and preserved skip-link focus.
+- Impeccable polish: removed starter UI and demo routes, used dividers instead of cards, and retained system type, a single cool accent, and concise product copy.
 
 ## Next
 
-- Replace the generated starter UI with the intentional empty catalog experience.
+- Add the first independent design through the documented publication workflow.
 
 ## Decisions
 
@@ -31,7 +34,7 @@ None.
 
 ## Last verified commands
 
-- `npm test -- src/lib/catalog/registry.test.ts`
+- `npm run test:e2e`
 - `npm test`
 - `npm run check`
 - `npm run lint`
