@@ -14,7 +14,7 @@
 - Added a test-only incomplete workbench fixture plus unit and post-build gates that fail if server or client discovery widens across the publication boundary.
 - Made non-production entries under `published/` fail production builds; workbench, hidden, deprecated, and unknown slugs remain unavailable to public routes.
 - Added the responsive semantic factory shell, intentional empty catalog, published-design listing and detail routes, and isolated iframe preview route with reload recovery.
-- Covered schema, registry, and preview lookup behavior with 33 unit tests and empty-catalog, detail 404, and isolated preview 404 behavior with 3 Chromium tests.
+- Covered schema, registry, and preview lookup behavior with 32 unit tests and empty-catalog, detail 404, and isolated preview 404 behavior with 3 Chromium tests.
 - Kept the production catalog empty: there are no sample designs.
 
 ## Next
