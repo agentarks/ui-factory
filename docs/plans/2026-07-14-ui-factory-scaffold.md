@@ -17,6 +17,7 @@
 ### Task 1: Create the official SvelteKit baseline
 
 **Files:**
+
 - Create or replace: `package.json`, `package-lock.json`, `svelte.config.js`, `vite.config.ts`, `tsconfig.json`, `eslint.config.js`, `.prettierrc`, `.prettierignore`, `playwright.config.ts`
 - Create: `src/app.html`, `src/app.d.ts`, `src/app.css`, `src/routes/+layout.svelte`, `src/routes/+page.svelte`
 - Modify: `.gitignore`
@@ -43,13 +44,13 @@ Set the package name to `ui-factory`. Keep official scripts and ensure these com
 
 ```json
 {
-  "scripts": {
-    "dev": "vite dev",
-    "build": "vite build",
-    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-    "test": "vitest run",
-    "test:e2e": "playwright test"
-  }
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"test": "vitest run",
+		"test:e2e": "playwright test"
+	}
 }
 ```
 
@@ -78,6 +79,7 @@ git commit -m "chore: scaffold SvelteKit application"
 ### Task 2: Add concise project and Impeccable context
 
 **Files:**
+
 - Create: `AGENTS.md`
 - Create: `STATUS.md`
 - Create: `PRODUCT.md`
@@ -149,6 +151,7 @@ git commit -m "docs: add maintainable project context"
 ### Task 3: Implement metadata validation with TDD
 
 **Files:**
+
 - Create: `src/lib/catalog/schema.ts`
 - Create: `src/lib/catalog/schema.test.ts`
 
@@ -178,29 +181,29 @@ Export:
 
 ```ts
 export const designMetadataSchema = z.object({
-  schemaVersion: z.literal(1),
-  slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  version: z.string().regex(/^\d+\.\d+\.\d+$/),
-  title: z.string().trim().min(1),
-  summary: z.string().trim().min(1),
-  pageType: z.enum([
-    'dashboard',
-    'product-detail',
-    'authentication',
-    'settings',
-    'checkout',
-    'data-management',
-    'landing-page',
-    'app-shell',
-    'other'
-  ]),
-  applicationTypes: z.array(z.string().trim().min(1)).min(1),
-  visualStyles: z.array(z.string().trim().min(1)).min(1),
-  theme: z.enum(['light', 'dark', 'adaptive']),
-  density: z.enum(['compact', 'comfortable', 'spacious']),
-  platforms: z.array(z.enum(['web', 'desktop', 'tablet', 'mobile'])).min(1),
-  status: z.enum(['draft', 'reviewed', 'production-ready', 'deprecated']),
-  tags: z.array(z.string().trim().min(1)).default([])
+	schemaVersion: z.literal(1),
+	slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+	version: z.string().regex(/^\d+\.\d+\.\d+$/),
+	title: z.string().trim().min(1),
+	summary: z.string().trim().min(1),
+	pageType: z.enum([
+		'dashboard',
+		'product-detail',
+		'authentication',
+		'settings',
+		'checkout',
+		'data-management',
+		'landing-page',
+		'app-shell',
+		'other'
+	]),
+	applicationTypes: z.array(z.string().trim().min(1)).min(1),
+	visualStyles: z.array(z.string().trim().min(1)).min(1),
+	theme: z.enum(['light', 'dark', 'adaptive']),
+	density: z.enum(['compact', 'comfortable', 'spacious']),
+	platforms: z.array(z.enum(['web', 'desktop', 'tablet', 'mobile'])).min(1),
+	status: z.enum(['draft', 'reviewed', 'production-ready', 'deprecated']),
+	tags: z.array(z.string().trim().min(1)).default([])
 });
 
 export type DesignMetadata = z.infer<typeof designMetadataSchema>;
@@ -225,6 +228,7 @@ git commit -m "feat: validate design metadata"
 ### Task 4: Implement catalog discovery with TDD
 
 **Files:**
+
 - Create: `src/lib/catalog/registry.ts`
 - Create: `src/lib/catalog/registry.test.ts`
 - Create: `src/lib/catalog/__fixtures__/complete/metadata.json`
@@ -299,6 +303,7 @@ git commit -m "feat: discover file-backed designs"
 ### Task 5: Build the empty catalog UI
 
 **Files:**
+
 - Modify: `src/app.css`
 - Modify: `src/routes/+layout.svelte`
 - Create or modify: `src/routes/+page.ts`
@@ -372,6 +377,7 @@ git commit -m "feat: add empty catalog experience"
 ### Task 6: Final verification and documentation sync
 
 **Files:**
+
 - Modify: `STATUS.md`
 - Modify if commands differ: `README.md`, `AGENTS.md`
 
