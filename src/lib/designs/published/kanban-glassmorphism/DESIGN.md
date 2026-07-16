@@ -135,7 +135,7 @@ The specimen demonstrates each state visually (functional drag-and-drop and netw
 - **Empty (shown):** a column with no cards renders a dashed frosted placeholder (“No cards yet”) — see the **In Review** column.
 - **Loading (shown):** a frosted **skeleton card** with shimmering placeholder bars (in Backlog) represents a card still loading. The shimmer animates only under `prefers-reduced-motion: no-preference`.
 - **Error (shown):** an inline **glass error banner** under the header — red-tinted warning icon + bold label, a Retry button, and a dismiss control (`role="alert"`).
-- **Drag/move affordance (shown):** every card has a **grip handle** (faint by default, full on hover) and `cursor: grab`. Full drag-and-drop logic is optional and not implemented; reuse the card + grip treatment when adding it.
+- **Drag/move affordance (shown):** every card has a **grip handle** (faint by default, full on hover). Full drag-and-drop logic is optional and not implemented; add `cursor: grab` + actual DnD when wiring it for real, reusing the card + grip treatment.
 - **Done (shown):** completed cards show a check icon and a green due-date treatment.
 - **Priority (shown):** colored dot + capitalized word in the card footer (red/High, amber/Medium).
 - **Validation:** when implementing real card-edit forms, reuse the red-tinted label + inline message pattern under each field.

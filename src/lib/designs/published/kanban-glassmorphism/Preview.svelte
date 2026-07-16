@@ -132,11 +132,21 @@
 			<circle cx="8" cy="11.6" r="1" fill="currentColor" />
 		</svg>
 		<p>
-			<strong>Sync paused.</strong> Couldn't reach the server — recent changes may not be saved.
+			<strong>Sync paused.</strong> Couldn't reach the server. Recent changes may not be saved.
 		</p>
 		<div class="error-actions">
 			<button type="button" class="error-retry">Retry</button>
-			<button type="button" class="icon-btn error-dismiss" aria-label="Dismiss error">✕</button>
+			<button type="button" class="icon-btn error-dismiss" aria-label="Dismiss error">
+				<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+					<path
+						d="M3.5 3.5l9 9M12.5 3.5l-9 9"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.7"
+						stroke-linecap="round"
+					/>
+				</svg>
+			</button>
 		</div>
 	</div>
 
@@ -265,7 +275,7 @@
 					{/each}
 
 					{#if col.id === 'backlog'}
-						<li class="skeleton-card" aria-label="Loading card">
+						<li class="skeleton-card" aria-hidden="true">
 							<div class="skel skel-title"></div>
 							<div class="skel-row">
 								<div class="skel skel-label"></div>
@@ -606,7 +616,6 @@
 	.card {
 		padding: 0.7rem 0.8rem;
 		border-radius: 14px;
-		cursor: grab;
 		background: rgba(255, 255, 255, 0.62);
 		-webkit-backdrop-filter: blur(6px) saturate(150%);
 		backdrop-filter: blur(6px) saturate(150%);
@@ -951,11 +960,13 @@
 		.segmented button,
 		.primary,
 		.add-card,
-		.icon-btn {
+		.icon-btn,
+		.grip {
 			transition:
 				transform 0.18s ease,
 				box-shadow 0.18s ease,
-				background 0.18s ease;
+				background 0.18s ease,
+				opacity 0.18s ease;
 		}
 
 		.card:hover {
