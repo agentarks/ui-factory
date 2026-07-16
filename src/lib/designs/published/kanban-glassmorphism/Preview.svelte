@@ -43,7 +43,9 @@
 			</div>
 			<ul class="team-avatars" aria-label="Team members">
 				{#each members as m (m.id)}
-					<li class="avatar" style="--h: {m.hue}" title={m.name}>{m.initials}</li>
+					<li class="avatar" style="--h: {m.hue}" aria-label={m.name} title={m.name}>
+						{m.initials}
+					</li>
 				{/each}
 			</ul>
 		</div>
@@ -207,7 +209,14 @@
 										{#each card.assignees as id (id)}
 											{@const m = byId.get(id)}
 											{#if m}
-												<li class="avatar sm" style="--h: {m.hue}" title={m.name}>{m.initials}</li>
+												<li
+													class="avatar sm"
+													style="--h: {m.hue}"
+													aria-label={m.name}
+													title={m.name}
+												>
+													{m.initials}
+												</li>
 											{/if}
 										{/each}
 									</ul>
@@ -691,7 +700,7 @@
 	}
 	.tone-green {
 		background: rgba(34, 160, 90, 0.16);
-		color: #1a6638;
+		color: #14592f;
 	}
 	.tone-pink {
 		background: rgba(225, 70, 150, 0.16);
@@ -711,7 +720,7 @@
 	}
 	.tone-cyan {
 		background: rgba(20, 160, 200, 0.16);
-		color: #13687e;
+		color: #0f5266;
 	}
 
 	/* ---------- Focus + motion ---------- */
@@ -756,6 +765,11 @@
 		.column {
 			flex: 0 0 17rem;
 		}
+	}
+
+	.board-body {
+		scrollbar-width: thin;
+		scrollbar-color: rgba(255, 255, 255, 0.4) transparent;
 	}
 
 	.board-body::-webkit-scrollbar {

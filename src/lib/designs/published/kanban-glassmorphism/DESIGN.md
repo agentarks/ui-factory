@@ -45,7 +45,7 @@ Apply this to every panel (header, columns). It is the heart of the direction:
 
 ### The vibrant field
 
-The gradient is a **mesh of soft radial blobs over a diagonal base**, fixed to the viewport so it stays stable while columns scroll:
+The gradient is a **mesh of soft radial blobs over a diagonal base**, painted on the board root (it scrolls with the page; a `fixed` attachment is intentionally avoided because it glitches `backdrop-filter` on Safari/iOS):
 
 ```css
 background:
@@ -54,7 +54,6 @@ background:
 	radial-gradient(at 78% 80%, oklch(0.74 0.16 230) 0px, transparent 55%),
 	radial-gradient(at 22% 86%, oklch(0.78 0.15 165) 0px, transparent 52%),
 	linear-gradient(135deg, oklch(0.62 0.17 275), oklch(0.66 0.16 320) 48%, oklch(0.72 0.16 355));
-background-attachment: fixed;
 ```
 
 The base `linear-gradient` keeps minimum luminance high so no dark holes form — this is what lets dark ink pass AA even before the glass is drawn.
