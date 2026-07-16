@@ -4,11 +4,11 @@ One page type, ten **distinct visual styles** — the catalog's core value is co
 
 ## Subject
 
-A **Kanban board** for a small product team: 4–5 columns (e.g. Backlog → In Progress → In Review → Done, plus an empty Blocked column to exercise the empty state), cards with title, labels, assignee avatars, due dates, and counts, plus a board header with filters and view controls.
+A **Kanban board** for a small product team: 3–4 columns (Backlog → In Progress → In Review → Done), cards with title, labels, assignee avatars, due dates, and counts, plus a board header with filters and view controls.
 
 - `pageType`: `data-management`
 - Shared **realistic content** is copied into each entry's own `fixtures.ts` (entries stay independent per the contract — each owns its copy). Only the visual language changes.
-- **Baseline locked** by the first published entry: `src/lib/designs/published/kanban-glassmorphism/fixtures.ts` (5 columns including an empty `Blocked` column, 9 cards, 5 members). Later styles copy that file and re-skin only the visuals.
+- **Baseline locked** by the first published entry: `src/lib/designs/published/kanban-glassmorphism/fixtures.ts` (4 columns: Backlog, In Progress, In Review [empty], Done; 9 cards; 5 members). Later styles copy that file and re-skin only the visuals.
 
 ## The ten styles
 

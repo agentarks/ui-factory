@@ -31,7 +31,7 @@ test('opens a published design detail with its isolated preview', async ({ page 
 	await expect(frame.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
 	await expect(frame.getByRole('button', { name: 'New task' })).toBeVisible();
 	await expect(frame.getByText('Backlog', { exact: true })).toBeVisible();
-	await expect(frame.getByRole('heading', { name: 'Blocked' })).toBeVisible();
+	await expect(frame.getByRole('heading', { name: 'In Review' })).toBeVisible();
 	await expect(frame.getByText('No cards yet')).toBeVisible();
 });
 

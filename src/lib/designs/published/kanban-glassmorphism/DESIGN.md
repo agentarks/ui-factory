@@ -7,7 +7,7 @@
 
 ## Canonical page reference
 
-A Kanban board for a small product team: a board header (project identity, team avatars, search, filters, view controls, primary action) over 3–5 columns of draggable-feeling cards. Columns: Backlog → In Progress → In Review → Done, plus an empty **Blocked** column that demonstrates the empty state. Cards carry a title, colored labels, an optional priority indicator, an optional checklist progress line, a due date, and assignee avatars.
+A Kanban board for a small product team: a board header (project identity, team avatars, search, filters, view controls, primary action) over four columns of draggable-feeling cards: Backlog → In Progress → In Review → Done. The **In Review** column is empty, demonstrating the empty state; the other three hold realistic cards with a title, colored labels, an optional priority indicator, an optional checklist progress line, a due date, and assignee avatars.
 
 ## Design principles
 
@@ -180,7 +180,7 @@ Rule of thumb: any new surface is a glass panel (header/column/card recipe at an
 
 ## Content baseline
 
-`fixtures.ts` is the locked shared Kanban baseline: 5 members, 5 columns (Backlog, In Progress, In Review, Done, Blocked-empty), 9 cards with labels, priority, checklist, due dates, and assignees. Later styles copy this file and re-skin only the visuals.
+`fixtures.ts` is the locked shared Kanban baseline: 5 members, 4 columns (Backlog, In Progress, In Review [empty], Done), 9 cards with labels, priority, checklist, due dates, and assignees. Later styles copy this file and re-skin only the visuals.
 
 ## Acceptance checklist (for AI coding agents implementing this direction)
 

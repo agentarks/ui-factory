@@ -89,6 +89,28 @@ export const columns: Column[] = [
 				],
 				assignees: ['pn', 'so'],
 				due: 'Aug 02'
+			},
+			{
+				id: 'au-149',
+				title: 'Onboarding flow copy revisions',
+				labels: [
+					{ name: 'copy', tone: 'amber' },
+					{ name: 'review', tone: 'rose' }
+				],
+				assignees: ['lf'],
+				due: 'Jul 16',
+				priority: 'medium'
+			},
+			{
+				id: 'au-155',
+				title: 'Rate limiter for the public API',
+				labels: [
+					{ name: 'backend', tone: 'blue' },
+					{ name: 'security', tone: 'red' }
+				],
+				assignees: ['dc'],
+				due: 'Jul 17',
+				priority: 'high'
 			}
 		]
 	},
@@ -127,30 +149,7 @@ export const columns: Column[] = [
 		id: 'in-review',
 		name: 'In Review',
 		accent: 'amber',
-		cards: [
-			{
-				id: 'au-149',
-				title: 'Onboarding flow copy revisions',
-				labels: [
-					{ name: 'copy', tone: 'amber' },
-					{ name: 'review', tone: 'rose' }
-				],
-				assignees: ['lf'],
-				due: 'Jul 16',
-				priority: 'medium'
-			},
-			{
-				id: 'au-155',
-				title: 'Rate limiter for the public API',
-				labels: [
-					{ name: 'backend', tone: 'blue' },
-					{ name: 'security', tone: 'red' }
-				],
-				assignees: ['dc'],
-				due: 'Jul 17',
-				priority: 'high'
-			}
-		]
+		cards: []
 	},
 	{
 		id: 'done',
@@ -180,11 +179,5 @@ export const columns: Column[] = [
 				done: true
 			}
 		]
-	},
-	{
-		id: 'blocked',
-		name: 'Blocked',
-		accent: 'red',
-		cards: []
 	}
 ];
