@@ -24,7 +24,7 @@ export type Member = {
 	hue: number;
 };
 
-export type Priority = 'low' | 'medium' | 'high';
+export type Priority = 'medium' | 'high';
 
 export type Card = {
 	id: string;

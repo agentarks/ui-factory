@@ -140,7 +140,7 @@
 
 									{#if card.labels.length}
 										<ul class="labels">
-											{#each card.labels as l (l.name)}
+											{#each card.labels as l (`${l.name}-${l.tone}`)}
 												<li class="label tone-{l.tone}">{l.name}</li>
 											{/each}
 										</ul>
@@ -266,7 +266,6 @@
 			radial-gradient(at 78% 80%, oklch(0.74 0.16 230) 0px, transparent 55%),
 			radial-gradient(at 22% 86%, oklch(0.78 0.15 165) 0px, transparent 52%),
 			linear-gradient(135deg, oklch(0.62 0.17 275), oklch(0.66 0.16 320) 48%, oklch(0.72 0.16 355));
-		background-attachment: fixed;
 	}
 
 	.glass {
@@ -279,7 +278,8 @@
 
 	@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
 		/* ponytail: opaque fallback where backdrop-filter is unsupported */
-		.glass {
+		.glass,
+		.card {
 			background: rgba(255, 255, 255, 0.88);
 		}
 	}
@@ -389,10 +389,6 @@
 
 	.search input::placeholder {
 		color: var(--ink-faint);
-	}
-
-	.search input:focus {
-		outline: none;
 	}
 
 	.segmented {

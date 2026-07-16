@@ -65,7 +65,7 @@ The base `linear-gradient` keeps minimum luminance high so no dark holes form â€
 | ----------------- | ----------------------- | ------------------------------------------ |
 | `--ink`           | `oklch(0.26 0.035 285)` | Card titles, primary text                  |
 | `--ink-soft`      | `oklch(0.42 0.03 285)`  | Meta text: due dates, counts, subtitles    |
-| `--ink-faint`     | `oklch(0.5 0.03 285)`   | Placeholder text                           |
+| `--ink-faint`     | `oklch(0.46 0.03 285)`  | Placeholder text                           |
 | `--accent-strong` | `oklch(0.5 0.17 285)`   | Active filters, focus ring, primary button |
 | `--hair`          | `rgba(255,255,255,0.6)` | All hairline borders                       |
 
