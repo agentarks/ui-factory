@@ -109,7 +109,7 @@ The base `linear-gradient` holds minimum luminance high (L ≥ 0.62) so dark ink
 - **Card** (frosted glass, 14px radius, `blur(6px)`): title (`<h3>`), label chips, an optional checklist progress line, and a footer with the priority indicator, due date, and assignee avatars. Hover lifts the card 2px with a deeper shadow (reduced-motion: static).
 - **Label chip:** light frosted tint + dark ink (AA), one per concept; pill, ~0.66rem.
 - **Avatar:** initials on a dark-tinted OKLCH fill (hue per person) with a 2px rim; exposes the full name via `aria-label`. Two sizes: header 34px, card 26px.
-- **Controls:** search input (translucent fill, 40px min-height), segmented toggle and filter chips (`aria-pressed`, 36px), primary button (accent gradient, 40px), icon button (36px). Every control shows the accent focus ring.
+- **Controls:** search input (translucent fill, 44px min-height), segmented toggle and filter chips (`aria-pressed`, 44px), primary button (accent gradient, 44px), icon button (44px). Every control shows the accent focus ring.
 - **Empty state:** a dashed frosted placeholder (“No cards yet”) renders in any column with zero cards.
 
 ## Navigation patterns
@@ -120,7 +120,7 @@ This specimen is a single board with no route navigation. When extending to a fu
 
 - **Desktop (≥768px):** columns in a horizontal flex row; the board scrolls horizontally when columns overflow; the board-body scrollbar is thin and frosted (`scrollbar-width: thin` for Firefox, `::-webkit-scrollbar` for WebKit).
 - **Mobile/tablet (<768px):** columns stack vertically; no document-level horizontal overflow at 375/768/1280 (verified). Outer padding scales via `clamp`.
-- Touch targets: every interactive control ≥36px (search 40, primary 40, add-card 44, icon buttons/chips 36).
+- Touch targets: every interactive control ≥44px (search, primary, chips, icon buttons, add-card).
 
 ## Interaction and motion
 
@@ -148,7 +148,7 @@ This specimen is a single board with no route navigation. When extending to a fu
 
 Keep the gradient field + glass recipe constant; adapt the layout shell.
 
-- **Settings / account page:** glass top bar; a glass two-column shell (nav rail + content). Form fields are translucent inputs (rgba white 0.4 fill, hairline border, 40px min-height) on the glass content panel; save bar is a glass footer with the primary button.
+- **Settings / account page:** glass top bar; a glass two-column shell (nav rail + content). Form fields are translucent inputs (rgba white 0.4 fill, hairline border, 44px min-height) on the glass content panel; save bar is a glass footer with the primary button.
 - **Auth / login:** centered single glass card (radius 22, white 0.55, blur 18) on the vibrant field; inputs as above; primary "Sign in" button. Add a secondary "Create account" text link.
 - **Tables / data views:** glass panel holds the table; rows separated by `rgba(255,255,255,0.5)` hairlines (no zebra stripes); sticky glass header row; filters reuse the chip + segmented-control patterns.
 - **Detail pages:** glass breadcrumb + title header; metadata as labelled chips; related items as a horizontal scroll of cards reusing the board-card recipe.
@@ -163,7 +163,7 @@ Rule of thumb: any new surface is a glass panel (header/column/card recipe at an
 - Pair every `backdrop-filter` with the `@supports` opaque fallback.
 - Keep glass on the vibrant field; let the gradient show through at ~0.55 white.
 - Use dark tinted ink on frosted surfaces; tint every neutral toward hue 285.
-- Give every interactive element the accent focus ring and ≥36px target.
+- Give every interactive element the accent focus ring and ≥44px target.
 - Convey state (priority, done, empty) in text, not color/shape alone.
 
 **Don't**
@@ -197,7 +197,7 @@ Rule of thumb: any new surface is a glass panel (header/column/card recipe at an
 - [ ] Cards are a lighter frosted layer (`blur(6px)`) above the columns, giving layered z-depth (board → columns → cards); the `@supports` opaque fallback covers them too.
 - [ ] All colors are OKLCH; neutrals tinted toward hue 285; no `#000`/`#fff`; no gradient text; no colored side-stripes.
 - [ ] Typography uses the system stack and the documented scale; hierarchy via scale + weight.
-- [ ] Every interactive element has the accent focus ring, ≥36px target, and a real role/label; avatars expose the full name.
+- [ ] Every interactive element has the accent focus ring, ≥44px target, and a real role/label; avatars expose the full name.
 - [ ] All text meets WCAG 2.2 AA (≥4.5:1) against its rendered frosted background; state is conveyed in text, not color/shape alone.
 - [ ] Layout is responsive: columns scroll horizontally on desktop and stack on mobile; no document horizontal overflow at 375/768/1280.
 - [ ] All motion is ≤0.18s ease, gated behind `prefers-reduced-motion: no-preference`; no layout-property animation; no bounce/elastic.

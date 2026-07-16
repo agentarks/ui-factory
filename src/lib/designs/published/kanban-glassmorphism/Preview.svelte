@@ -404,7 +404,7 @@
 
 	.search input {
 		width: 8.5rem;
-		min-height: 40px;
+		min-height: 44px;
 		border: 0;
 		background: transparent;
 		color: var(--ink);
@@ -435,9 +435,11 @@
 		color: var(--ink-soft);
 		border: 0;
 		background: transparent;
-		padding: 0 0.7rem;
-		min-height: 36px;
-		border-radius: 9px;
+		padding: 0 0.75rem;
+		min-width: 44px;
+		min-height: 44px;
+		justify-content: center;
+		border-radius: 10px;
 		cursor: pointer;
 	}
 
@@ -462,7 +464,7 @@
 		font-weight: 700;
 		color: var(--on-accent);
 		border: 0;
-		min-height: 40px;
+		min-height: 44px;
 		padding: 0.5rem 0.95rem;
 		border-radius: 11px;
 		cursor: pointer;
@@ -523,8 +525,8 @@
 		margin-left: auto;
 		display: inline-grid;
 		place-items: center;
-		width: 36px;
-		height: 36px;
+		width: 44px;
+		height: 44px;
 		border: 0;
 		border-radius: 9px;
 		background: transparent;
