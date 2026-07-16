@@ -130,10 +130,15 @@ This specimen is a single board with no route navigation. When extending to a fu
 
 ## States
 
-- **Empty (shown):** a column with no cards renders a dashed frosted placeholder ("No cards yet"). This is part of the locked shared baseline.
+The specimen demonstrates each state visually (functional drag-and-drop and network logic are out of scope — these are the visual treatments to reuse):
+
+- **Empty (shown):** a column with no cards renders a dashed frosted placeholder (“No cards yet”) — see the **In Review** column.
+- **Loading (shown):** a frosted **skeleton card** with shimmering placeholder bars (in Backlog) represents a card still loading. The shimmer animates only under `prefers-reduced-motion: no-preference`.
+- **Error (shown):** an inline **glass error banner** under the header — red-tinted warning icon + bold label, a Retry button, and a dismiss control (`role="alert"`).
+- **Drag/move affordance (shown):** every card has a **grip handle** (faint by default, full on hover) and `cursor: grab`. Full drag-and-drop logic is optional and not implemented; reuse the card + grip treatment when adding it.
 - **Done (shown):** completed cards show a check icon and a green due-date treatment.
 - **Priority (shown):** colored dot + capitalized word in the card footer (red/High, amber/Medium).
-- **Loading / error / validation:** out of scope for this static, fixture-driven specimen (it has no async data, forms, or network). When an app implements this board for real, add: a frosted skeleton of column/card shapes for loading, an inline error banner (glass, red-tinted label) with a retry action, and per-field validation on any card-edit form.
+- **Validation:** when implementing real card-edit forms, reuse the red-tinted label + inline message pattern under each field.
 
 ## Accessibility
 
@@ -202,3 +207,4 @@ Rule of thumb: any new surface is a glass panel (header/column/card recipe at an
 - [ ] Layout is responsive: columns scroll horizontally on desktop and stack on mobile; no document horizontal overflow at 375/768/1280.
 - [ ] All motion is ≤0.18s ease, gated behind `prefers-reduced-motion: no-preference`; no layout-property animation; no bounce/elastic.
 - [ ] The board content matches the locked `fixtures.ts` baseline; the empty-column state renders.
+- [ ] Loading (skeleton), error (inline banner), drag affordance (grip), empty, done, and priority states are all shown; the skeleton shimmer respects `prefers-reduced-motion`.

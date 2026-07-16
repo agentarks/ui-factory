@@ -33,6 +33,9 @@ test('opens a published design detail with its isolated preview', async ({ page 
 	await expect(frame.getByText('Backlog', { exact: true })).toBeVisible();
 	await expect(frame.getByRole('heading', { name: 'In Review' })).toBeVisible();
 	await expect(frame.getByText('No cards yet')).toBeVisible();
+	await expect(frame.getByText('Sync paused', { exact: false })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'Retry' })).toBeVisible();
+	await expect(frame.locator('.skeleton-card')).toBeVisible();
 });
 
 test('returns 404 for an unknown design', async ({ page }) => {

@@ -113,6 +113,33 @@
 		</div>
 	</header>
 
+	<div class="error-banner glass" role="alert">
+		<svg class="error-icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+			<path
+				d="M8 1.6l6.4 11.4H1.6L8 1.6z"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="1.5"
+				stroke-linejoin="round"
+			/>
+			<path
+				d="M8 6v3.4"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="1.6"
+				stroke-linecap="round"
+			/>
+			<circle cx="8" cy="11.6" r="1" fill="currentColor" />
+		</svg>
+		<p>
+			<strong>Sync paused.</strong> Couldn't reach the server — recent changes may not be saved.
+		</p>
+		<div class="error-actions">
+			<button type="button" class="error-retry">Retry</button>
+			<button type="button" class="icon-btn error-dismiss" aria-label="Dismiss error">✕</button>
+		</div>
+	</div>
+
 	<section class="board-body" aria-label="Kanban board">
 		{#each columns as col (col.id)}
 			<section class="glass column" style="--accent: {toneAccent[col.accent]}">
@@ -134,7 +161,19 @@
 						<li>
 							<article class="card">
 								<div class="card-main">
-									<h3 class="card-title">{card.title}</h3>
+									<div class="card-head">
+										<span class="grip" aria-hidden="true">
+											<svg viewBox="0 0 16 16" width="11" height="11">
+												<circle cx="5.5" cy="4" r="1.2" fill="currentColor" />
+												<circle cx="10.5" cy="4" r="1.2" fill="currentColor" />
+												<circle cx="5.5" cy="8" r="1.2" fill="currentColor" />
+												<circle cx="10.5" cy="8" r="1.2" fill="currentColor" />
+												<circle cx="5.5" cy="12" r="1.2" fill="currentColor" />
+												<circle cx="10.5" cy="12" r="1.2" fill="currentColor" />
+											</svg>
+										</span>
+										<h3 class="card-title">{card.title}</h3>
+									</div>
 
 									{#if card.labels.length}
 										<ul class="labels">
@@ -224,6 +263,17 @@
 							</article>
 						</li>
 					{/each}
+
+					{#if col.id === 'backlog'}
+						<li class="skeleton-card" aria-label="Loading card">
+							<div class="skel skel-title"></div>
+							<div class="skel-row">
+								<div class="skel skel-label"></div>
+								<div class="skel skel-label"></div>
+							</div>
+							<div class="skel skel-foot"></div>
+						</li>
+					{/if}
 
 					{#if col.cards.length === 0}
 						<li class="empty-col">
@@ -556,6 +606,7 @@
 	.card {
 		padding: 0.7rem 0.8rem;
 		border-radius: 14px;
+		cursor: grab;
 		background: rgba(255, 255, 255, 0.62);
 		-webkit-backdrop-filter: blur(6px) saturate(150%);
 		backdrop-filter: blur(6px) saturate(150%);
@@ -759,6 +810,132 @@
 	.tone-cyan {
 		background: rgba(20, 160, 200, 0.16);
 		color: #0f5266;
+	}
+
+	/* ---------- States: drag affordance, loading skeleton, error ---------- */
+
+	.card-head {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.35rem;
+	}
+
+	.grip {
+		flex: none;
+		margin-top: 0.2rem;
+		color: var(--ink-faint);
+		opacity: 0.55;
+	}
+
+	.card:hover .grip {
+		opacity: 1;
+	}
+
+	.skeleton-card {
+		display: flex;
+		flex-direction: column;
+		gap: 0.55rem;
+		padding: 0.7rem 0.8rem;
+		border-radius: 14px;
+		background: rgba(255, 255, 255, 0.4);
+		border: 1px solid rgba(255, 255, 255, 0.5);
+	}
+
+	.skel {
+		border-radius: 6px;
+		background: linear-gradient(
+			90deg,
+			rgba(255, 255, 255, 0.3),
+			rgba(255, 255, 255, 0.62),
+			rgba(255, 255, 255, 0.3)
+		);
+		background-size: 200% 100%;
+	}
+
+	.skel-title {
+		height: 12px;
+		width: 70%;
+	}
+
+	.skel-row {
+		display: flex;
+		gap: 0.3rem;
+	}
+
+	.skel-label {
+		height: 12px;
+		width: 44px;
+		border-radius: 999px;
+	}
+
+	.skel-foot {
+		height: 10px;
+		width: 35%;
+	}
+
+	@keyframes shimmer {
+		0% {
+			background-position: 200% 0;
+		}
+		100% {
+			background-position: -200% 0;
+		}
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.skel {
+			animation: shimmer 1.4s ease-in-out infinite;
+		}
+	}
+
+	.error-banner {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		margin-top: 1rem;
+		padding: 0.6rem 0.9rem;
+		border-radius: 14px;
+		border-color: oklch(0.7 0.12 25 / 0.55);
+	}
+
+	.error-banner .error-icon {
+		color: oklch(0.55 0.19 25);
+		flex: none;
+	}
+
+	.error-banner p {
+		margin: 0;
+		flex: 1;
+		font-size: 0.78rem;
+		color: var(--ink);
+	}
+
+	.error-banner strong {
+		color: oklch(0.45 0.16 25);
+	}
+
+	.error-actions {
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
+	}
+
+	.error-retry {
+		font: inherit;
+		font-size: 0.78rem;
+		font-weight: 700;
+		color: var(--on-accent);
+		background: oklch(0.5 0.17 25);
+		border: 0;
+		min-height: 44px;
+		min-width: 44px;
+		padding: 0 0.9rem;
+		border-radius: 10px;
+		cursor: pointer;
+	}
+
+	.error-dismiss {
+		color: var(--ink-soft);
 	}
 
 	/* ---------- Focus + motion ---------- */
