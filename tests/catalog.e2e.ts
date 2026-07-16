@@ -26,6 +26,7 @@ test('opens a published design detail with its isolated preview', async ({ page 
 	await expect(
 		page.getByRole('heading', { name: 'Kanban Board · Glassmorphism', exact: false })
 	).toBeVisible();
+	await expect(page.getByText('frosted, translucent Kanban board', { exact: false })).toBeVisible();
 
 	const frame = page.frameLocator('iframe[title*="preview"i]');
 	await expect(frame.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
