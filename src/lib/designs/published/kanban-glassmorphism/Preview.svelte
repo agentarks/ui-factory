@@ -302,6 +302,10 @@
 		.glass {
 			background: rgba(255, 255, 255, 0.88);
 		}
+
+		.card {
+			background: rgba(255, 255, 255, 0.82);
+		}
 	}
 
 	/* ---------- Header ---------- */
@@ -544,12 +548,15 @@
 
 	/* ---------- Cards ---------- */
 
-	/* ponytail: no backdrop-filter on cards — they sit on an already-blurred uniform
-	   column surface, so a per-card blur is pure paint cost with no visible benefit. */
+	/* Cards are a distinct frosted z-layer above the columns: a lighter blur than the
+	   columns reads as thinner, closer glass. Tuned for showcase fidelity; the GPU cost
+	   of blurring ~9 cards is acceptable for a single-page design specimen. */
 	.card {
 		padding: 0.7rem 0.8rem;
 		border-radius: 14px;
 		background: rgba(255, 255, 255, 0.62);
+		-webkit-backdrop-filter: blur(6px) saturate(150%);
+		backdrop-filter: blur(6px) saturate(150%);
 		border: 1px solid rgba(255, 255, 255, 0.7);
 		box-shadow: 0 4px 14px rgba(31, 38, 135, 0.12);
 	}

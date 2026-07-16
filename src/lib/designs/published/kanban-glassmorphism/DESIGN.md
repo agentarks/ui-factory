@@ -79,7 +79,7 @@ A Kanban board for a small product team: a board header (project identity, team 
 
 - **White at ~0.55 alpha** keeps panels readable while letting the gradient through.
 - **`saturate(180%)`** cancels the desaturation blur introduces.
-- **Cards skip their own backdrop-filter:** they sit on an already-blurred, uniform column surface, so a per-card blur is pure paint cost with no visible benefit. Cards keep a translucent `white 0.62` fill + hairline border + soft shadow.
+- **Cards are a lighter frosted layer:** `blur(6px) saturate(150%)` (vs the columns' 18px) so cards read as thinner, closer glass above the columns — a deliberate z-depth layering (board → columns → cards). White 0.62 fill + hairline border + soft shadow.
 - **Do not use `background-attachment: fixed` with `backdrop-filter`** — it repaint-glitches on Safari/iOS. The gradient scrolls with the page.
 
 ### The vibrant field
@@ -102,7 +102,7 @@ The base `linear-gradient` holds minimum luminance high (L ≥ 0.62) so dark ink
 - **Header** (glass, 22px radius): project chip + title + team avatars on the left; search, filter chips, board/list toggle, and primary "New task" on the right. Wraps on narrow widths.
 - **Board body:** flex row of columns on ≥768px with horizontal scroll (authentic Kanban); columns stack vertically below 768px.
 - **Column** (glass, 20px radius): heading with a colored accent dot, card count, and a "more actions" button; a vertical list of cards; a dashed "Add a card" affordance; an **empty-state placeholder** when the column has no cards.
-- **Card** (translucent, 14px radius): title, label chips, optional checklist progress, and a footer carrying the priority indicator (red dot + "High", amber dot + "Medium"), the due date (check icon when done), and assignee avatars.
+- **Card** (frosted glass, 14px radius, `blur(6px)`): title, label chips, optional checklist progress, and a footer carrying the priority indicator (red dot + "High", amber dot + "Medium"), the due date (check icon when done), and assignee avatars.
 
 ## Navigation patterns
 
@@ -160,7 +160,7 @@ Rule of thumb: any new surface is a glass panel (header/column/card recipe at an
 
 **Don't**
 
-- Don't blur surfaces that already sit on a blurred uniform surface (e.g. cards on a frosted column) — wasted paint.
+- Don't blur a surface that sits on a sharp, detailed surface expecting a frosted result — backdrop-filter only blurs what's behind the element, so ensure there is actually varied content or a gradient behind the glass.
 - Don't use `background-attachment: fixed` with `backdrop-filter` (Safari/iOS glitch).
 - Don't put glass directly on glass without a shadow or border to separate them.
 - Don't use a colored side-stripe (`border-left > 1px`) as an accent — use a tinted chip, a dot, or a leading icon.
@@ -171,7 +171,7 @@ Rule of thumb: any new surface is a glass panel (header/column/card recipe at an
 
 - **Use** when the product wants an expressive, modern, visually rich surface and the target devices can afford `backdrop-filter` (modern evergreen browsers).
 - **Avoid** for data-dense, performance-critical, or primarily-text surfaces (observability, long tables, reading apps), or when supporting older browsers without `backdrop-filter` where the opaque fallback would erase the effect.
-- **Trade-offs:** glassmorphism is GPU-heavier than flat UI (blur on multiple large panels), and contrast depends on the field behind the glass, so ink/tints must be tuned conservatively. The expressive look costs some performance and some contrast headroom.
+- **Trade-offs:** glassmorphism is GPU-heavier than flat UI (`backdrop-filter` blurs the header, columns, and every card), and contrast depends on the field behind the glass, so ink/tints must be tuned conservatively. The expressive look costs performance and contrast headroom; acceptable for a showcase specimen, worth bounding (fewer/smaller blur layers) in a high-traffic app.
 
 ## Dependencies, assets, and licenses
 
@@ -186,7 +186,7 @@ Rule of thumb: any new surface is a glass panel (header/column/card recipe at an
 
 - [ ] Vibrant gradient field is present behind every surface; minimum luminance stays high (no dark holes under text).
 - [ ] Panels use the glass recipe (rgba white ~0.55, `backdrop-filter: blur(18px) saturate(180%)`, hairline border, soft shadow) **with** the `@supports` opaque fallback.
-- [ ] Cards are translucent without their own backdrop-filter; they read as glass via fill + border + shadow.
+- [ ] Cards are a lighter frosted layer (`blur(6px)`) above the columns, giving layered z-depth (board → columns → cards); the `@supports` opaque fallback covers them too.
 - [ ] All colors are OKLCH; neutrals tinted toward hue 285; no `#000`/`#fff`; no gradient text; no colored side-stripes.
 - [ ] Typography uses the system stack and the documented scale; hierarchy via scale + weight.
 - [ ] Every interactive element has the accent focus ring, ≥36px target, and a real role/label; avatars expose the full name.
