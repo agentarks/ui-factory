@@ -2,7 +2,7 @@
 	"schemaVersion": 1,
 	"slug": "kanban-glassmorphism",
 	"version": "1.0.0",
-	"title": "Kanban Board — Glassmorphism",
+	"title": "Kanban Board · Glassmorphism",
 	"summary": "A frosted, translucent Kanban board floating over a vibrant gradient mesh, with backdrop blur, hairline borders, and soft glow.",
 	"pageType": "data-management",
 	"applicationTypes": ["project-management", "productivity", "team-collaboration"],

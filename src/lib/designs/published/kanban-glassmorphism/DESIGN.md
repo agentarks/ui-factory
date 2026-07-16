@@ -1,4 +1,4 @@
-# Kanban Board — Glassmorphism
+# Kanban Board · Glassmorphism
 
 A single-page Kanban board for a small product team, rendered in a **glassmorphism** visual language: frosted, translucent panels floating over a vibrant gradient mesh, softened by backdrop blur, hairline borders, and gentle glow.
 
@@ -29,7 +29,7 @@ Apply this to every panel (header, columns). It is the heart of the direction:
 - **White at 0.55 alpha** keeps panels readable while still letting the gradient show through.
 - **`saturate(180%)`** compensates for the desaturation that blur introduces, so the color behind the glass stays vivid instead of washing grey.
 - **Hairline `rgba(255,255,255,0.6)` border** sells the "glass edge" — a 1px light rim catches the implied light source.
-- **Cards** use the same recipe at smaller radius with **white 0.62** (slightly more opaque) and `blur(10px)` so card text stays crisp on top of the column.
+- **Cards** skip their own backdrop-filter: they sit on an already-blurred uniform column surface, so a per-card blur adds paint cost with no visible benefit. They keep a translucent `white 0.62` fill plus a hairline border and soft shadow, which is enough to read as glass on top of the frosted column.
 
 ### Backdrop-filter fallback (required)
 
@@ -101,7 +101,7 @@ Initials in a 34px (26px on cards) circle, white text on `oklch(0.46 0.13 <hue>)
 - **Header** (glass, 22px radius): project chip + title + team avatars on the left; search, filter chips, board/list toggle, and a primary "New task" on the right. Wraps on narrow widths.
 - **Board body**: a flex row of columns on ≥768px with horizontal scroll (authentic Kanban); columns stack vertically below 768px.
 - **Column** (glass, 20px radius): heading with a colored dot (`--accent` per column), count chip, and a "more actions" button; a vertical list of cards; a dashed "Add a card" affordance.
-- **Card** (glass, 14px radius): optional priority bar (3px left edge — red for high, amber for medium), title, label chips, optional checklist progress, and a footer with due date + assignee avatars.
+- **Card** (translucent, 14px radius): title, label chips, optional checklist progress, and a footer carrying a priority indicator (red dot + “High”, amber dot + “Medium”), the due date, and assignee avatars.
 
 ## Accessibility
 
@@ -109,7 +109,7 @@ Initials in a 34px (26px on cards) circle, white text on `oklch(0.46 0.13 <hue>)
 - All controls are real `<button>`/`<input>` elements; filters and view toggles carry `aria-pressed`, counts carry `aria-label`, icons are `aria-hidden` with labelled control parents.
 - **Visible focus:** `outline: 2px solid var(--accent-strong); outline-offset: 2px;` on every interactive element.
 - **AA contrast** is maintained by the design, not by exception: dark ink over a high-opacity frosted white panel, light-tint label chips with dark ink, and a deliberately bright gradient field so dark text never lands on a dark region.
-- Avatars and priority bars are decorative; meaning (labels, due dates) is always conveyed in text.
+- Avatars and priority dots are decorative; meaning (priority level, labels, due dates) is always conveyed in text as well.
 
 ## Motion
 

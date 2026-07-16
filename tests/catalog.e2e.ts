@@ -9,7 +9,7 @@ test('lists published designs in the catalog', async ({ page }) => {
 	await expect(brand).toBeVisible();
 	expect((await brand.boundingBox())?.height).toBeGreaterThanOrEqual(44);
 
-	const designLink = page.getByRole('link', { name: 'Kanban Board — Glassmorphism' });
+	const designLink = page.getByRole('link', { name: 'Kanban Board · Glassmorphism' });
 	await expect(designLink).toBeVisible();
 	await expect(page.getByText('frosted, translucent Kanban board', { exact: false })).toBeVisible();
 	await expect(page.getByText('No designs published')).toHaveCount(0);
@@ -24,7 +24,7 @@ test('opens a published design detail with its isolated preview', async ({ page 
 	await page.goto('/designs/kanban-glassmorphism');
 
 	await expect(
-		page.getByRole('heading', { name: 'Kanban Board — Glassmorphism', exact: false })
+		page.getByRole('heading', { name: 'Kanban Board · Glassmorphism', exact: false })
 	).toBeVisible();
 
 	const frame = page.frameLocator('iframe[title*="preview"i]');

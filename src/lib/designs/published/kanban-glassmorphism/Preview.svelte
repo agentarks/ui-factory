@@ -131,10 +131,6 @@
 					{#each col.cards as card (card.id)}
 						<li>
 							<article class="card">
-								{#if card.priority}
-									<span class="pri-bar pri-{card.priority}" aria-hidden="true"></span>
-								{/if}
-
 								<div class="card-main">
 									<h3 class="card-title">{card.title}</h3>
 
@@ -163,40 +159,48 @@
 								</div>
 
 								<footer class="card-foot">
-									<span class="due {card.done ? 'is-done' : ''}">
-										{#if card.done}
-											<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
-												<path
-													d="M3.5 8.5l3 3 6-7"
-													fill="none"
-													stroke="currentColor"
-													stroke-width="1.8"
-													stroke-linecap="round"
-													stroke-linejoin="round"
-												/>
-											</svg>
-										{:else}
-											<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
-												<rect
-													x="2.5"
-													y="3.5"
-													width="11"
-													height="10"
-													rx="1.6"
-													fill="none"
-													stroke="currentColor"
-													stroke-width="1.4"
-												/>
-												<path
-													d="M2.5 6.5h11M5.5 2v3M10.5 2v3"
-													stroke="currentColor"
-													stroke-width="1.4"
-													stroke-linecap="round"
-													fill="none"
-												/>
-											</svg>
+									<span class="foot-meta">
+										{#if card.priority}
+											<span class="priority pri-{card.priority}">
+												<span class="dot" aria-hidden="true"></span>
+												{card.priority}
+											</span>
 										{/if}
-										{card.due}
+										<span class="due {card.done ? 'is-done' : ''}">
+											{#if card.done}
+												<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
+													<path
+														d="M3.5 8.5l3 3 6-7"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="1.8"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													/>
+												</svg>
+											{:else}
+												<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
+													<rect
+														x="2.5"
+														y="3.5"
+														width="11"
+														height="10"
+														rx="1.6"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="1.4"
+													/>
+													<path
+														d="M2.5 6.5h11M5.5 2v3M10.5 2v3"
+														stroke="currentColor"
+														stroke-width="1.4"
+														stroke-linecap="round"
+														fill="none"
+													/>
+												</svg>
+											{/if}
+											{card.due}
+										</span>
 									</span>
 
 									<ul class="assignees" aria-label="Assignees">
@@ -252,6 +256,7 @@
 		--ink-faint: oklch(0.46 0.03 285);
 		--accent-strong: oklch(0.5 0.17 285);
 		--hair: rgba(255, 255, 255, 0.6);
+		--on-accent: oklch(0.99 0.004 285);
 		--field-shadow: 0 8px 32px rgba(31, 38, 135, 0.18);
 
 		position: relative;
@@ -278,8 +283,7 @@
 
 	@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
 		/* ponytail: opaque fallback where backdrop-filter is unsupported */
-		.glass,
-		.card {
+		.glass {
 			background: rgba(255, 255, 255, 0.88);
 		}
 	}
@@ -313,7 +317,7 @@
 		font-size: 0.78rem;
 		font-weight: 700;
 		letter-spacing: 0.02em;
-		color: #fff;
+		color: var(--on-accent);
 		background: linear-gradient(135deg, oklch(0.52 0.17 290), oklch(0.5 0.18 340));
 		box-shadow: 0 3px 10px oklch(0.5 0.17 310 / 0.45);
 	}
@@ -352,7 +356,7 @@
 		border-radius: 50%;
 		font-size: 0.72rem;
 		font-weight: 700;
-		color: #fff;
+		color: var(--on-accent);
 		background: oklch(0.46 0.13 var(--h, 285));
 		border: 2px solid rgba(255, 255, 255, 0.75);
 		box-shadow: 0 2px 6px rgba(31, 38, 135, 0.25);
@@ -380,6 +384,7 @@
 
 	.search input {
 		width: 8.5rem;
+		min-height: 40px;
 		border: 0;
 		background: transparent;
 		color: var(--ink);
@@ -402,13 +407,16 @@
 
 	.segmented button,
 	.chip {
+		display: inline-flex;
+		align-items: center;
 		font: inherit;
 		font-size: 0.78rem;
 		font-weight: 600;
 		color: var(--ink-soft);
 		border: 0;
 		background: transparent;
-		padding: 0.34rem 0.7rem;
+		padding: 0 0.7rem;
+		min-height: 36px;
 		border-radius: 9px;
 		cursor: pointer;
 	}
@@ -420,7 +428,7 @@
 
 	.segmented button[aria-pressed='true'],
 	.chip[aria-pressed='true'] {
-		color: #fff;
+		color: var(--on-accent);
 		background: var(--accent-strong);
 		box-shadow: 0 2px 8px oklch(0.5 0.17 285 / 0.4);
 	}
@@ -432,8 +440,9 @@
 		font: inherit;
 		font-size: 0.82rem;
 		font-weight: 700;
-		color: #fff;
+		color: var(--on-accent);
 		border: 0;
+		min-height: 40px;
 		padding: 0.5rem 0.95rem;
 		border-radius: 11px;
 		cursor: pointer;
@@ -494,10 +503,10 @@
 		margin-left: auto;
 		display: inline-grid;
 		place-items: center;
-		width: 28px;
-		height: 28px;
+		width: 36px;
+		height: 36px;
 		border: 0;
-		border-radius: 8px;
+		border-radius: 9px;
 		background: transparent;
 		color: var(--ink-soft);
 		cursor: pointer;
@@ -519,32 +528,14 @@
 
 	/* ---------- Cards ---------- */
 
+	/* ponytail: no backdrop-filter on cards — they sit on an already-blurred uniform
+	   column surface, so a per-card blur is pure paint cost with no visible benefit. */
 	.card {
-		position: relative;
-		overflow: hidden;
 		padding: 0.7rem 0.8rem;
 		border-radius: 14px;
 		background: rgba(255, 255, 255, 0.62);
-		-webkit-backdrop-filter: blur(10px) saturate(160%);
-		backdrop-filter: blur(10px) saturate(160%);
 		border: 1px solid rgba(255, 255, 255, 0.7);
 		box-shadow: 0 4px 14px rgba(31, 38, 135, 0.12);
-	}
-
-	.pri-bar {
-		position: absolute;
-		left: 0;
-		top: 0;
-		bottom: 0;
-		width: 3px;
-	}
-
-	.pri-high {
-		background: oklch(0.57 0.19 25);
-	}
-
-	.pri-medium {
-		background: oklch(0.7 0.15 70);
 	}
 
 	.card-title {
@@ -591,6 +582,44 @@
 		border-top: 1px solid rgba(255, 255, 255, 0.55);
 	}
 
+	.foot-meta {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		min-width: 0;
+	}
+
+	.priority {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		font-size: 0.68rem;
+		font-weight: 700;
+		text-transform: capitalize;
+	}
+
+	.priority .dot {
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+	}
+
+	.priority.pri-high {
+		color: oklch(0.46 0.16 25);
+	}
+
+	.priority.pri-high .dot {
+		background: oklch(0.57 0.19 25);
+	}
+
+	.priority.pri-medium {
+		color: oklch(0.46 0.12 70);
+	}
+
+	.priority.pri-medium .dot {
+		background: oklch(0.7 0.15 70);
+	}
+
 	.due {
 		display: inline-flex;
 		align-items: center;
@@ -627,7 +656,8 @@
 		color: var(--ink-soft);
 		border: 1px dashed rgba(255, 255, 255, 0.7);
 		background: rgba(255, 255, 255, 0.28);
-		padding: 0.5rem;
+		min-height: 44px;
+		padding: 0.6rem;
 		border-radius: 12px;
 		cursor: pointer;
 	}
