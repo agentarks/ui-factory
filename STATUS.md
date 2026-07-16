@@ -20,12 +20,12 @@
 - Impeccable critique: the restrained hierarchy keeps attention on future previews and the publication message makes the empty state candid rather than promotional.
 - Impeccable audit: semantic landmarks, visible focus, AA-oriented tokens, and bounded line lengths cover the shell; Chromium checks at 375px and 1280px found no horizontal overflow and preserved skip-link focus.
 - Impeccable polish: removed starter UI and demo routes, used dividers instead of cards, and retained system type, a single cool accent, and concise product copy.
-- Published `kanban-glassmorphism`, the first of the ten planned Kanban styles: a frosted translucent board over a vibrant gradient mesh with backdrop blur, hairline borders, and soft glow, authored production-ready with its own `fixtures.ts`, self-contained `DESIGN.md` handoff, and WCAG 2.2 AA-verified contrast across every text role (checked against a conservative worst-case layer composite).
+- Published `kanban-glassmorphism`, the first of the ten planned Kanban styles: a frosted translucent board over a vibrant gradient mesh with backdrop blur, hairline borders, and soft glow, authored production-ready. Its `fixtures.ts` **locks the shared Kanban content baseline** (5 columns including an empty `Blocked` column for the empty state, 9 cards, 5 members) that later styles re-skin. The self-contained `DESIGN.md` meets the product-vision handoff bar (color/typography/spacing/layout/responsive/motion/a11y, extension rules to new pages, do/don't, when-to-use/avoid/trade-offs, declared deps/assets/licenses, and an AI acceptance checklist). Cleared impeccable critique/audit/polish plus independent `pi.frontend-reviewer`/`pi.qa` passes; WCAG 2.2 AA verified by real-pixel contrast audit across every text role.
 
 ## Next
 
-- Build the remaining nine Kanban styles defined in `docs/catalog-roadmap.md`, one entry at a time through the documented publication workflow.
-- Build `kanban-flat-material` next as the cleanest reference style and lock the shared board content baseline from it; align `kanban-glassmorphism`'s fixtures to that baseline once it is set.
+- Build the remaining nine Kanban styles defined in `docs/catalog-roadmap.md`, one entry at a time through the documented publication workflow. Each copies the locked baseline from `src/lib/designs/published/kanban-glassmorphism/fixtures.ts` and re-skins only the visuals.
+- Build `kanban-flat-material` next as the cleanest reference style, re-skinning the locked baseline.
 
 ## Decisions
 
@@ -36,7 +36,7 @@
 - Iframe sandboxing is deferred while previews are trusted repository content; require it before accepting untrusted or community-authored previews.
 - Detail-page happy-path browser coverage is deferred until the first real published design provides a stable subject.
 - Catalog direction is set in `docs/catalog-roadmap.md`: one page type (Kanban board) rendered in ten distinct visual styles (flat, glass, neumorphism, claymorphism, illustration, editorial, Swiss, brutalism, dark-neon, skeuomorphic), built one at a time. Style comparison on a fixed subject is the primary value.
-- `kanban-glassmorphism` is the first published entry (dispatch priority). Its `fixtures.ts` is a concrete first instance of the shared board content; `kanban-flat-material` remains the intended reference baseline that confirms the canonical card/column/label data the other styles re-skin.
+- `kanban-glassmorphism` is the first published entry (dispatch priority) and therefore **locks the shared Kanban content baseline**: its `fixtures.ts` is canonical. Later styles copy it and change only the visual language. (Earlier advisory build order had `kanban-flat-material` locking the baseline; superseded by publication order.)
 
 ## Blockers
 

@@ -180,5 +180,11 @@ export const columns: Column[] = [
 				done: true
 			}
 		]
+	},
+	{
+		id: 'blocked',
+		name: 'Blocked',
+		accent: 'red',
+		cards: []
 	}
 ];

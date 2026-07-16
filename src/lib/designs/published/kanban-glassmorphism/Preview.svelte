@@ -225,6 +225,13 @@
 						</li>
 					{/each}
 
+					{#if col.cards.length === 0}
+						<li class="empty-col">
+							<span class="empty-mark" aria-hidden="true"></span>
+							<p>No cards yet</p>
+						</li>
+					{/if}
+
 					<li>
 						<button type="button" class="add-card">
 							<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
@@ -674,6 +681,28 @@
 	.add-card:hover {
 		color: var(--ink);
 		background: rgba(255, 255, 255, 0.45);
+	}
+
+	.empty-col {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.45rem;
+		padding: 1.1rem 0.5rem;
+		border: 1px dashed rgba(255, 255, 255, 0.55);
+		border-radius: 12px;
+		background: rgba(255, 255, 255, 0.2);
+		color: var(--ink-faint);
+		font-size: 0.74rem;
+		text-align: center;
+	}
+
+	.empty-mark {
+		width: 16px;
+		height: 16px;
+		border-radius: 50%;
+		border: 1.5px dashed currentColor;
+		opacity: 0.7;
 	}
 
 	/* ---------- Label tones (AA ink on light frosted tint) ---------- */

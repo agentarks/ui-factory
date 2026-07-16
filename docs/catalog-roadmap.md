@@ -4,10 +4,11 @@ One page type, ten **distinct visual styles** — the catalog's core value is co
 
 ## Subject
 
-A **Kanban board** for a small product team: 3–4 columns (e.g. Backlog → In Progress → In Review → Done), cards with title, labels, assignee avatars, due dates, and counts, plus a board header with filters and view controls.
+A **Kanban board** for a small product team: 4–5 columns (e.g. Backlog → In Progress → In Review → Done, plus an empty Blocked column to exercise the empty state), cards with title, labels, assignee avatars, due dates, and counts, plus a board header with filters and view controls.
 
 - `pageType`: `data-management`
 - Shared **realistic content** is copied into each entry's own `fixtures.ts` (entries stay independent per the contract — each owns its copy). Only the visual language changes.
+- **Baseline locked** by the first published entry: `src/lib/designs/published/kanban-glassmorphism/fixtures.ts` (5 columns including an empty `Blocked` column, 9 cards, 5 members). Later styles copy that file and re-skin only the visuals.
 
 ## The ten styles
 
@@ -28,8 +29,10 @@ Each is one single-page specimen with a meaningfully distinct visual direction. 
 
 ## Build order and why
 
-1. **`kanban-flat-material`** — cleanest, most accessible reference style; locks the shared board content and structural baseline that every other style re-skins.
-2. **`kanban-glassmorphism`** — first visually demanding direction; proves blur/gradient/translucency handling.
+> **Baseline locked.** Dispatch priority published `kanban-glassmorphism` first, so its `fixtures.ts` is the canonical shared content baseline. The order below is advisory; `kanban-flat-material` now re-skins the locked baseline rather than defining it.
+
+1. **`kanban-flat-material`** — cleanest, most accessible reference style; re-skins the locked baseline and confirms the structural baseline every other style shares.
+2. **`kanban-glassmorphism`** — _(published first; locked the content baseline)_ first visually demanding direction; proves blur/gradient/translucency handling.
 3. **`kanban-neumorphism`** — proves the AA-contrast adaptation pattern for low-contrast styles early.
 4. **`kanban-claymorphism`** — puffy 3D; proves custom shadows and candy palette.
 5. **`kanban-illustration`** — first decorative/asset direction; proves illustration + playful chrome.
