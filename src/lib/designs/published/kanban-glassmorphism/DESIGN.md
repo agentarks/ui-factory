@@ -99,10 +99,18 @@ The base `linear-gradient` holds minimum luminance high (L ≥ 0.62) so dark ink
 
 ## Layout and composition
 
-- **Header** (glass, 22px radius): project chip + title + team avatars on the left; search, filter chips, board/list toggle, and primary "New task" on the right. Wraps on narrow widths.
-- **Board body:** flex row of columns on ≥768px with horizontal scroll (authentic Kanban); columns stack vertically below 768px.
-- **Column** (glass, 20px radius): heading with a colored accent dot, card count, and a "more actions" button; a vertical list of cards; a dashed "Add a card" affordance; an **empty-state placeholder** when the column has no cards.
-- **Card** (frosted glass, 14px radius, `blur(6px)`): title, label chips, optional checklist progress, and a footer carrying the priority indicator (red dot + "High", amber dot + "Medium"), the due date (check icon when done), and assignee avatars.
+- The board is a header bar over a body of columns. On ≥768px the columns form a horizontal flex row that scrolls horizontally when they overflow (authentic Kanban); below 768px they stack vertically. The header wraps its controls onto a second row on narrow widths.
+- Z-depth is layered: the vibrant field sits at the back; frosted glass columns (`blur(18px)`) float above it; frosted cards (`blur(6px)`) float above the columns. Each layer is separated by its shadow, hairline border, and opacity, never by nested solid fills.
+
+## Components and behavior
+
+- **Board header** (glass, 22px radius): project chip + title + subtitle + team-avatar group on the left; on the right a search field, filter chips (All / Mine / Due this week), a Board/List segmented toggle, and a primary “New task” button. Wraps on narrow widths.
+- **Column** (glass, 20px radius): a header row with a colored accent dot, the column name (`<h2>`), a card-count pill, and a “more actions” icon button; a vertical list of cards; a dashed “Add a card” button; and an empty-state placeholder when the column has no cards.
+- **Card** (frosted glass, 14px radius, `blur(6px)`): title (`<h3>`), label chips, an optional checklist progress line, and a footer with the priority indicator, due date, and assignee avatars. Hover lifts the card 2px with a deeper shadow (reduced-motion: static).
+- **Label chip:** light frosted tint + dark ink (AA), one per concept; pill, ~0.66rem.
+- **Avatar:** initials on a dark-tinted OKLCH fill (hue per person) with a 2px rim; exposes the full name via `aria-label`. Two sizes: header 34px, card 26px.
+- **Controls:** search input (translucent fill, 40px min-height), segmented toggle and filter chips (`aria-pressed`, 36px), primary button (accent gradient, 40px), icon button (36px). Every control shows the accent focus ring.
+- **Empty state:** a dashed frosted placeholder (“No cards yet”) renders in any column with zero cards.
 
 ## Navigation patterns
 
@@ -176,7 +184,7 @@ Rule of thumb: any new surface is a glass panel (header/column/card recipe at an
 ## Dependencies, assets, and licenses
 
 - **No external dependencies, fonts, images, or binary assets.** System UI font stack; icons are inline SVG; avatars are initials (no image assets). Self-contained and framework-agnostic.
-- License: same as the UI Factory repository.
+- License: inherits the source repository's license.
 
 ## Content baseline
 
