@@ -133,7 +133,7 @@ This specimen is a single board with no route navigation. When extending to a fu
 The specimen demonstrates each state visually (functional drag-and-drop and network logic are out of scope — these are the visual treatments to reuse):
 
 - **Empty (shown):** a column with no cards renders a dashed frosted placeholder (“No cards yet”) — see the **In Review** column.
-- **Loading (shown):** a frosted **skeleton card** with shimmering placeholder bars (in Backlog) represents a card still loading. The shimmer animates only under `prefers-reduced-motion: no-preference`.
+- **Loading (shown):** a **skeleton card** with shimmering placeholder bars (in Backlog) represents a card still loading. The shimmer animates only under `prefers-reduced-motion: no-preference`.
 - **Error (shown):** an inline **glass error banner** under the header — red-tinted warning icon + bold label, a Retry button, and a dismiss control (`role="status" aria-live="polite"`).
 - **Drag/move affordance (shown):** every card has a **grip handle** (faint by default, full on hover). Full drag-and-drop logic is optional and not implemented; add `cursor: grab` + actual DnD when wiring it for real, reusing the card + grip treatment.
 - **Done (shown):** completed cards show a check icon and a green due-date treatment.

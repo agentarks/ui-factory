@@ -156,7 +156,11 @@
 				<header class="column-head">
 					<span class="column-dot" aria-hidden="true"></span>
 					<h2>{col.name}</h2>
-					<span class="count" aria-label="{col.cards.length} cards">{col.cards.length}</span>
+					<span
+						class="count"
+						aria-label="{col.cards.length} {col.cards.length === 1 ? 'card' : 'cards'}"
+						>{col.cards.length}</span
+					>
 					<button type="button" class="icon-btn" aria-label="More actions for {col.name}">
 						<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
 							<circle cx="3.5" cy="8" r="1.4" fill="currentColor" />
@@ -169,7 +173,7 @@
 				<ul class="card-list">
 					{#each col.cards as card (card.id)}
 						<li>
-							<article class="card">
+							<article class="card" aria-labelledby="title-{card.id}">
 								<div class="card-main">
 									<div class="card-head">
 										<span class="grip" aria-hidden="true">
@@ -182,7 +186,7 @@
 												<circle cx="10.5" cy="12" r="1.2" fill="currentColor" />
 											</svg>
 										</span>
-										<h3 class="card-title">{card.title}</h3>
+										<h3 class="card-title" id="title-{card.id}">{card.title}</h3>
 									</div>
 
 									{#if card.labels.length}
@@ -421,7 +425,7 @@
 		list-style: none;
 		margin: 0;
 		padding: 0 0 0 0.5rem;
-		border-left: 1px solid rgba(255, 255, 255, 0.5);
+		border-left: 1px solid var(--hair);
 	}
 
 	.team-avatars li {
@@ -664,7 +668,7 @@
 		gap: 0.5rem;
 		margin-top: 0.6rem;
 		padding-top: 0.55rem;
-		border-top: 1px solid rgba(255, 255, 255, 0.55);
+		border-top: 1px solid var(--hair);
 	}
 
 	.foot-meta {
@@ -847,7 +851,7 @@
 		padding: 0.7rem 0.8rem;
 		border-radius: 14px;
 		background: rgba(255, 255, 255, 0.4);
-		border: 1px solid rgba(255, 255, 255, 0.5);
+		border: 1px solid var(--hair);
 	}
 
 	.skel {
