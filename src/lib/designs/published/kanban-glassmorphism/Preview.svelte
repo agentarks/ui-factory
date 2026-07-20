@@ -113,7 +113,7 @@
 		</div>
 	</header>
 
-	<div class="error-banner glass" role="alert">
+	<div class="error-banner glass" role="status" aria-live="polite">
 		<svg class="error-icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
 			<path
 				d="M8 1.6l6.4 11.4H1.6L8 1.6z"

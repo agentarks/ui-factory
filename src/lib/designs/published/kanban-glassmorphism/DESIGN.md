@@ -54,17 +54,17 @@ A Kanban board for a small product team: a board header (project identity, team 
 
 - **Density:** comfortable. Card padding 0.7–0.8rem; column padding 0.85rem; header padding 0.85rem 1.1rem; board outer padding `clamp(1rem, 2.5vw, 2rem)`. Gaps vary for rhythm (cards 0.6rem, labels 0.3rem, footer meta 0.5rem).
 - **Radii:** header 22px · columns 20px · cards 14px · controls 9–12px · chips/avatars 999px. Larger surfaces get larger radii.
-- **Elevation (shadows, the only "border" that reads on glass):** panels `0 8px 32px rgba(31,38,135,.18)` · cards `0 4px 14px rgba(31,38,135,.12)` · hover lifts the card to `0 10px 22px rgba(31,38,135,.22)`.
+- **Elevation (shadows, the only "border" that reads on glass):** panels `0 8px 32px rgba(30,40,60,.1)` · cards `0 4px 14px rgba(30,40,60,.08)` · hover lifts the card to `0 10px 22px rgba(30,40,60,.14)`.
 - **Borders:** 1px `--hair` (faint cool-gray `rgba(30,40,60,0.09)`) on glass edges; dashed cool-gray (`rgba(30,40,60,0.22–0.28)`) on the add-card/empty affordances.
 
 ## The glass recipe (core technique)
 
 ```css
 .panel {
-	background: rgba(255, 255, 255, 0.55);
+	background: rgba(255, 255, 255, 0.4);
 	border: 1px solid var(--hair); /* faint cool-gray; white vanishes on the near-white mist field */
 	border-radius: 20px;
-	box-shadow: 0 8px 32px rgba(31, 38, 135, 0.18);
+	box-shadow: 0 8px 32px rgba(30, 40, 60, 0.1);
 	-webkit-backdrop-filter: blur(18px) saturate(180%);
 	backdrop-filter: blur(18px) saturate(180%);
 }
@@ -77,9 +77,9 @@ A Kanban board for a small product team: a board header (project identity, team 
 }
 ```
 
-- **White at ~0.55 alpha** keeps panels readable while letting the gradient through.
+- **White at ~0.4 alpha** keeps panels readable while letting the gradient through.
 - **`saturate(180%)`** cancels the desaturation blur introduces.
-- **Cards are a lighter frosted layer:** `blur(6px) saturate(150%)` (vs the columns' 18px) so cards read as thinner, closer glass above the columns — a deliberate z-depth layering (board → columns → cards). White 0.62 fill + hairline border + soft shadow.
+- **Cards are a lighter frosted layer:** `blur(6px) saturate(150%)` (vs the columns' 18px) so cards read as thinner, closer glass above the columns — a deliberate z-depth layering (board → columns → cards). White 0.52 fill + hairline border + soft shadow.
 - **Do not use `background-attachment: fixed` with `backdrop-filter`** — it repaint-glitches on Safari/iOS. The gradient scrolls with the page.
 
 ### The mist field
@@ -89,13 +89,13 @@ A mesh of soft, very low-chroma radial blobs over a near-white diagonal base, pa
 ```css
 background:
 	radial-gradient(at 16% 20%, oklch(0.94 0.012 240) 0px, transparent 55%),
-	radial-gradient(at 84% 12%, oklch(0.92 0.018 250) 0px, transparent 52%),
-	radial-gradient(at 78% 80%, oklch(0.9 0.02 220) 0px, transparent 55%),
+	radial-gradient(at 84% 12%, oklch(0.88 0.022 250) 0px, transparent 52%),
+	radial-gradient(at 78% 80%, oklch(0.86 0.024 225) 0px, transparent 55%),
 	radial-gradient(at 22% 86%, oklch(0.95 0.008 230) 0px, transparent 52%),
-	linear-gradient(135deg, oklch(0.93 0.012 245), oklch(0.91 0.016 235) 48%, oklch(0.94 0.01 220));
+	linear-gradient(135deg, oklch(0.93 0.012 245), oklch(0.87 0.02 235) 48%, oklch(0.94 0.01 220));
 ```
 
-The base `linear-gradient` holds luminance very high (L ≥ 0.91) — a calm near-white wash — so dark ink has maximum contrast headroom and the surface stays soothing rather than sharp. The low chroma (≤ 0.02) is intentional: enough tonal variation for the frosted blur to read, without saturated color straining the eye. Because the field is near-white, glass edges use a faint cool-gray hairline (`--hair`), not white, so panels keep subtle definition.
+The base `linear-gradient` holds luminance very high (L ≈ 0.86–0.95) — a calm near-white wash — so dark ink has maximum contrast headroom and the surface stays soothing rather than sharp. The low chroma (≤ 0.025) is intentional: enough tonal variation for the frosted blur to read, without saturated color straining the eye. Because the field is near-white, glass edges use a faint cool-gray hairline (`--hair`), not white, so panels keep subtle definition.
 
 ## Layout and composition
 
@@ -134,7 +134,7 @@ The specimen demonstrates each state visually (functional drag-and-drop and netw
 
 - **Empty (shown):** a column with no cards renders a dashed frosted placeholder (“No cards yet”) — see the **In Review** column.
 - **Loading (shown):** a frosted **skeleton card** with shimmering placeholder bars (in Backlog) represents a card still loading. The shimmer animates only under `prefers-reduced-motion: no-preference`.
-- **Error (shown):** an inline **glass error banner** under the header — red-tinted warning icon + bold label, a Retry button, and a dismiss control (`role="alert"`).
+- **Error (shown):** an inline **glass error banner** under the header — red-tinted warning icon + bold label, a Retry button, and a dismiss control (`role="status" aria-live="polite"`).
 - **Drag/move affordance (shown):** every card has a **grip handle** (faint by default, full on hover). Full drag-and-drop logic is optional and not implemented; add `cursor: grab` + actual DnD when wiring it for real, reusing the card + grip treatment.
 - **Done (shown):** completed cards show a check icon and a green due-date treatment.
 - **Priority (shown):** colored dot + capitalized word in the card footer (red/High, amber/Medium).
@@ -146,7 +146,7 @@ The specimen demonstrates each state visually (functional drag-and-drop and netw
 - All controls are real `<button>`/`<input>`; filters and view toggle carry `aria-pressed`; counts and icon buttons carry `aria-label`; icons are `aria-hidden`.
 - **Avatars expose the full name** via `aria-label` (initials alone are not enough; `title` is not reliably announced).
 - **Visible focus:** `outline: 2px solid var(--accent-strong); outline-offset: 2px;` on every interactive element (verified live).
-- **WCAG 2.2 AA** is met by construction: the near-white mist field (L ≥ 0.9) gives dark ink maximum contrast headroom; over high-opacity frosted white the margin is even larger. Light-tint label chips carry dark ink, and white-on-accent is used only where the dusty-slate accent is dark enough. Independent real-pixel audit confirmed every text role ≥ 4.5:1.
+- **WCAG 2.2 AA** is met by construction: the near-white mist field (L ≈ 0.86–0.95) gives dark ink maximum contrast headroom; over high-opacity frosted white the margin is even larger. Light-tint label chips carry dark ink, and white-on-accent is used only where the dusty-slate accent is dark enough. Independent real-pixel audit confirmed every text role ≥ 4.5:1.
 - Meaning is never conveyed by color/shape alone (priority and status are always labelled in text).
 
 ## Extending the design to new pages
@@ -154,7 +154,7 @@ The specimen demonstrates each state visually (functional drag-and-drop and netw
 Keep the mist field + glass recipe constant; adapt the layout shell.
 
 - **Settings / account page:** glass top bar; a glass two-column shell (nav rail + content). Form fields are translucent inputs (rgba white 0.4 fill, hairline border, 44px min-height) on the glass content panel; save bar is a glass footer with the primary button.
-- **Auth / login:** centered single glass card (radius 22, white 0.55, blur 18) on the mist field; inputs as above; primary "Sign in" button. Add a secondary "Create account" text link.
+- **Auth / login:** centered single glass card (radius 22, white 0.4, blur 18) on the mist field; inputs as above; primary "Sign in" button. Add a secondary "Create account" text link.
 - **Tables / data views:** glass panel holds the table; rows separated by `rgba(255,255,255,0.5)` hairlines (no zebra stripes); sticky glass header row; filters reuse the chip + segmented-control patterns.
 - **Detail pages:** glass breadcrumb + title header; metadata as labelled chips; related items as a horizontal scroll of cards reusing the board-card recipe.
 - **Dashboards:** glass KPI tiles reuse the card recipe (translucent fill, hairline border, soft shadow) — but avoid the SaaS "hero-metric" cliché; lead with a chart in a glass panel, not a giant number.
@@ -166,7 +166,7 @@ Rule of thumb: any new surface is a glass panel (header/column/card recipe at an
 **Do**
 
 - Pair every `backdrop-filter` with the `@supports` opaque fallback.
-- Keep glass on the mist field; let the soft wash show through at ~0.55 white.
+- Keep glass on the mist field; let the soft wash show through at ~0.4 white.
 - Use dark tinted ink on frosted surfaces; tint every neutral toward hue 240 (cool blue-gray).
 - Give every interactive element the accent focus ring and ≥44px target.
 - Convey state (priority, done, empty) in text, not color/shape alone.
@@ -197,8 +197,8 @@ Rule of thumb: any new surface is a glass panel (header/column/card recipe at an
 
 ## Acceptance checklist (for AI coding agents implementing this direction)
 
-- [ ] Mist field (low-chroma cool wash) is present behind every surface; luminance stays high (L ≥ 0.9) and chroma low (≤ 0.04); no dark holes under text.
-- [ ] Panels use the glass recipe (rgba white ~0.55, `backdrop-filter: blur(18px) saturate(180%)`, hairline border, soft shadow) **with** the `@supports` opaque fallback.
+- [ ] Mist field (low-chroma cool wash) is present behind every surface; luminance stays high (L ≥ 0.86) and chroma low (≤ 0.04); no dark holes under text.
+- [ ] Panels use the glass recipe (rgba white ~0.4, `backdrop-filter: blur(18px) saturate(180%)`, hairline border, soft shadow) **with** the `@supports` opaque fallback.
 - [ ] Cards are a lighter frosted layer (`blur(6px)`) above the columns, giving layered z-depth (board → columns → cards); the `@supports` opaque fallback covers them too.
 - [ ] All colors are OKLCH; neutrals tinted toward hue 240 (cool blue-gray); no `#000`/`#fff`; no gradient text; no colored side-stripes.
 - [ ] Typography uses the system stack and the documented scale; hierarchy via scale + weight.

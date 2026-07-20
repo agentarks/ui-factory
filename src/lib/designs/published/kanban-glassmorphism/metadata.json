@@ -3,13 +3,13 @@
 	"slug": "kanban-glassmorphism",
 	"version": "1.0.0",
 	"title": "Kanban Board · Glassmorphism",
-	"summary": "A frosted, translucent Kanban board floating over a vibrant gradient mesh, with backdrop blur, hairline borders, and soft glow.",
+	"summary": "A frosted, translucent Kanban board floating over a soft low-chroma mist wash, with backdrop blur, cool-gray hairlines, and a calm dusty-slate accent.",
 	"pageType": "data-management",
 	"applicationTypes": ["project-management", "productivity", "team-collaboration"],
 	"visualStyles": ["glassmorphism"],
 	"theme": "light",
 	"density": "comfortable",
-	"platforms": ["web", "desktop", "tablet"],
+	"platforms": ["web", "desktop", "tablet", "mobile"],
 	"status": "production-ready",
-	"tags": ["kanban", "board", "glassmorphism", "translucent", "backdrop-blur", "gradient"]
+	"tags": ["kanban", "board", "glassmorphism", "translucent", "backdrop-blur", "mist"]
 }

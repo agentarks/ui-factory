@@ -17,7 +17,7 @@ Each is one single-page specimen with a meaningfully distinct visual direction. 
 | #   | Slug                   | Style                   | Visual signature                                                                                     | Theme | Density     |
 | --- | ---------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------- | ----- | ----------- |
 | 1   | `kanban-flat-material` | Flat / Material         | Solid color blocks, crisp elevation shadows, bold accents, app-like chrome                           | light | comfortable |
-| 2   | `kanban-glassmorphism` | Glassmorphism           | Frosted translucent panels over a vibrant gradient, light hairline borders, soft glow                | light | comfortable |
+| 2   | `kanban-glassmorphism` | Glassmorphism           | Frosted translucent panels over a soft low-chroma mist wash, cool-gray hairlines, calm accent        | light | comfortable |
 | 3   | `kanban-neumorphism`   | Neumorphism             | Soft extruded/inset monochrome surfaces, dual light+dark shadows, tactile, low-contrast lifted to AA | light | comfortable |
 | 4   | `kanban-claymorphism`  | Claymorphism            | Puffy pastel 3D shapes, rounded marshmallow cards, soft drop shadows, candy palette                  | light | comfortable |
 | 5   | `kanban-illustration`  | Illustration / Playful  | Chunky illustrated accents, stickers, rounded friendly shapes, doodles, bright palette               | light | spacious    |
