@@ -327,12 +327,12 @@
 	}
 
 	.board-root {
-		--ink: oklch(0.26 0.035 285);
-		--ink-soft: oklch(0.42 0.03 285);
-		--ink-faint: oklch(0.46 0.03 285);
-		--accent-strong: oklch(0.5 0.17 285);
-		--hair: rgba(255, 255, 255, 0.6);
-		--on-accent: oklch(0.99 0.004 285);
+		--ink: oklch(0.26 0.025 240);
+		--ink-soft: oklch(0.42 0.022 240);
+		--ink-faint: oklch(0.46 0.022 240);
+		--accent-strong: oklch(0.52 0.06 235);
+		--hair: rgba(30, 40, 60, 0.09);
+		--on-accent: oklch(0.99 0.004 240);
 		--field-shadow: 0 8px 32px rgba(31, 38, 135, 0.18);
 
 		position: relative;
@@ -342,11 +342,16 @@
 		font-synthesis: none;
 		color: var(--ink);
 		background:
-			radial-gradient(at 16% 20%, oklch(0.7 0.2 290) 0px, transparent 55%),
-			radial-gradient(at 84% 12%, oklch(0.78 0.18 350) 0px, transparent 52%),
-			radial-gradient(at 78% 80%, oklch(0.74 0.16 230) 0px, transparent 55%),
-			radial-gradient(at 22% 86%, oklch(0.78 0.15 165) 0px, transparent 52%),
-			linear-gradient(135deg, oklch(0.62 0.17 275), oklch(0.66 0.16 320) 48%, oklch(0.72 0.16 355));
+			radial-gradient(at 16% 20%, oklch(0.94 0.012 240) 0px, transparent 55%),
+			radial-gradient(at 84% 12%, oklch(0.92 0.018 250) 0px, transparent 52%),
+			radial-gradient(at 78% 80%, oklch(0.9 0.02 220) 0px, transparent 55%),
+			radial-gradient(at 22% 86%, oklch(0.95 0.008 230) 0px, transparent 52%),
+			linear-gradient(
+				135deg,
+				oklch(0.93 0.012 245),
+				oklch(0.91 0.016 235) 48%,
+				oklch(0.94 0.01 220)
+			);
 	}
 
 	.glass {
@@ -398,8 +403,8 @@
 		font-weight: 700;
 		letter-spacing: 0.02em;
 		color: var(--on-accent);
-		background: linear-gradient(135deg, oklch(0.52 0.17 290), oklch(0.5 0.18 340));
-		box-shadow: 0 3px 10px oklch(0.5 0.17 310 / 0.45);
+		background: linear-gradient(135deg, oklch(0.52 0.06 235), oklch(0.5 0.06 220));
+		box-shadow: 0 3px 10px oklch(0.5 0.05 230 / 0.3);
 	}
 
 	.title-block h1 {
@@ -437,8 +442,8 @@
 		font-size: 0.72rem;
 		font-weight: 700;
 		color: var(--on-accent);
-		background: oklch(0.46 0.13 var(--h, 285));
-		border: 2px solid rgba(255, 255, 255, 0.75);
+		background: oklch(0.46 0.05 var(--h, 240));
+		border: 2px solid rgba(30, 40, 60, 0.14);
 		box-shadow: 0 2px 6px rgba(31, 38, 135, 0.25);
 	}
 
@@ -512,7 +517,7 @@
 	.chip[aria-pressed='true'] {
 		color: var(--on-accent);
 		background: var(--accent-strong);
-		box-shadow: 0 2px 8px oklch(0.5 0.17 285 / 0.4);
+		box-shadow: 0 2px 8px oklch(0.5 0.05 230 / 0.25);
 	}
 
 	.primary {
@@ -528,8 +533,8 @@
 		padding: 0.5rem 0.95rem;
 		border-radius: 11px;
 		cursor: pointer;
-		background: linear-gradient(135deg, oklch(0.54 0.18 292), oklch(0.54 0.17 340));
-		box-shadow: 0 6px 18px oklch(0.52 0.17 310 / 0.5);
+		background: linear-gradient(135deg, oklch(0.54 0.06 238), oklch(0.54 0.06 220));
+		box-shadow: 0 6px 18px oklch(0.52 0.05 228 / 0.35);
 	}
 
 	/* ---------- Board + columns ---------- */
@@ -739,7 +744,7 @@
 		font-size: 0.78rem;
 		font-weight: 600;
 		color: var(--ink-soft);
-		border: 1px dashed rgba(255, 255, 255, 0.7);
+		border: 1px dashed rgba(30, 40, 60, 0.28);
 		background: rgba(255, 255, 255, 0.28);
 		min-height: 44px;
 		padding: 0.6rem;
@@ -758,7 +763,7 @@
 		align-items: center;
 		gap: 0.45rem;
 		padding: 1.1rem 0.5rem;
-		border: 1px dashed rgba(255, 255, 255, 0.55);
+		border: 1px dashed rgba(30, 40, 60, 0.22);
 		border-radius: 12px;
 		background: rgba(255, 255, 255, 0.2);
 		color: var(--ink-faint);
@@ -777,48 +782,48 @@
 	/* ---------- Label tones (AA ink on light frosted tint) ---------- */
 
 	.tone-violet {
-		background: rgba(124, 92, 255, 0.16);
-		color: #3a2a92;
+		background: oklch(0.93 0.025 290);
+		color: oklch(0.4 0.07 290);
 	}
 	.tone-teal {
-		background: rgba(20, 150, 150, 0.16);
-		color: #135f5f;
+		background: oklch(0.93 0.025 190);
+		color: oklch(0.4 0.06 190);
 	}
 	.tone-blue {
-		background: rgba(56, 120, 240, 0.16);
-		color: #1f4fb0;
+		background: oklch(0.93 0.028 250);
+		color: oklch(0.4 0.08 250);
 	}
 	.tone-slate {
-		background: rgba(90, 100, 120, 0.18);
-		color: #3a4252;
+		background: oklch(0.93 0.014 255);
+		color: oklch(0.4 0.025 255);
 	}
 	.tone-indigo {
-		background: rgba(99, 102, 241, 0.16);
-		color: #352f96;
+		background: oklch(0.93 0.028 275);
+		color: oklch(0.4 0.08 275);
 	}
 	.tone-green {
-		background: rgba(34, 160, 90, 0.16);
-		color: #14592f;
+		background: oklch(0.93 0.03 150);
+		color: oklch(0.4 0.08 150);
 	}
 	.tone-pink {
-		background: rgba(225, 70, 150, 0.16);
-		color: #932a66;
+		background: oklch(0.93 0.025 350);
+		color: oklch(0.42 0.08 350);
 	}
 	.tone-amber {
-		background: rgba(200, 140, 20, 0.18);
-		color: #75510a;
+		background: oklch(0.93 0.04 70);
+		color: oklch(0.42 0.08 70);
 	}
 	.tone-rose {
-		background: rgba(220, 80, 110, 0.16);
-		color: #8d2440;
+		background: oklch(0.93 0.025 15);
+		color: oklch(0.42 0.08 15);
 	}
 	.tone-red {
-		background: rgba(210, 55, 55, 0.16);
-		color: #8a2424;
+		background: oklch(0.93 0.03 25);
+		color: oklch(0.42 0.09 25);
 	}
 	.tone-cyan {
-		background: rgba(20, 160, 200, 0.16);
-		color: #0f5266;
+		background: oklch(0.93 0.025 220);
+		color: oklch(0.4 0.06 220);
 	}
 
 	/* ---------- States: drag affordance, loading skeleton, error ---------- */
