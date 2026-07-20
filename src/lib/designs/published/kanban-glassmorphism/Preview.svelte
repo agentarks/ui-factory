@@ -1,0 +1,1013 @@
+<script lang="ts">
+	import { columns, members, type LabelTone } from './fixtures';
+
+	const byId = new Map(members.map((m) => [m.id, m]));
+
+	const filters = [
+		{ id: 'all', label: 'All' },
+		{ id: 'mine', label: 'Mine' },
+		{ id: 'due', label: 'Due this week' }
+	] as const;
+	type FilterId = (typeof filters)[number]['id'];
+	type ViewId = 'board' | 'list';
+
+	// Visual-specimen interaction state only; cards are not re-filtered.
+	let activeFilter = $state<FilterId>('all');
+	let activeView = $state<ViewId>('board');
+	let query = $state('');
+
+	const cardTotal = columns.reduce((n, col) => n + col.cards.length, 0);
+
+	const toneAccent: Record<LabelTone, string> = {
+		violet: 'oklch(0.55 0.17 290)',
+		teal: 'oklch(0.55 0.1 195)',
+		blue: 'oklch(0.55 0.15 250)',
+		slate: 'oklch(0.55 0.02 270)',
+		indigo: 'oklch(0.55 0.16 275)',
+		green: 'oklch(0.55 0.13 150)',
+		pink: 'oklch(0.6 0.18 350)',
+		amber: 'oklch(0.66 0.14 70)',
+		rose: 'oklch(0.6 0.16 15)',
+		red: 'oklch(0.57 0.19 25)',
+		cyan: 'oklch(0.6 0.12 220)'
+	};
+</script>
+
+<div class="board-root">
+	<header class="glass board-header">
+		<div class="header-left">
+			<span class="project-chip">Aurora</span>
+			<div class="title-block">
+				<h1>Sprint 24 · Board</h1>
+				<p class="subtitle">{columns.length} columns · {cardTotal} cards · updated 2m ago</p>
+			</div>
+			<ul class="team-avatars" aria-label="Team members">
+				{#each members as m (m.id)}
+					<li class="avatar" style="--h: {m.hue}" aria-label={m.name} title={m.name}>
+						{m.initials}
+					</li>
+				{/each}
+			</ul>
+		</div>
+
+		<div class="header-right">
+			<label class="search">
+				<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
+					<circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" stroke-width="1.6" />
+					<path
+						d="M11 11l3.2 3.2"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.6"
+						stroke-linecap="round"
+					/>
+				</svg>
+				<input
+					type="search"
+					placeholder="Search cards…"
+					aria-label="Search cards"
+					bind:value={query}
+				/>
+			</label>
+
+			<div class="segmented filters" role="group" aria-label="Filter cards">
+				{#each filters as f (f.id)}
+					<button
+						type="button"
+						class="chip"
+						aria-pressed={activeFilter === f.id}
+						onclick={() => (activeFilter = f.id)}>{f.label}</button
+					>
+				{/each}
+			</div>
+
+			<div class="segmented view-toggle" role="group" aria-label="Board view">
+				<button
+					type="button"
+					aria-pressed={activeView === 'board'}
+					onclick={() => (activeView = 'board')}
+				>
+					Board
+				</button>
+				<button
+					type="button"
+					aria-pressed={activeView === 'list'}
+					onclick={() => (activeView = 'list')}
+				>
+					List
+				</button>
+			</div>
+
+			<button type="button" class="primary">
+				<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+					<path
+						d="M8 2v12M2 8h12"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.8"
+						stroke-linecap="round"
+					/>
+				</svg>
+				New task
+			</button>
+		</div>
+	</header>
+
+	<div class="error-banner glass" role="status" aria-live="polite">
+		<svg class="error-icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+			<path
+				d="M8 1.6l6.4 11.4H1.6L8 1.6z"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="1.5"
+				stroke-linejoin="round"
+			/>
+			<path
+				d="M8 6v3.4"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="1.6"
+				stroke-linecap="round"
+			/>
+			<circle cx="8" cy="11.6" r="1" fill="currentColor" />
+		</svg>
+		<p>
+			<strong>Sync paused.</strong> Couldn't reach the server. Recent changes may not be saved.
+		</p>
+		<div class="error-actions">
+			<button type="button" class="error-retry">Retry</button>
+			<button type="button" class="icon-btn error-dismiss" aria-label="Dismiss error">
+				<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+					<path
+						d="M3.5 3.5l9 9M12.5 3.5l-9 9"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.7"
+						stroke-linecap="round"
+					/>
+				</svg>
+			</button>
+		</div>
+	</div>
+
+	<section class="board-body" aria-label="Kanban board">
+		{#each columns as col (col.id)}
+			<section class="glass column" style="--accent: {toneAccent[col.accent]}">
+				<header class="column-head">
+					<span class="column-dot" aria-hidden="true"></span>
+					<h2>{col.name}</h2>
+					<span
+						class="count"
+						aria-label="{col.cards.length} {col.cards.length === 1 ? 'card' : 'cards'}"
+						>{col.cards.length}</span
+					>
+					<button type="button" class="icon-btn" aria-label="More actions for {col.name}">
+						<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+							<circle cx="3.5" cy="8" r="1.4" fill="currentColor" />
+							<circle cx="8" cy="8" r="1.4" fill="currentColor" />
+							<circle cx="12.5" cy="8" r="1.4" fill="currentColor" />
+						</svg>
+					</button>
+				</header>
+
+				<ul class="card-list">
+					{#each col.cards as card (card.id)}
+						<li>
+							<article class="card" aria-labelledby="title-{card.id}">
+								<div class="card-main">
+									<div class="card-head">
+										<span class="grip" aria-hidden="true">
+											<svg viewBox="0 0 16 16" width="11" height="11">
+												<circle cx="5.5" cy="4" r="1.2" fill="currentColor" />
+												<circle cx="10.5" cy="4" r="1.2" fill="currentColor" />
+												<circle cx="5.5" cy="8" r="1.2" fill="currentColor" />
+												<circle cx="10.5" cy="8" r="1.2" fill="currentColor" />
+												<circle cx="5.5" cy="12" r="1.2" fill="currentColor" />
+												<circle cx="10.5" cy="12" r="1.2" fill="currentColor" />
+											</svg>
+										</span>
+										<h3 class="card-title" id="title-{card.id}">{card.title}</h3>
+									</div>
+
+									{#if card.labels.length}
+										<ul class="labels">
+											{#each card.labels as l (`${l.name}-${l.tone}`)}
+												<li class="label tone-{l.tone}">{l.name}</li>
+											{/each}
+										</ul>
+									{/if}
+
+									{#if card.checklist}
+										<p class="checklist">
+											<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
+												<path
+													d="M3 4h10M3 8h10M3 12h7"
+													fill="none"
+													stroke="currentColor"
+													stroke-width="1.5"
+													stroke-linecap="round"
+												/>
+											</svg>
+											{card.checklist.done}/{card.checklist.total} subtasks
+										</p>
+									{/if}
+								</div>
+
+								<footer class="card-foot">
+									<span class="foot-meta">
+										{#if card.priority}
+											<span class="priority pri-{card.priority}">
+												<span class="dot" aria-hidden="true"></span>
+												{card.priority}
+											</span>
+										{/if}
+										<span class="due {card.done ? 'is-done' : ''}">
+											{#if card.done}
+												<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
+													<path
+														d="M3.5 8.5l3 3 6-7"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="1.8"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													/>
+												</svg>
+											{:else}
+												<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
+													<rect
+														x="2.5"
+														y="3.5"
+														width="11"
+														height="10"
+														rx="1.6"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="1.4"
+													/>
+													<path
+														d="M2.5 6.5h11M5.5 2v3M10.5 2v3"
+														stroke="currentColor"
+														stroke-width="1.4"
+														stroke-linecap="round"
+														fill="none"
+													/>
+												</svg>
+											{/if}
+											{card.due}
+										</span>
+									</span>
+
+									<ul class="assignees" aria-label="Assignees">
+										{#each card.assignees as id (id)}
+											{@const m = byId.get(id)}
+											{#if m}
+												<li
+													class="avatar sm"
+													style="--h: {m.hue}"
+													aria-label={m.name}
+													title={m.name}
+												>
+													{m.initials}
+												</li>
+											{/if}
+										{/each}
+									</ul>
+								</footer>
+							</article>
+						</li>
+					{/each}
+
+					{#if col.id === 'backlog'}
+						<li class="skeleton-card" aria-hidden="true">
+							<div class="skel skel-title"></div>
+							<div class="skel-row">
+								<div class="skel skel-label"></div>
+								<div class="skel skel-label"></div>
+							</div>
+							<div class="skel skel-foot"></div>
+						</li>
+					{/if}
+
+					{#if col.cards.length === 0}
+						<li class="empty-col">
+							<span class="empty-mark" aria-hidden="true"></span>
+							<p>No cards yet</p>
+						</li>
+					{/if}
+
+					<li>
+						<button type="button" class="add-card">
+							<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
+								<path
+									d="M8 2v12M2 8h12"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="1.7"
+									stroke-linecap="round"
+								/>
+							</svg>
+							Add a card
+						</button>
+					</li>
+				</ul>
+			</section>
+		{/each}
+	</section>
+</div>
+
+<style>
+	/* Preview documents render outside the factory CSS boundary, so reset here. */
+	:global(html, body) {
+		margin: 0;
+		min-height: 100%;
+	}
+
+	.board-root,
+	.board-root *,
+	.board-root *::before,
+	.board-root *::after {
+		box-sizing: border-box;
+	}
+
+	.board-root {
+		--ink: oklch(0.26 0.025 240);
+		--ink-soft: oklch(0.42 0.022 240);
+		--ink-faint: oklch(0.46 0.022 240);
+		--accent-strong: oklch(0.52 0.06 235);
+		--hair: rgba(30, 40, 60, 0.09);
+		--on-accent: oklch(0.99 0.004 240);
+		--field-shadow: 0 8px 32px rgba(30, 40, 60, 0.1);
+
+		position: relative;
+		min-height: 100vh;
+		padding: clamp(1rem, 2.5vw, 2rem);
+		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+		font-synthesis: none;
+		color: var(--ink);
+		background:
+			radial-gradient(at 16% 20%, oklch(0.94 0.012 240) 0px, transparent 55%),
+			radial-gradient(at 84% 12%, oklch(0.88 0.022 250) 0px, transparent 52%),
+			radial-gradient(at 78% 80%, oklch(0.86 0.024 225) 0px, transparent 55%),
+			radial-gradient(at 22% 86%, oklch(0.95 0.008 230) 0px, transparent 52%),
+			linear-gradient(135deg, oklch(0.93 0.012 245), oklch(0.87 0.02 235) 48%, oklch(0.94 0.01 220));
+	}
+
+	.glass {
+		background: rgba(255, 255, 255, 0.4);
+		-webkit-backdrop-filter: blur(18px) saturate(180%);
+		backdrop-filter: blur(18px) saturate(180%);
+		border: 1px solid var(--hair);
+		box-shadow: var(--field-shadow);
+	}
+
+	@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+		/* ponytail: opaque fallback where backdrop-filter is unsupported */
+		.glass {
+			background: rgba(255, 255, 255, 0.88);
+		}
+
+		.card {
+			background: rgba(255, 255, 255, 0.82);
+		}
+	}
+
+	/* ---------- Header ---------- */
+
+	.board-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		flex-wrap: wrap;
+		padding: 0.85rem 1.1rem;
+		border-radius: 22px;
+	}
+
+	.header-left,
+	.header-right {
+		display: flex;
+		align-items: center;
+		gap: 0.85rem;
+		flex-wrap: wrap;
+	}
+
+	.project-chip {
+		display: inline-grid;
+		place-items: center;
+		height: 2rem;
+		padding: 0 0.7rem;
+		border-radius: 999px;
+		font-size: 0.78rem;
+		font-weight: 700;
+		letter-spacing: 0.02em;
+		color: var(--on-accent);
+		background: linear-gradient(135deg, oklch(0.52 0.06 235), oklch(0.5 0.06 220));
+		box-shadow: 0 3px 10px oklch(0.5 0.05 230 / 0.3);
+	}
+
+	.title-block h1 {
+		margin: 0;
+		font-size: 1.15rem;
+		font-weight: 750;
+		letter-spacing: -0.01em;
+		line-height: 1.2;
+	}
+
+	.subtitle {
+		margin: 0.15rem 0 0;
+		font-size: 0.76rem;
+		color: var(--ink-soft);
+	}
+
+	.team-avatars {
+		display: flex;
+		list-style: none;
+		margin: 0;
+		padding: 0 0 0 0.5rem;
+		border-left: 1px solid var(--hair);
+	}
+
+	.team-avatars li {
+		margin-left: -10px;
+	}
+
+	.avatar {
+		width: 34px;
+		height: 34px;
+		display: grid;
+		place-items: center;
+		border-radius: 50%;
+		font-size: 0.72rem;
+		font-weight: 700;
+		color: var(--on-accent);
+		background: oklch(0.46 0.05 var(--h, 240));
+		border: 2px solid rgba(30, 40, 60, 0.14);
+		box-shadow: 0 2px 6px rgba(30, 40, 60, 0.16);
+	}
+
+	.avatar.sm {
+		width: 26px;
+		height: 26px;
+		font-size: 0.6rem;
+		border-width: 2px;
+	}
+
+	/* ---------- Header controls ---------- */
+
+	.search {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.4rem 0.6rem;
+		border-radius: 10px;
+		background: rgba(255, 255, 255, 0.4);
+		border: 1px solid var(--hair);
+		color: var(--ink-soft);
+	}
+
+	.search input {
+		width: 8.5rem;
+		min-height: 44px;
+		border: 0;
+		background: transparent;
+		color: var(--ink);
+		font: inherit;
+		font-size: 0.85rem;
+	}
+
+	.search input::placeholder {
+		color: var(--ink-faint);
+	}
+
+	.segmented {
+		display: inline-flex;
+		padding: 3px;
+		gap: 2px;
+		border-radius: 12px;
+		background: rgba(255, 255, 255, 0.35);
+		border: 1px solid var(--hair);
+	}
+
+	.segmented button,
+	.chip {
+		display: inline-flex;
+		align-items: center;
+		font: inherit;
+		font-size: 0.78rem;
+		font-weight: 600;
+		color: var(--ink-soft);
+		border: 0;
+		background: transparent;
+		padding: 0 0.75rem;
+		min-width: 44px;
+		min-height: 44px;
+		justify-content: center;
+		border-radius: 10px;
+		cursor: pointer;
+	}
+
+	.chip {
+		background: rgba(255, 255, 255, 0.42);
+		border: 1px solid var(--hair);
+	}
+
+	.segmented button[aria-pressed='true'],
+	.chip[aria-pressed='true'] {
+		color: var(--on-accent);
+		background: var(--accent-strong);
+		box-shadow: 0 2px 8px oklch(0.5 0.05 230 / 0.25);
+	}
+
+	.primary {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		font: inherit;
+		font-size: 0.82rem;
+		font-weight: 700;
+		color: var(--on-accent);
+		border: 0;
+		min-height: 44px;
+		padding: 0.5rem 0.95rem;
+		border-radius: 11px;
+		cursor: pointer;
+		background: linear-gradient(135deg, oklch(0.54 0.06 238), oklch(0.54 0.06 220));
+		box-shadow: 0 6px 18px oklch(0.52 0.05 228 / 0.35);
+	}
+
+	/* ---------- Board + columns ---------- */
+
+	.board-body {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		margin-top: 1rem;
+	}
+
+	.column {
+		display: flex;
+		flex-direction: column;
+		padding: 0.85rem 0.8rem;
+		border-radius: 20px;
+	}
+
+	.column-head {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.2rem 0.25rem 0.75rem;
+	}
+
+	.column-dot {
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+		background: var(--accent);
+		box-shadow: 0 0 0 4px color-mix(in oklch, var(--accent) 22%, transparent);
+	}
+
+	.column-head h2 {
+		margin: 0;
+		font-size: 0.92rem;
+		font-weight: 700;
+	}
+
+	.count {
+		min-width: 1.4rem;
+		text-align: center;
+		font-size: 0.72rem;
+		font-weight: 700;
+		color: var(--ink-soft);
+		padding: 0.05rem 0.4rem;
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.5);
+		border: 1px solid var(--hair);
+	}
+
+	.icon-btn {
+		margin-left: auto;
+		display: inline-grid;
+		place-items: center;
+		width: 44px;
+		height: 44px;
+		border: 0;
+		border-radius: 9px;
+		background: transparent;
+		color: var(--ink-soft);
+		cursor: pointer;
+	}
+
+	.icon-btn:hover {
+		background: rgba(255, 255, 255, 0.45);
+		color: var(--ink);
+	}
+
+	.card-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+	}
+
+	/* ---------- Cards ---------- */
+
+	/* Cards are a distinct frosted z-layer above the columns: a lighter blur than the
+	   columns reads as thinner, closer glass. Tuned for showcase fidelity; the GPU cost
+	   of blurring ~9 cards is acceptable for a single-page design specimen. */
+	.card {
+		padding: 0.7rem 0.8rem;
+		border-radius: 14px;
+		background: rgba(255, 255, 255, 0.52);
+		-webkit-backdrop-filter: blur(6px) saturate(150%);
+		backdrop-filter: blur(6px) saturate(150%);
+		border: 1px solid rgba(30, 40, 60, 0.1);
+		box-shadow: 0 4px 14px rgba(30, 40, 60, 0.08);
+	}
+
+	.card-title {
+		margin: 0;
+		font-size: 0.88rem;
+		font-weight: 620;
+		line-height: 1.35;
+		color: var(--ink);
+	}
+
+	.labels {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.3rem;
+		margin: 0.5rem 0 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.label {
+		font-size: 0.66rem;
+		font-weight: 700;
+		letter-spacing: 0.02em;
+		padding: 0.12rem 0.45rem;
+		border-radius: 999px;
+	}
+
+	.checklist {
+		display: flex;
+		align-items: center;
+		gap: 0.32rem;
+		margin: 0.5rem 0 0;
+		font-size: 0.72rem;
+		color: var(--ink-soft);
+	}
+
+	.card-foot {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		margin-top: 0.6rem;
+		padding-top: 0.55rem;
+		border-top: 1px solid var(--hair);
+	}
+
+	.foot-meta {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		min-width: 0;
+	}
+
+	.priority {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		font-size: 0.68rem;
+		font-weight: 700;
+		text-transform: capitalize;
+	}
+
+	.priority .dot {
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+	}
+
+	.priority.pri-high {
+		color: oklch(0.46 0.16 25);
+	}
+
+	.priority.pri-high .dot {
+		background: oklch(0.57 0.19 25);
+	}
+
+	.priority.pri-medium {
+		color: oklch(0.46 0.12 70);
+	}
+
+	.priority.pri-medium .dot {
+		background: oklch(0.7 0.15 70);
+	}
+
+	.due {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		font-size: 0.72rem;
+		font-weight: 600;
+		color: var(--ink-soft);
+	}
+
+	.due.is-done {
+		color: oklch(0.42 0.13 150);
+	}
+
+	.assignees {
+		display: flex;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	.assignees li {
+		margin-left: -8px;
+	}
+
+	.add-card {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.35rem;
+		width: 100%;
+		font: inherit;
+		font-size: 0.78rem;
+		font-weight: 600;
+		color: var(--ink-soft);
+		border: 1px dashed rgba(30, 40, 60, 0.28);
+		background: rgba(255, 255, 255, 0.28);
+		min-height: 44px;
+		padding: 0.6rem;
+		border-radius: 12px;
+		cursor: pointer;
+	}
+
+	.add-card:hover {
+		color: var(--ink);
+		background: rgba(255, 255, 255, 0.45);
+	}
+
+	.empty-col {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.45rem;
+		padding: 1.1rem 0.5rem;
+		border: 1px dashed rgba(30, 40, 60, 0.22);
+		border-radius: 12px;
+		background: rgba(255, 255, 255, 0.2);
+		color: var(--ink-faint);
+		font-size: 0.74rem;
+		text-align: center;
+	}
+
+	.empty-mark {
+		width: 16px;
+		height: 16px;
+		border-radius: 50%;
+		border: 1.5px dashed currentColor;
+		opacity: 0.7;
+	}
+
+	/* ---------- Label tones (AA ink on light frosted tint) ---------- */
+
+	.tone-violet {
+		background: oklch(0.93 0.025 290);
+		color: oklch(0.4 0.07 290);
+	}
+	.tone-teal {
+		background: oklch(0.93 0.025 190);
+		color: oklch(0.4 0.06 190);
+	}
+	.tone-blue {
+		background: oklch(0.93 0.028 250);
+		color: oklch(0.4 0.08 250);
+	}
+	.tone-slate {
+		background: oklch(0.93 0.014 255);
+		color: oklch(0.4 0.025 255);
+	}
+	.tone-indigo {
+		background: oklch(0.93 0.028 275);
+		color: oklch(0.4 0.08 275);
+	}
+	.tone-green {
+		background: oklch(0.93 0.03 150);
+		color: oklch(0.4 0.08 150);
+	}
+	.tone-pink {
+		background: oklch(0.93 0.025 350);
+		color: oklch(0.42 0.08 350);
+	}
+	.tone-amber {
+		background: oklch(0.93 0.04 70);
+		color: oklch(0.42 0.08 70);
+	}
+	.tone-rose {
+		background: oklch(0.93 0.025 15);
+		color: oklch(0.42 0.08 15);
+	}
+	.tone-red {
+		background: oklch(0.93 0.03 25);
+		color: oklch(0.42 0.09 25);
+	}
+	.tone-cyan {
+		background: oklch(0.93 0.025 220);
+		color: oklch(0.4 0.06 220);
+	}
+
+	/* ---------- States: drag affordance, loading skeleton, error ---------- */
+
+	.card-head {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.35rem;
+	}
+
+	.grip {
+		flex: none;
+		margin-top: 0.2rem;
+		color: var(--ink-faint);
+		opacity: 0.55;
+	}
+
+	.card:hover .grip {
+		opacity: 1;
+	}
+
+	.skeleton-card {
+		display: flex;
+		flex-direction: column;
+		gap: 0.55rem;
+		padding: 0.7rem 0.8rem;
+		border-radius: 14px;
+		background: rgba(255, 255, 255, 0.4);
+		border: 1px solid var(--hair);
+	}
+
+	.skel {
+		border-radius: 6px;
+		background: linear-gradient(
+			90deg,
+			rgba(255, 255, 255, 0.3),
+			rgba(255, 255, 255, 0.62),
+			rgba(255, 255, 255, 0.3)
+		);
+		background-size: 200% 100%;
+	}
+
+	.skel-title {
+		height: 12px;
+		width: 70%;
+	}
+
+	.skel-row {
+		display: flex;
+		gap: 0.3rem;
+	}
+
+	.skel-label {
+		height: 12px;
+		width: 44px;
+		border-radius: 999px;
+	}
+
+	.skel-foot {
+		height: 10px;
+		width: 35%;
+	}
+
+	@keyframes shimmer {
+		0% {
+			background-position: 200% 0;
+		}
+		100% {
+			background-position: -200% 0;
+		}
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.skel {
+			animation: shimmer 1.4s ease-in-out infinite;
+		}
+	}
+
+	.error-banner {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		margin-top: 1rem;
+		padding: 0.6rem 0.9rem;
+		border-radius: 14px;
+		border-color: oklch(0.7 0.12 25 / 0.55);
+	}
+
+	.error-banner .error-icon {
+		color: oklch(0.55 0.19 25);
+		flex: none;
+	}
+
+	.error-banner p {
+		margin: 0;
+		flex: 1;
+		font-size: 0.78rem;
+		color: var(--ink);
+	}
+
+	.error-banner strong {
+		color: oklch(0.45 0.16 25);
+	}
+
+	.error-actions {
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
+	}
+
+	.error-retry {
+		font: inherit;
+		font-size: 0.78rem;
+		font-weight: 700;
+		color: var(--on-accent);
+		background: oklch(0.5 0.17 25);
+		border: 0;
+		min-height: 44px;
+		min-width: 44px;
+		padding: 0 0.9rem;
+		border-radius: 10px;
+		cursor: pointer;
+	}
+
+	.error-dismiss {
+		color: var(--ink-soft);
+	}
+
+	/* ---------- Focus + motion ---------- */
+
+	.board-root :where(button, input):focus-visible {
+		outline: 2px solid var(--accent-strong);
+		outline-offset: 2px;
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.card,
+		.chip,
+		.segmented button,
+		.primary,
+		.add-card,
+		.icon-btn,
+		.grip {
+			transition:
+				transform 0.18s ease,
+				box-shadow 0.18s ease,
+				background 0.18s ease,
+				opacity 0.18s ease;
+		}
+
+		.card:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 10px 22px rgba(30, 40, 60, 0.14);
+		}
+
+		.primary:hover {
+			transform: translateY(-1px);
+		}
+	}
+
+	/* ---------- Responsive ---------- */
+
+	@media (min-width: 48rem) {
+		.board-body {
+			flex-direction: row;
+			overflow-x: auto;
+			padding-bottom: 0.5rem;
+		}
+
+		.column {
+			flex: 0 0 17rem;
+		}
+	}
+
+	.board-body {
+		scrollbar-width: thin;
+		scrollbar-color: rgba(255, 255, 255, 0.4) transparent;
+	}
+
+	.board-body::-webkit-scrollbar {
+		height: 10px;
+	}
+
+	.board-body::-webkit-scrollbar-thumb {
+		background: rgba(255, 255, 255, 0.4);
+		border-radius: 999px;
+	}
+</style>
