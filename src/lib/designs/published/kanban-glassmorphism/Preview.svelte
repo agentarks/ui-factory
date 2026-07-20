@@ -333,7 +333,7 @@
 		--accent-strong: oklch(0.52 0.06 235);
 		--hair: rgba(30, 40, 60, 0.09);
 		--on-accent: oklch(0.99 0.004 240);
-		--field-shadow: 0 8px 32px rgba(31, 38, 135, 0.18);
+		--field-shadow: 0 8px 32px rgba(30, 40, 60, 0.1);
 
 		position: relative;
 		min-height: 100vh;
@@ -343,19 +343,14 @@
 		color: var(--ink);
 		background:
 			radial-gradient(at 16% 20%, oklch(0.94 0.012 240) 0px, transparent 55%),
-			radial-gradient(at 84% 12%, oklch(0.92 0.018 250) 0px, transparent 52%),
-			radial-gradient(at 78% 80%, oklch(0.9 0.02 220) 0px, transparent 55%),
+			radial-gradient(at 84% 12%, oklch(0.88 0.022 250) 0px, transparent 52%),
+			radial-gradient(at 78% 80%, oklch(0.86 0.024 225) 0px, transparent 55%),
 			radial-gradient(at 22% 86%, oklch(0.95 0.008 230) 0px, transparent 52%),
-			linear-gradient(
-				135deg,
-				oklch(0.93 0.012 245),
-				oklch(0.91 0.016 235) 48%,
-				oklch(0.94 0.01 220)
-			);
+			linear-gradient(135deg, oklch(0.93 0.012 245), oklch(0.87 0.02 235) 48%, oklch(0.94 0.01 220));
 	}
 
 	.glass {
-		background: rgba(255, 255, 255, 0.55);
+		background: rgba(255, 255, 255, 0.4);
 		-webkit-backdrop-filter: blur(18px) saturate(180%);
 		backdrop-filter: blur(18px) saturate(180%);
 		border: 1px solid var(--hair);
@@ -444,7 +439,7 @@
 		color: var(--on-accent);
 		background: oklch(0.46 0.05 var(--h, 240));
 		border: 2px solid rgba(30, 40, 60, 0.14);
-		box-shadow: 0 2px 6px rgba(31, 38, 135, 0.25);
+		box-shadow: 0 2px 6px rgba(30, 40, 60, 0.16);
 	}
 
 	.avatar.sm {
@@ -621,11 +616,11 @@
 	.card {
 		padding: 0.7rem 0.8rem;
 		border-radius: 14px;
-		background: rgba(255, 255, 255, 0.62);
+		background: rgba(255, 255, 255, 0.52);
 		-webkit-backdrop-filter: blur(6px) saturate(150%);
 		backdrop-filter: blur(6px) saturate(150%);
-		border: 1px solid rgba(255, 255, 255, 0.7);
-		box-shadow: 0 4px 14px rgba(31, 38, 135, 0.12);
+		border: 1px solid rgba(30, 40, 60, 0.1);
+		box-shadow: 0 4px 14px rgba(30, 40, 60, 0.08);
 	}
 
 	.card-title {
@@ -976,7 +971,7 @@
 
 		.card:hover {
 			transform: translateY(-2px);
-			box-shadow: 0 10px 22px rgba(31, 38, 135, 0.22);
+			box-shadow: 0 10px 22px rgba(30, 40, 60, 0.14);
 		}
 
 		.primary:hover {
