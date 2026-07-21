@@ -1,0 +1,20 @@
+{
+	"schemaVersion": 1,
+	"slug": "kanban-illustration",
+	"version": "1.0.0",
+	"title": "Kanban Board · Mid-Century Poster",
+	"summary": "A warm parchment Kanban board with espresso ink, a disciplined mustard/teal/coral palette, hand-cut geometric shapes, rectangular cards with crisp offset shadows, and serif headings over system-sans controls.",
+	"pageType": "data-management",
+	"applicationTypes": [
+		"project-management",
+		"productivity",
+		"team-collaboration",
+		"creative-tools"
+	],
+	"visualStyles": ["illustration", "mid-century", "playful"],
+	"theme": "light",
+	"density": "spacious",
+	"platforms": ["web", "desktop", "tablet", "mobile"],
+	"status": "production-ready",
+	"tags": ["kanban", "board", "illustration", "mid-century", "poster", "parchment", "geometric"]
+}
