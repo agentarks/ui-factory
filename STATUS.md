@@ -4,7 +4,7 @@
 
 **Phase:** Scaffold complete
 
-**Objective:** Publish the first independent, production-ready design entry.
+**Objective:** Publish the next independent, production-ready design entry. (`kanban-glassmorphism` and `kanban-illustration` are published; eight Kanban styles remain.)
 
 ## Completed
 
@@ -21,10 +21,11 @@
 - Impeccable audit: semantic landmarks, visible focus, AA-oriented tokens, and bounded line lengths cover the shell; Chromium checks at 375px and 1280px found no horizontal overflow and preserved skip-link focus.
 - Impeccable polish: removed starter UI and demo routes, used dividers instead of cards, and retained system type, a single cool accent, and concise product copy.
 - Published `kanban-glassmorphism`, the first of the ten planned Kanban styles: a frosted translucent board over a soft low-chroma mist wash with backdrop blur, cool-gray hairlines, and a calm dusty-slate accent, authored production-ready. Its `fixtures.ts` **locks the shared Kanban content baseline** (4 columns: Backlog, In Progress, In Review [empty, for the empty state], Done; 9 cards; 5 members) that later styles re-skin. The self-contained `DESIGN.md` meets the product-vision handoff bar (color/typography/spacing/layout/responsive/motion/a11y, extension rules to new pages, do/don't, when-to-use/avoid/trade-offs, declared deps/assets/licenses, and an AI acceptance checklist). Cleared impeccable critique/audit/polish plus independent `pi.frontend-reviewer`/`pi.qa` passes; WCAG 2.2 AA verified by real-pixel contrast audit across every text role.
+- Published `kanban-illustration`, the second of the ten planned Kanban styles and the first illustration direction: a warm parchment canvas with espresso ink, a disciplined mustard/teal/coral palette, hand-cut geometric shapes (starbursts, concentric circles, 2×3 square grip), rectangular cards with crisp offset shadows (`Npx Npx 0`, no blur), and serif headings/card titles over system-sans controls/meta. Walked the publication workflow end to end (workbench `draft` → `reviewed` → `production-ready` → moved to `published/`). `fixtures.ts` copied verbatim from the locked glass baseline; only the visual language changes. Illustration concentrated in composition (header starburst watermark + project-chip starburst) and state treatments (empty starburst, cut-paper error triangle, square grip, hard-edged skeleton). 2px espresso `--ink` outlines on major surfaces (header, columns, project chip, avatars, controls, error banner) and 1.5px `--rule-strong` on cards; no pure black/white, no colored side-stripes, no external fonts/assets/deps, no gradient text, no cited or imitated named artist. Self-contained `DESIGN.md` (18 sections plus the header) meets the product-vision handoff bar (color/typography/spacing/layout/responsive/motion/a11y, extension rules to new pages, do/don't, when-to-use/avoid/trade-offs, declared deps/assets/licenses, and an AI acceptance checklist). Added one focused Playwright smoke covering the detail page, the isolated preview header (`Sprint 24 · Board`), Backlog and In Review columns, the empty In Review state, the inline error banner + Retry button, the loading skeleton, and a filter `aria-pressed` interaction. Search/filter/view controls are visual-specimen-only (they toggle selection state, not business behavior), matching the glass baseline.
 
 ## Next
 
-- Build the remaining nine Kanban styles defined in `docs/catalog-roadmap.md`, one entry at a time through the documented publication workflow. Each copies the locked baseline from `src/lib/designs/published/kanban-glassmorphism/fixtures.ts` and re-skins only the visuals.
+- Build the remaining eight Kanban styles defined in `docs/catalog-roadmap.md`, one entry at a time through the documented publication workflow. Each copies the locked baseline from `src/lib/designs/published/kanban-glassmorphism/fixtures.ts` and re-skins only the visuals.
 - Build `kanban-flat-material` next as the cleanest reference style, re-skinning the locked baseline.
 
 ## Decisions
@@ -44,11 +45,12 @@ None.
 
 ## Last verified commands
 
+- `npm run format`
+- `npm run lint`
 - `npm run check`
 - `npm test`
 - `npm run test:e2e`
 - `npm run build` (includes the client publication-boundary scan)
 - `node scripts/check-client-publication-boundary.mjs`
-- `npm run lint`
 - Mutation checks: widened client discovery fails the post-build scan; widened server preview discovery fails registry startup for missing metadata.
-- `git diff --check`
+- `git diff --check` (against base `2a3a654`)
