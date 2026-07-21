@@ -53,6 +53,18 @@ A Kanban board for a small product team: a board header (project identity with s
 
   (Same warm-parchment pattern for teal, slate, indigo, pink, rose.)
 
+### The parchment canvas
+
+The board root is a warm parchment wash — two soft `--parchment-deep` corner radials over a flat `--parchment` base, painted on `.board-root`:
+
+```css
+background:
+	radial-gradient(at 100% 0%, var(--parchment-deep) 0px, transparent 45%),
+	radial-gradient(at 0% 100%, var(--parchment-deep) 0px, transparent 42%), var(--parchment);
+```
+
+Luminance stays very high (L ≈ 0.9–0.94) so espresso ink has maximum contrast headroom, and chroma stays low (≤ 0.035) so the canvas reads as warm cream paper, not saturated color. The two corner radials give the page a subtle printed-paper depth without ever darkening enough under text to threaten AA contrast. Major surfaces (header, columns, cards) sit on top as opaque ink-outlined fills, not as translucent layers — the canvas is a backdrop, never a see-through surface.
+
 ## Typography
 
 - **Serif stack:** `ui-serif, 'Iowan Old Style', 'Palatino Linotype', P052, Palatino, 'Source Serif 4', serif`. `ui-serif` resolves to the OS serif (Iowan on Apple, Palatino elsewhere) so the preview is self-contained and the handoff is framework-agnostic. No external fonts.
@@ -67,24 +79,24 @@ A Kanban board for a small product team: a board header (project identity with s
 - **Borders:** every major surface has a 2px espresso `--ink` outline (header, columns, project chip, avatars, primary button, search, segmented controls, error banner). Cards use 1.5px `--rule-strong` so they read as a lighter layer than columns. Footer dividers and column-head underlines are 1.5–2px `--rule`.
 - **Elevation = crisp offset shadows, never blur.** The core recipe:
 
-  ```css
-  .card {
-  	box-shadow: 3px 3px 0 var(--rule-strong);
-  } /* lighter layer */
-  .column {
-  	box-shadow: 5px 5px 0 var(--ink);
-  } /* heavier, ink */
-  .header,
-  .project-chip,
-  .primary {
-  	box-shadow: 3–6px 3–6px 0 var(--ink);
-  }
-  .card:hover {
-  	box-shadow: 5px 5px 0 var(--ink);
-  } /* poster lift */
-  ```
+```css
+.card {
+	box-shadow: 3px 3px 0 var(--rule-strong);
+} /* lighter layer */
+.column {
+	box-shadow: 5px 5px 0 var(--ink);
+} /* heavier, ink */
+.header,
+.project-chip,
+.primary {
+	box-shadow: 3px 3px 0 var(--ink);
+}
+.card:hover {
+	box-shadow: 5px 5px 0 var(--ink);
+} /* poster lift */
+```
 
-  The offset direction matches the poster convention (down-right). Hover moves the element up-left by the same delta so the shadow appears to grow, not detach.
+The offset direction matches the poster convention (down-right). Header/project-chip/primary use a 3px ink offset; columns use 5px ink; cards use 3px `--rule-strong` and lift to 5px ink on hover. Hover moves the element up-left by the same delta so the shadow appears to grow, not detach.
 
 ## Layout and composition
 
@@ -100,7 +112,7 @@ A Kanban board for a small product team: a board header (project identity with s
 - **Drag grip:** a 2×3 grid of small squares (geometric, not dots) — faint by default, full colour on hover.
 - **Label chip:** rectangular cut-paper block — pale warm OKLCH tint fill + dark espresso ink of the same hue + 1.5px same-hue outline. Uppercase, tracked, ~0.66rem.
 - **Avatar:** circular, initials on a dark warm-tinted OKLCH fill, 2px espresso rim + offset shadow; exposes the full name via `aria-label`. Two sizes: header 34px, card 28px.
-- **Controls:** search input (cream fill, 2px ink outline, 2px offset shadow, 44px min-height), segmented toggle and filter chips (`aria-pressed`, 40–44px), primary button (mustard-deep fill, cream text, 3px offset shadow, 44px), icon button (44px). Every control shows the 3px mustard-deep focus ring.
+- **Controls:** search input (cream fill, 2px ink outline, 2px offset shadow, 44px min-height), segmented toggle and filter chips (`aria-pressed`, 44px), primary button (mustard-deep fill, cream text, 3px offset shadow, 44px), icon button (44px). Every control shows the 3px mustard-deep focus ring. The search input, filter chips, and view toggle demonstrate **selected interaction state only** — they do not filter, search, or re-render the board; they are visual-specimen controls that toggle `aria-pressed` and bound `value`, not business logic.
 - **Empty state:** a dashed rectangular placeholder with a filled-starburst mark (mustard-deep) and serif italic "No cards yet" — see the **In Review** column.
 - **Skeleton (loading):** a card-shaped outline with hard-edged shimmering bars (no rounded corners). Shimmer animates only under `prefers-reduced-motion: no-preference`.
 - **Error (inline):** a rectangular banner under the header — coral-deep border, warm coral wash, a **cut-paper triangle** icon (filled mustard-cream with espresso outline), serif "Sync paused" label, sans body copy, a coral-deep Retry button, and a dismiss control (`role="status" aria-live="polite"`).
@@ -115,13 +127,14 @@ This specimen is a single board with no route navigation. When extending to a fu
 
 - **Desktop (≥768px):** columns in a horizontal flex row; the board scrolls horizontally when columns overflow; the board-body scrollbar is a chunky rectangular thumb (`scrollbar-width: thin`, `::-webkit-scrollbar` with a 3px parchment border) on a khaki thumb.
 - **Mobile/tablet (<768px):** columns stack vertically; no document-level horizontal overflow at 375/768/1280. Outer padding scales via `clamp`.
-- Touch targets: every interactive control ≥44px (search, primary, chips, icon buttons, add-card). Segmented-control buttons are 40px inside a 44px-tall container with the outline + offset shadow providing the rest of the hit area.
+- Touch targets: every interactive control is ≥44px (search, primary, chips, filter chips, view-toggle buttons, icon buttons, add-card).
 
 ## Interaction and motion
 
 - Hover: card moves up-left 2px and its shadow grows from 3px rule-strong to 5px ink; primary button and error Retry move up-left 1px. Active filter/view gets the mustard-deep fill. Chips/segmented buttons get a parchment-deep hover fill.
-- All transitions are 0.18s ease and are **gated behind `@media (prefers-reduced-motion: no-preference)`** — reduced-motion users get a fully static board with no loss of function.
-- Never animate CSS layout properties other than `transform`; never use bounce/elastic easing; never use blur or soft shadows (they break the print aesthetic).
+- **Transitions** are 0.18s ease over `transform`, `box-shadow`, `background`, and `color`, applied to `.card`, `.chip`, `.segmented button`, `.primary`, `.icon-btn`, and `.error-retry`, and are **gated behind `@media (prefers-reduced-motion: no-preference)`** — reduced-motion users get a fully static board with no loss of function. Only non-layout properties are transitioned; layout is never animated.
+- **Skeleton shimmer:** `.skel` uses a `repeating-linear-gradient(90deg, …)` stripe fill with `background-size: 200% 100%`, and a `@keyframes shimmer` animates `background-position` from `200% 0` to `-200% 0` over `1.4s ease-in-out infinite`, also gated behind `prefers-reduced-motion: no-preference`.
+- Never animate CSS layout properties; never use bounce/elastic easing; never use blur or soft shadows (they break the print aesthetic).
 
 ## States
 
@@ -203,6 +216,6 @@ Rule of thumb: any new surface is a rectangular panel (header/column/card recipe
 - [ ] All text meets WCAG 2.2 AA (≥4.5:1) against its rendered surface; state is conveyed in text, not colour/shape alone.
 - [ ] Illustration is concentrated in composition (header starburst watermark + project-chip starburst) and state treatments (empty starburst, cut-paper error triangle, 2×3 square grip, skeleton) — cards stay clean.
 - [ ] Layout is responsive: columns scroll horizontally on desktop and stack on mobile; no document horizontal overflow at 375/768/1280.
-- [ ] All motion is ≤0.18s ease, gated behind `prefers-reduced-motion: no-preference`; only `transform` is animated; no blur/soft-shadow/bounce.
+- [ ] All motion is ≤0.18s ease (transitions on `transform`, `box-shadow`, `background`, `color`) or the 1.4s ease-in-out skeleton `background-position` animation, each gated behind `prefers-reduced-motion: no-preference`; no layout-property animation; no blur/soft-shadow/bounce.
 - [ ] The board content matches the locked `fixtures.ts` baseline; the empty-column state (In Review) renders with the starburst mark.
 - [ ] Loading (hard-edged skeleton), error (cut-paper inline banner), drag affordance (square grip), empty, done, and priority states are all shown; the skeleton shimmer respects `prefers-reduced-motion`.

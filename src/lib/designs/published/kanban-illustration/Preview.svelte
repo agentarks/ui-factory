@@ -567,7 +567,7 @@
 		background: transparent;
 		padding: 0 0.8rem;
 		min-width: 44px;
-		min-height: 40px;
+		min-height: 44px;
 		justify-content: center;
 		cursor: pointer;
 	}
