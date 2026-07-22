@@ -226,6 +226,19 @@ test('opens the kanban-neumorphism design and its isolated preview states', asyn
 			const box = await frame.getByRole('button', { name, exact: true }).boundingBox();
 			expect(box?.height).toBeGreaterThanOrEqual(44);
 		}
+		// icon buttons are square targets: assert both width and height >=44px.
+		// Covers the column "more actions" button and the error dismiss button,
+		// which previously shipped at 38px (a target-size regression).
+		const moreActions = await frame
+			.getByRole('button', { name: 'More actions for Backlog' })
+			.boundingBox();
+		expect(moreActions?.width).toBeGreaterThanOrEqual(44);
+		expect(moreActions?.height).toBeGreaterThanOrEqual(44);
+		const dismiss = await frame
+			.getByRole('button', { name: 'Dismiss error', exact: true })
+			.boundingBox();
+		expect(dismiss?.width).toBeGreaterThanOrEqual(44);
+		expect(dismiss?.height).toBeGreaterThanOrEqual(44);
 		const overflow = await previewFrame!.evaluate(
 			() => document.documentElement.scrollWidth - document.documentElement.clientWidth
 		);

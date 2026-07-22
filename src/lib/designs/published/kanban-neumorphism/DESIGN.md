@@ -76,7 +76,7 @@ A Kanban board for a small product team: a board header (project identity, team 
 - **Card** (raised slab, 12px radius, `--raise-sm` + ring): title (`<h3>`), monochrome pressed label pills, an optional checklist progress line, and a footer (separated by a pressed groove) with the priority indicator, due date, and assignee avatars. Hover lifts the card 1px to `--raise` (reduced-motion: static).
 - **Label chip:** monochrome pressed-in pill + `--ink-soft` text; meaning is the text.
 - **Avatar:** near-white initials on a whisper-chroma OKLCH fill with a neumorphic ring; exposes the full name via `aria-label`. Two sizes: header 34px, card 28px.
-- **Controls:** search input (pressed-in well, 44px height, dark text), segmented tracks holding pressed-in active options (`aria-pressed`), primary button (inverted dark fill with near-white text, 44px), icon button (38px visual but ≥44px tap target via padding/min-height where required — the column "more" button is the one compact control and is ≥38px; every header filter/view control is a full 44px tap). The search field shows a contrasting dark `:focus-within` ring.
+- **Controls:** search input (pressed-in well, 44px height, dark text), segmented tracks holding pressed-in active options (`aria-pressed`), primary button (inverted dark fill with near-white text, 44px), icon buttons (column "more actions" and error dismiss, full 44×44px). Every header filter/view control is a full 44px tap. The search field shows a contrasting dark `:focus-within` ring.
 - **Empty state:** a pressed well with a small inset square mark and "No cards yet" renders in any column with zero cards.
 - **Loading skeleton:** a pressed groove card holding inset placeholder bars with an opacity pulse (gradient-free).
 
@@ -88,7 +88,7 @@ This specimen is a single board with no route navigation. When extending to a fu
 
 - **Desktop (≥768px):** columns in a horizontal flex row; the board scrolls horizontally when columns overflow; the board-body scrollbar is thin (`scrollbar-width: thin` for Firefox, `::-webkit-scrollbar` for WebKit).
 - **Mobile/tablet (<768px):** columns stack vertically; the app-bar control rows wrap; no document-level horizontal overflow at 375/768/1280. Outer padding scales via `clamp`.
-- Touch targets: every interactive control ≥44px at all viewports (search field, primary, every filter chip, every Board/List segmented button, add-card, Retry, dismiss). The column "more actions" icon is the one sub-44px visual but remains an easy tap; if a stricter audit is required, raise it to a full 44px square.
+- Touch targets: **every interactive control is ≥44×44px at all viewports** — search field, primary, every filter chip, every Board/List segmented button, add-card, Retry, and every icon button (the column "more actions" button and the error dismiss button). There is no sub-44px target anywhere in the board.
 
 ## Interaction and motion
 
@@ -172,7 +172,7 @@ Keep the token set + extrusion scale + hairline ring constant; adapt the layout 
 - [ ] Selection/active state is a **pressed-in** well (`--press-sm` + `--ring-strong`), not a colored fill.
 - [ ] All colors are OKLCH; neutrals tinted toward hue 255; no `#000`/`#fff`; no gradient text; no colored side-stripes; label chips and large surfaces are monochrome; whisper-chroma lives only in stage dots/priority/done/error, each paired with text.
 - [ ] Typography uses the system stack and the documented scale; hierarchy via scale + weight.
-- [ ] Every interactive element has the focus ring (dark accent on surfaces, near-white on the dark primary), ≥44px target at all viewports (including every filter chip and Board/List segmented button), and a real role/label; avatars expose the full name; the search field shows a contrasting dark `:focus-within` ring with the input kept as the semantic focus target.
+- [ ] Every interactive element has the focus ring (dark accent on surfaces, near-white on the dark primary), is ≥44×44px at all viewports (every filter chip, Board/List segmented button, and every icon button including column "more actions" and error dismiss), and has a real role/label; avatars expose the full name; the search field shows a contrasting dark `:focus-within` ring with the input kept as the semantic focus target.
 - [ ] All text meets WCAG 2.2 AA (≥4.5:1) against its cool-gray background; state is conveyed in text/tactile difference, not color/shape alone.
 - [ ] Layout is responsive: columns scroll horizontally on desktop and stack on mobile; no document horizontal overflow at 375/768/1280.
 - [ ] Normal UI transitions are ≤0.16s ease and the skeleton opacity pulse is a 1.4s loop, both gated behind `prefers-reduced-motion: no-preference` (reduced-motion shows a fully static board); hover effects gated behind `(hover: hover)`; no layout-property animation (besides small `transform` lifts); no bounce/elastic.

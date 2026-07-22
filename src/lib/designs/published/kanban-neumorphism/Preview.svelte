@@ -681,8 +681,8 @@
 		margin-left: auto;
 		display: inline-grid;
 		place-items: center;
-		width: 38px;
-		height: 38px;
+		width: 44px;
+		height: 44px;
 		border: 0;
 		border-radius: var(--r-control);
 		background: var(--surface);
