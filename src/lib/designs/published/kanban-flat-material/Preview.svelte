@@ -473,6 +473,19 @@
 		color: var(--ink-faint);
 	}
 
+	/* Composite search field: the container shows a contrasting cobalt focus ring
+	   (:focus-within) so keyboard focus is unmistakable on the near-white field.
+	   The <input> stays the semantic focus target; its own outline is suppressed
+	   here to avoid an invisible near-white-on-near-white double ring. */
+	.search:focus-within {
+		outline: 3px solid var(--primary);
+		outline-offset: 2px;
+	}
+
+	.search input:focus-visible {
+		outline: none;
+	}
+
 	.segmented {
 		display: inline-flex;
 		padding: 3px;
@@ -493,7 +506,7 @@
 		background: transparent;
 		padding: 0 0.8rem;
 		min-width: 44px;
-		min-height: 38px;
+		min-height: 44px;
 		justify-content: center;
 		border-radius: 6px;
 		cursor: pointer;
@@ -949,7 +962,9 @@
 		outline-offset: 2px;
 	}
 
-	.app-bar :where(button, input, .search):focus-visible {
+	/* Bar buttons (primary, chips, segmented) keep a near-white ring on cobalt;
+	   the search field's keyboard focus is shown by its :focus-within ring above. */
+	.app-bar :where(button):focus-visible {
 		outline-color: var(--surface);
 	}
 

@@ -94,22 +94,24 @@ This specimen is a single board with no route navigation. When extending to a fu
 
 - **Desktop (≥768px):** columns in a horizontal flex row; the board scrolls horizontally when columns overflow; the board-body scrollbar is thin (`scrollbar-width: thin` for Firefox, `::-webkit-scrollbar` for WebKit).
 - **Mobile/tablet (<768px):** columns stack vertically; the app-bar control rows wrap; no document-level horizontal overflow at 375/768/1280. Outer padding scales via `clamp`.
-- Touch targets: every interactive control ≥44px (search, primary, chips, icon buttons, add-card). In-bar segmented buttons use a 38px tap height inside a 44px-tall group container; the group itself remains comfortably operable — raise to 44px if you drop the container padding.
+- Touch targets: every interactive control ≥44px at all viewports (search field, primary, every filter chip, every Board/List segmented button, icon buttons, add-card). Segmented buttons are full 44px-tall taps inside a thin 3px group container.
 
 ## Interaction and motion
 
 - Hover: card lifts 2px to an 8dp shadow; primary button lifts 1px to a 4dp shadow and settles on active. Active filter/view gets the solid near-white fill with cobalt text.
-- All transitions are 0.16s ease and are **gated behind `@media (prefers-reduced-motion: no-preference)`** — reduced-motion users get a fully static board with no loss of function.
+- Normal UI transitions (hover, focus, press, active-state fill) are **0.16s ease**, gated behind `@media (prefers-reduced-motion: no-preference)`.
+- The loading skeleton's opacity pulse is a separate, slower **1.4s ease-in-out** loop, also gated behind `prefers-reduced-motion: no-preference`. It is the only repeating motion and has no reduced-motion counterpart by design (reduced-motion shows static skeleton bars).
+- In both cases, reduced-motion users get a fully static board with no loss of function.
 - Never animate CSS layout properties (other than the small `transform` lifts); never use bounce/elastic easing.
 
 ## States
 
-The specimen demonstrates each state visually (functional drag-and-drop and network logic are out of scope — these are the visual treatments to reuse):
+The states below are **visual state/affordance demonstrations only**, not functional behavior. Search, filtering, the Board/List toggle, Retry, dismiss, and drag-and-drop are specimen-only — they render the treatment and toggle `aria-pressed` selection state, but perform no real filtering, syncing, dismissal, or card movement. The drag treatment is static. Reuse these visual treatments when wiring real behavior:
 
 - **Empty (shown):** a column with no cards renders a dashed tinted placeholder ("No cards yet") — see the **In Review** column.
 - **Loading (shown):** a **skeleton card** with solid placeholder bars (in Backlog). The skeleton uses an **opacity pulse** (not a gradient shimmer) so it stays gradient-free. The pulse animates only under `prefers-reduced-motion: no-preference`.
 - **Error (shown):** an inline **solid pale-red error banner** under the app bar — red warning icon + bold red label, a solid red Retry button, and a dismiss control (`role="status" aria-live="polite"`). No side-stripe.
-- **Drag/move affordance (shown):** every card has a **grip handle** (faint by default, full on hover, `cursor: grab`). Full drag-and-drop logic is optional and not implemented; add actual DnD when wiring it for real, reusing the card + grip treatment.
+- **Drag/move affordance (shown, static):** every card has a **grip handle** (faint by default, full on hover, `cursor: grab`) as a visual affordance only — no drag-and-drop logic is implemented. Add actual DnD when wiring it for real, reusing the card + grip treatment.
 - **Done (shown):** completed cards show a check icon and a green due-date treatment.
 - **Priority (shown):** colored dot + capitalized word in the card footer (red/High, amber/Medium).
 - **Validation:** when implementing real card-edit forms, reuse the red label + inline message pattern under each field.
@@ -119,7 +121,7 @@ The specimen demonstrates each state visually (functional drag-and-drop and netw
 - Landmarks: `<header>` (banner) + `<main>` + `<section aria-label="Kanban board">` (region); one `<section>` per column with an `<h2>`, cards as `<h3>` inside `<article>`. Heading order h1→h2→h3 is strict.
 - All controls are real `<button>`/`<input>`; filters and view toggle carry `aria-pressed`; counts and icon buttons carry `aria-label`; icons are `aria-hidden`.
 - **Avatars expose the full name** via `aria-label` (initials alone are not enough; `title` is not reliably announced).
-- **Visible focus:** `outline: 3px solid` with `outline-offset: 2px` on every interactive element — near-white on the cobalt bar, cobalt on near-white surfaces (verified live).
+- **Visible focus:** `outline: 3px solid` with `outline-offset: 2px` on every interactive element — near-white on the cobalt bar, cobalt on near-white surfaces. The composite search field shows focus on its container via a contrasting **cobalt `:focus-within` ring** (the near-white field would otherwise hide an input outline); the `<input>` remains the semantic focus target, with its own redundant outline suppressed so keyboard users see one clear indicator, not an invisible near-white-on-near-white double ring.
 - **WCAG 2.2 AA** is met by construction: dark navy ink (L 0.28) on near-white surfaces (L ≈ 0.965–0.985) and near-white (L 0.99) on deep cobalt (L 0.42) both give large contrast margins. Label chips carry dark ink on pale tints; priority/done/error colors are all dark enough on near-white for AA. Meaning is never conveyed by color/shape alone (priority and status are always labelled in text).
 
 ## Extending the design to new pages
@@ -159,7 +161,7 @@ Keep the token set + elevation scale constant; adapt the layout shell. Any new s
 ## Dependencies, assets, and licenses
 
 - **No external dependencies, fonts, images, or binary assets.** System UI font stack; icons are inline SVG; avatars are initials (no image assets). Self-contained and framework-agnostic.
-- License: inherits the source repository's license.
+- **Licensing:** this repository declares **no license** (no `LICENSE` file, no `package.json` `license` field), so the source is unlicensed/all-rights-reserved by default under copyright. The specimen adds no third-party assets of its own. Confirm the consuming repository's license before adopting these rules.
 
 ## Content baseline
 
@@ -173,9 +175,9 @@ Keep the token set + elevation scale constant; adapt the layout shell. Any new s
 - [ ] All colors are OKLCH; neutrals tinted toward hue 250; no `#000`/`#fff`; no gradient text; no colored side-stripes.
 - [ ] Primary actions are cobalt; on the cobalt bar they invert to near-white with cobalt text.
 - [ ] Typography uses the system stack and the documented scale; hierarchy via scale + weight.
-- [ ] Every interactive element has the focus ring (near-white on cobalt, cobalt on surfaces), ≥44px target, and a real role/label; avatars expose the full name.
+- [ ] Every interactive element has the focus ring (near-white on cobalt, cobalt on surfaces), ≥44px target at all viewports (including every filter chip and Board/List segmented button), and a real role/label; avatars expose the full name; the search field shows a contrasting cobalt `:focus-within` ring with the input kept as the semantic focus target.
 - [ ] All text meets WCAG 2.2 AA (≥4.5:1) against its solid background; state is conveyed in text, not color/shape alone.
 - [ ] Layout is responsive: columns scroll horizontally on desktop and stack on mobile; no document horizontal overflow at 375/768/1280.
-- [ ] All motion is ≤0.16s ease, gated behind `prefers-reduced-motion: no-preference`; no layout-property animation (besides small `transform` lifts); no bounce/elastic.
+- [ ] Normal UI transitions are ≤0.16s ease and the skeleton opacity pulse is a 1.4s loop, both gated behind `prefers-reduced-motion: no-preference` (reduced-motion shows a fully static board); no layout-property animation (besides small `transform` lifts); no bounce/elastic.
 - [ ] The board content matches the locked `fixtures.ts` baseline; the empty-column state renders.
 - [ ] Loading (skeleton with opacity pulse, gradient-free), error (inline pale-red banner), drag affordance (grip), empty, done, and priority states are all shown; the skeleton pulse respects `prefers-reduced-motion`.

@@ -85,6 +85,28 @@ test('opens the kanban-flat-material design and its isolated preview states', as
 	const mineBtn = frame.getByRole('button', { name: 'Mine', exact: true });
 	await mineBtn.click();
 	await expect(mineBtn).toHaveAttribute('aria-pressed', 'true');
+
+	// control targets: every filter chip and Board/List segmented button is >=44px tall
+	for (const name of ['Board', 'List', 'All', 'Mine']) {
+		const box = await frame.getByRole('button', { name, exact: true }).boundingBox();
+		expect(box?.height).toBeGreaterThanOrEqual(44);
+	}
+
+	// keyboard focus on the search field shows a contrasting container ring
+	await frame.getByRole('searchbox').focus();
+	await expect(frame.locator('.search')).toHaveCSS('outline-style', 'solid');
+	await expect(frame.locator('.search')).toHaveCSS('outline-width', '3px');
+
+	// no horizontal document overflow in the preview at mobile/tablet/desktop widths
+	const previewFrame = page.frame({ url: /kanban-flat-material\/preview$/ });
+	expect(previewFrame).toBeTruthy();
+	for (const width of [375, 768, 1280]) {
+		await page.setViewportSize({ width, height: 800 });
+		const overflow = await previewFrame!.evaluate(
+			() => document.documentElement.scrollWidth - document.documentElement.clientWidth
+		);
+		expect(overflow).toBeLessThanOrEqual(0);
+	}
 });
 
 test('opens the kanban-illustration design and its isolated preview states', async ({ page }) => {
