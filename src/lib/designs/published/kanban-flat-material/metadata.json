@@ -1,0 +1,15 @@
+{
+	"schemaVersion": 1,
+	"slug": "kanban-flat-material",
+	"version": "1.0.0",
+	"title": "Kanban Board · Flat Material",
+	"summary": "A high-contrast Flat/Material Kanban board with a deep cobalt app bar, pale blue canvas, solid near-white surfaces, crisp layered elevation, and disciplined semantic stage colors.",
+	"pageType": "data-management",
+	"applicationTypes": ["project-management", "productivity", "team-collaboration"],
+	"visualStyles": ["flat", "material"],
+	"theme": "light",
+	"density": "comfortable",
+	"platforms": ["web", "desktop", "tablet", "mobile"],
+	"status": "production-ready",
+	"tags": ["kanban", "board", "flat", "material", "cobalt", "elevation"]
+}

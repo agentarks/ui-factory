@@ -61,6 +61,32 @@ test('returns an isolated 404 for an unknown design preview', async ({ page }) =
 	await expect(page.locator('body')).toHaveCSS('margin', '8px');
 });
 
+test('opens the kanban-flat-material design and its isolated preview states', async ({ page }) => {
+	await page.goto('/designs/kanban-flat-material');
+
+	await expect(
+		page.getByRole('heading', { name: 'Kanban Board · Flat Material', exact: false })
+	).toBeVisible();
+	await expect(
+		page.getByText('high-contrast Flat/Material Kanban board', { exact: false })
+	).toBeVisible();
+
+	const frame = page.frameLocator('iframe[title*="preview"i]');
+	await expect(frame.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'New task' })).toBeVisible();
+	await expect(frame.getByText('Backlog', { exact: true })).toBeVisible();
+	await expect(frame.getByRole('heading', { name: 'In Review' })).toBeVisible();
+	await expect(frame.getByText('No cards yet')).toBeVisible();
+	await expect(frame.getByText('Sync paused', { exact: false })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'Retry' })).toBeVisible();
+	await expect(frame.locator('.skeleton-card')).toBeVisible();
+
+	// interaction smoke: toggling a filter updates its pressed state
+	const mineBtn = frame.getByRole('button', { name: 'Mine', exact: true });
+	await mineBtn.click();
+	await expect(mineBtn).toHaveAttribute('aria-pressed', 'true');
+});
+
 test('opens the kanban-illustration design and its isolated preview states', async ({ page }) => {
 	await page.goto('/designs/kanban-illustration');
 
