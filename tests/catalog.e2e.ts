@@ -340,4 +340,5 @@ test('opens the kanban-neumorphism design and its isolated preview states', asyn
 	expect(chipHover!.color).not.toBe(chipRest!.color);
 	expect(chipHover!.blueRedGap).toBeGreaterThan(chipRest!.blueRedGap);
 	expect(chipHover!.blueRedGap).toBeGreaterThanOrEqual(8);
+	expect(chipHover!.contrast).toBeGreaterThanOrEqual(4.5); // AA-dark ink holds on the tint
 });

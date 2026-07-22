@@ -11,17 +11,17 @@ A Kanban board for a small product team: a board header (project identity, team 
 
 ## Design principles
 
-1. **Surfaces match the canvas.** The neumorphic signature: raised cards, columns, and controls are the _same_ cool-gray color as the page background. Depth comes only from paired light/dark extrusion shadows, never from fills, gradients, or translucency.
+1. **Surfaces match the canvas.** The neumorphic signature: at rest, raised cards, columns, and controls are the _same_ cool-gray color as the page background. Depth comes only from paired light/dark extrusion shadows, never from fills, gradients, or translucency. (The single allowed exception is the documented _transient_ cool-cobalt hover tint on cards and secondary controls — see Interaction and motion.)
 2. **Hairline rings carry the boundary.** Because same-color-on-same-color relief can vanish against the canvas, every raised or pressed surface also carries a 1px darker inner hairline ring (an inset `box-shadow` layer). The ring is what keeps edges readable at AA — it is non-negotiable.
 3. **Selection = pressed in.** Active toggles and filters become inset (pressed) wells rather than colored fills. Tactile state is the interaction language; no colored "active" pill is needed.
-4. **Legibility over purity.** Ink is AA-dark, neutrals are tinted near-white rather than pure white, and a tiny set of whisper-chroma semantic cues (stage dots, priority, done, error) is retained — always paired with text/icons — so meaning never relies on the barely-there relief alone.
+4. **Legibility over purity.** Ink is AA-dark, neutrals are tinted near-white rather than pure white, and a tiny set of whisper-chroma semantic cues (stage dots, priority, done, error) is retained — always paired with text/icons — so meaning never relies on the barely-there relief alone. Whisper-chroma is otherwise semantic-only; the one non-semantic chroma in the system is the documented decorative hover tint.
 
 ## Color system (OKLCH)
 
 | Token           | Value                    | Role                                                                                  |
 | --------------- | ------------------------ | ------------------------------------------------------------------------------------- |
-| `--canvas`      | `oklch(0.9 0.006 255)`   | Neumorphic page base; raised surfaces share this exact color                          |
-| `--surface`     | `oklch(0.9 0.006 255)`   | Cards, columns, controls (identical to canvas)                                        |
+| `--canvas`      | `oklch(0.9 0.006 255)`   | Neumorphic page base; raised surfaces share this exact color at rest                  |
+| `--surface`     | `oklch(0.9 0.006 255)`   | Cards, columns, controls (identical to canvas at rest)                                |
 | `--ink`         | `oklch(0.26 0.014 255)`  | AA-dark primary text (≈7:1 on surface)                                                |
 | `--ink-soft`    | `oklch(0.37 0.014 255)`  | Meta: due dates, counts, checklist, empty-state copy, search placeholder (≈5:1)       |
 | `--ink-faint`   | `oklch(0.5 0.012 255)`   | Grip handle, decorative icons (non-text only)                                         |
@@ -38,7 +38,7 @@ A Kanban board for a small product team: a board header (project identity, team 
 
 - **Neutrals are tinted** toward hue 255 (cool gray), never pure grey/black/white. `--on-accent` is a near-white, not `#fff`.
 - **No gradients, no backdrop blur, no translucency** anywhere. The only depth cues are the dual extrusion shadows and the hairline ring.
-- **Monochrome by default:** cards, columns, labels, controls, dividers, and dividers are all the cool-gray surface. The only color in the system is a tiny set of **whisper-chroma semantic cues** (chroma 0.04–0.13), each always paired with a text label or icon, plus one **decorative** cool-cobalt hover tint (`--hover-tint`, chroma 0.032) used only as hover feedback:
+- **Monochrome by default:** at rest and persistently, cards, columns, labels, controls, dividers, and dividers are all the cool-gray surface — large surfaces are never given a persistent color fill. The only color in the system is a tiny set of **whisper-chroma semantic cues** (chroma 0.04–0.13), each always paired with a text label or icon, plus one **decorative** cool-cobalt hover tint (`--hover-tint`, chroma 0.032) that applies only transiently on hover to cards and secondary controls (never a persistent fill):
   - **Stage dots** (one per column header, chroma 0.02–0.05): Backlog slate `oklch(0.52 0.02 260)`, In Progress blue `oklch(0.52 0.05 250)`, In Review amber `oklch(0.6 0.05 70)`, Done green `oklch(0.54 0.05 152)`. They never become a colored side-stripe.
   - **Priority** (dot + capitalized word): high `oklch(0.48 0.12 25)`, medium `oklch(0.48 0.09 65)`.
   - **Done** due-date + check icon: `oklch(0.45 0.1 152)`.
@@ -145,7 +145,7 @@ Keep the token set + extrusion scale + hairline ring constant; adapt the layout 
 - Don't use gradients, backdrop blur, translucency, glass, clay, flat-material elevation, or illustration treatments — this is the neumorphic direction.
 - Don't use `#000`/`#fff` or gradient text.
 - Don't use a colored side-stripe (`border-left > 1px`) as an accent — use a pressed chip, a dot, or a leading icon.
-- Don't colorize label chips or large surfaces; keep the board monochrome and let whisper-chroma live only in the tiny semantic cues (dots, priority, done, error), each paired with text.
+- Don't colorize label chips or give large surfaces a _persistent_ color fill; keep the board monochrome at rest and let whisper-chroma live only in the tiny semantic cues (dots, priority, done, error), each paired with text. (The documented _transient_ cool-cobalt hover tint on cards/secondary controls is the one allowed exception — decorative, non-persistent, never the sole state signal.)
 - Don't remove the hairline ring to chase "purer" neumorphism — legibility over purity.
 - Don't use a gradient shimmer for loading skeletons; use the opacity pulse on inset grooves.
 - Don't animate layout properties (besides small `transform` lifts) or use bounce/elastic easing; don't ship motion without a reduced-motion fallback.
@@ -171,7 +171,7 @@ Keep the token set + extrusion scale + hairline ring constant; adapt the layout 
 - [ ] Depth comes only from paired light/dark extrusion shadows (tinted near-white + dark cool-gray, no pure white/black) plus the hairline ring. No gradients, no `backdrop-filter`, no translucency, no glass/clay/flat-material/illustration treatments.
 - [ ] A **1px darker inner hairline ring** (`inset 0 0 0 1px var(--hair)`, or `--hair-strong` on selected/raised controls) is layered onto every column, card, and selected/raised control.
 - [ ] Selection/active state is a **pressed-in** well (`--press-sm` + `--ring-strong`), not a colored fill.
-- [ ] All colors are OKLCH; neutrals tinted toward hue 255; no `#000`/`#fff`; no gradient text; no colored side-stripes; label chips and large surfaces are monochrome; whisper-chroma lives only in stage dots/priority/done/error, each paired with text.
+- [ ] All colors are OKLCH; neutrals tinted toward hue 255; no `#000`/`#fff`; no gradient text; no colored side-stripes; label chips and large surfaces are monochrome at rest (no persistent color fill); whisper-chroma lives only in stage dots/priority/done/error, each paired with text — except the single documented transient cool-cobalt hover tint on cards/secondary controls.
 - [ ] Typography uses the system stack and the documented scale; hierarchy via scale + weight.
 - [ ] Every interactive element has the focus ring — the dark accent outline on every control including the primary (whose ring seats against the surrounding surface at `outline-offset`, not against the dark fill) — is ≥44×44px at all viewports (every filter chip, Board/List segmented button, and every icon button including column "more actions" and error dismiss), and has a real role/label; avatars expose the full name; the search field shows a contrasting dark `:focus-within` ring with the input kept as the semantic focus target.
 - [ ] All text meets WCAG 2.2 AA (≥4.5:1) against its cool-gray background; state is conveyed in text/tactile difference, not color/shape alone.
