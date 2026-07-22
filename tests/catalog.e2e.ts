@@ -159,3 +159,76 @@ test('opens the kanban-illustration design and its isolated preview states', asy
 	await mineBtn.click();
 	await expect(mineBtn).toHaveAttribute('aria-pressed', 'true');
 });
+
+test('opens the kanban-neumorphism design and its isolated preview states', async ({ page }) => {
+	await page.goto('/designs/kanban-neumorphism');
+
+	await expect(
+		page.getByRole('heading', { name: 'Kanban Board · Neumorphism', exact: false })
+	).toBeVisible();
+	await expect(
+		page.getByText('Hairline-Ringed Neumorphic Kanban board', { exact: false })
+	).toBeVisible();
+
+	const frame = page.frameLocator('iframe[title*="preview"i]');
+	await expect(frame.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'New task' })).toBeVisible();
+	await expect(frame.getByText('Backlog', { exact: true })).toBeVisible();
+	await expect(frame.getByRole('heading', { name: 'In Review' })).toBeVisible();
+	await expect(frame.getByText('No cards yet')).toBeVisible();
+	await expect(frame.getByText('Sync paused', { exact: false })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'Retry' })).toBeVisible();
+	await expect(frame.locator('.skeleton-card')).toBeVisible();
+
+	// interaction smoke: toggling a filter updates its pressed state (neumorphic
+	// "selected = pressed in")
+	const mineBtn = frame.getByRole('button', { name: 'Mine', exact: true });
+	await mineBtn.click();
+	await expect(mineBtn).toHaveAttribute('aria-pressed', 'true');
+
+	// keyboard focus on the search field shows a container ring with meaningful
+	// contrast against the cool-gray surface (>=3:1, the WCAG UI-component
+	// minimum), proving the ring is visible on the low-contrast neumorphic field.
+	const previewFrame = page.frame({ url: /kanban-neumorphism\/preview$/ });
+	expect(previewFrame).toBeTruthy();
+	await frame.getByRole('searchbox').focus();
+	const focusContrast = await previewFrame!.evaluate(() => {
+		const el = document.querySelector('.search');
+		if (!(el instanceof HTMLElement)) return -1;
+		const cs = getComputedStyle(el);
+		if (cs.outlineStyle !== 'solid' || parseFloat(cs.outlineWidth) < 3) return -1;
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return -1;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const oL = lum(cs.outlineColor);
+		const bL = lum(cs.backgroundColor);
+		return (Math.max(oL, bL) + 0.05) / (Math.min(oL, bL) + 0.05);
+	});
+	expect(focusContrast).toBeGreaterThanOrEqual(3);
+
+	// every filter/view control is >=44px, and the preview has no horizontal
+	// document overflow, at each of mobile/tablet/desktop widths
+	const controls = ['Board', 'List', 'All', 'Mine', 'Due this week'];
+	for (const width of [375, 768, 1280]) {
+		await page.setViewportSize({ width, height: 800 });
+		for (const name of controls) {
+			const box = await frame.getByRole('button', { name, exact: true }).boundingBox();
+			expect(box?.height).toBeGreaterThanOrEqual(44);
+		}
+		const overflow = await previewFrame!.evaluate(
+			() => document.documentElement.scrollWidth - document.documentElement.clientWidth
+		);
+		expect(overflow).toBeLessThanOrEqual(0);
+	}
+});
