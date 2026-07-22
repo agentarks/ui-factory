@@ -134,7 +134,7 @@ Keep the token set + extrusion scale + hairline ring constant; adapt the layout 
 
 **Do**
 
-- Make every raised or pressed surface the **same cool-gray color as the canvas**; derive depth only from paired light/dark extrusion shadows.
+- At rest, make every raised or pressed surface the **same cool-gray color as the canvas**; derive depth only from paired light/dark extrusion shadows. (The documented _transient_ cool-cobalt hover tint on cards/secondary controls is the one allowed exception — decorative, non-persistent.)
 - Always layer the **1px darker inner hairline ring** onto columns, cards, and selected/raised controls — it is what keeps low-contrast relief legible.
 - Express selection as a **pressed-in** state, not a colored fill.
 - Keep shadows tinted (near-white light, dark cool-gray shade), never pure white/black; keep all colors OKLCH; tint neutrals toward hue 255.
@@ -167,7 +167,7 @@ Keep the token set + extrusion scale + hairline ring constant; adapt the layout 
 
 ## Acceptance checklist (for AI coding agents implementing this direction)
 
-- [ ] Cool-gray canvas (`oklch(0.9 0.006 255)`) sits behind every surface; raised cards/columns/controls use the **same** surface color.
+- [ ] Cool-gray canvas (`oklch(0.9 0.006 255)`) sits behind every surface; raised cards/columns/controls use the **same** surface color at rest (the documented transient cool-cobalt hover tint is the only allowed deviation).
 - [ ] Depth comes only from paired light/dark extrusion shadows (tinted near-white + dark cool-gray, no pure white/black) plus the hairline ring. No gradients, no `backdrop-filter`, no translucency, no glass/clay/flat-material/illustration treatments.
 - [ ] A **1px darker inner hairline ring** (`inset 0 0 0 1px var(--hair)`, or `--hair-strong` on selected/raised controls) is layered onto every column, card, and selected/raised control.
 - [ ] Selection/active state is a **pressed-in** well (`--press-sm` + `--ring-strong`), not a colored fill.
