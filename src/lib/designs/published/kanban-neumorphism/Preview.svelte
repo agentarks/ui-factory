@@ -351,6 +351,7 @@
 		--hair-strong: oklch(0.72 0.012 255); /* ring on selected/raised controls */
 		--accent: oklch(0.42 0.016 255); /* monochrome dark focus/selection accent */
 		--on-accent: oklch(0.96 0.004 255); /* near-white ink on dark fills (never #fff) */
+		--hover-tint: oklch(0.918 0.032 250); /* restrained cool-cobalt hover feedback (decorative) */
 		--danger: oklch(0.48 0.13 25); /* muted clay-red error ink */
 		--danger-soft: oklch(0.88 0.03 25); /* pale clay error surface */
 		--done: oklch(0.45 0.1 152); /* muted green done */
@@ -983,6 +984,23 @@
 	   >=3:1 here. A near-white ring would sit on the near-white surface and vanish. */
 	.primary:focus-visible {
 		outline-color: var(--accent);
+	}
+
+	/* Cool-cobalt hover tint — restrained decorative feedback on hover-capable
+	   devices. It is never the only state signal: the paired light/dark shadow,
+	   the 1px hairline ring, the focus ring, and the pressed/selected semantics
+	   all remain. Primary and error actions are deliberately NOT recolored, so
+	   their semantic role stays unambiguous. Under prefers-reduced-motion the
+	   tint still applies (it is a color change, not motion) but instantly — the
+	   0.16s fade and the transform lifts below are gated behind reduced-motion. */
+	@media (hover: hover) {
+		.card:hover,
+		.chip:not([aria-pressed='true']):hover,
+		.segmented button:not([aria-pressed='true']):hover,
+		.icon-btn:not(.error-dismiss):hover,
+		.add-card:hover {
+			background: var(--hover-tint);
+		}
 	}
 
 	@media (prefers-reduced-motion: no-preference) {

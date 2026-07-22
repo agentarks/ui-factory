@@ -277,4 +277,67 @@ test('opens the kanban-neumorphism design and its isolated preview states', asyn
 		);
 		expect(overflow).toBeLessThanOrEqual(0);
 	}
+
+	// cool-cobalt hover tint: a representative card and a secondary button visibly
+	// shift to the documented hover shade (the blue channel rises above red) on
+	// hover, while AA-dark text contrast holds against the tinted background. The
+	// tint is decorative — focus rings and pressed/selected semantics are unchanged.
+	const measure = (sel: string, textSel: string | null) =>
+		previewFrame!.evaluate(
+			([s, t]: [string, string | null]) => {
+				const el = document.querySelector(s);
+				if (!(el instanceof HTMLElement)) return null;
+				const cs = getComputedStyle(el);
+				const ctx = document.createElement('canvas').getContext('2d');
+				if (!ctx) return null;
+				const sample = (css: string) => {
+					ctx.clearRect(0, 0, 2, 2);
+					ctx.fillStyle = '#000';
+					ctx.fillStyle = css;
+					ctx.fillRect(0, 0, 2, 2);
+					const d = ctx.getImageData(0, 0, 1, 1).data;
+					const ch = (v: number) => {
+						const x = v / 255;
+						return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+					};
+					return {
+						lum: 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]),
+						blue: d[2],
+						red: d[0]
+					};
+				};
+				const bg = sample(cs.backgroundColor);
+				const textEl = t ? el.querySelector(t) : el;
+				const fg = textEl instanceof HTMLElement ? sample(getComputedStyle(textEl).color) : null;
+				const contrast = fg
+					? (Math.max(bg.lum, fg.lum) + 0.05) / (Math.min(bg.lum, fg.lum) + 0.05)
+					: -1;
+				return { color: cs.backgroundColor, blueRedGap: bg.blue - bg.red, contrast };
+			},
+			[sel, textSel] as [string, string | null]
+		);
+
+	// representative card
+	const cardRest = await measure('.card', '.card-title');
+	expect(cardRest).not.toBeNull();
+	await frame.locator('.card').first().hover();
+	// let the 0.16s hover transition settle before reading the target shade
+	await page.waitForTimeout(220);
+	const cardHover = await measure('.card', '.card-title');
+	expect(cardHover).not.toBeNull();
+	expect(cardHover!.color).not.toBe(cardRest!.color);
+	expect(cardHover!.blueRedGap).toBeGreaterThan(cardRest!.blueRedGap);
+	expect(cardHover!.blueRedGap).toBeGreaterThanOrEqual(8); // clearly cobalt-leaning
+	expect(cardHover!.contrast).toBeGreaterThanOrEqual(4.5); // AA-dark ink holds on the tint
+
+	// representative secondary button (All filter chip)
+	const chipRest = await measure('.chip', null);
+	expect(chipRest).not.toBeNull();
+	await frame.getByRole('button', { name: 'All', exact: true }).hover();
+	await page.waitForTimeout(220);
+	const chipHover = await measure('.chip', null);
+	expect(chipHover).not.toBeNull();
+	expect(chipHover!.color).not.toBe(chipRest!.color);
+	expect(chipHover!.blueRedGap).toBeGreaterThan(chipRest!.blueRedGap);
+	expect(chipHover!.blueRedGap).toBeGreaterThanOrEqual(8);
 });

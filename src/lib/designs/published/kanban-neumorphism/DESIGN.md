@@ -18,26 +18,27 @@ A Kanban board for a small product team: a board header (project identity, team 
 
 ## Color system (OKLCH)
 
-| Token           | Value                   | Role                                                                            |
-| --------------- | ----------------------- | ------------------------------------------------------------------------------- |
-| `--canvas`      | `oklch(0.9 0.006 255)`  | Neumorphic page base; raised surfaces share this exact color                    |
-| `--surface`     | `oklch(0.9 0.006 255)`  | Cards, columns, controls (identical to canvas)                                  |
-| `--ink`         | `oklch(0.26 0.014 255)` | AA-dark primary text (≈7:1 on surface)                                          |
-| `--ink-soft`    | `oklch(0.37 0.014 255)` | Meta: due dates, counts, checklist, empty-state copy, search placeholder (≈5:1) |
-| `--ink-faint`   | `oklch(0.5 0.012 255)`  | Grip handle, decorative icons (non-text only)                                   |
-| `--hair`        | `oklch(0.8 0.008 255)`  | 1px inner hairline ring on resting raised/pressed surfaces                      |
-| `--hair-strong` | `oklch(0.72 0.012 255)` | 1px inner ring on selected/raised controls                                      |
-| `--accent`      | `oklch(0.42 0.016 255)` | Monochrome dark focus/selection accent; primary fill                            |
-| `--on-accent`   | `oklch(0.96 0.004 255)` | Near-white ink on the dark primary fill (never `#fff`)                          |
-| `--danger`      | `oklch(0.48 0.13 25)`   | Muted clay-red error ink/icon                                                   |
-| `--danger-soft` | `oklch(0.88 0.03 25)`   | Pale clay error surface                                                         |
-| `--done`        | `oklch(0.45 0.1 152)`   | Muted green done state                                                          |
-| `--pri-high`    | `oklch(0.48 0.12 25)`   | Muted clay-red high priority                                                    |
-| `--pri-medium`  | `oklch(0.48 0.09 65)`   | Muted amber medium priority                                                     |
+| Token           | Value                    | Role                                                                                  |
+| --------------- | ------------------------ | ------------------------------------------------------------------------------------- |
+| `--canvas`      | `oklch(0.9 0.006 255)`   | Neumorphic page base; raised surfaces share this exact color                          |
+| `--surface`     | `oklch(0.9 0.006 255)`   | Cards, columns, controls (identical to canvas)                                        |
+| `--ink`         | `oklch(0.26 0.014 255)`  | AA-dark primary text (≈7:1 on surface)                                                |
+| `--ink-soft`    | `oklch(0.37 0.014 255)`  | Meta: due dates, counts, checklist, empty-state copy, search placeholder (≈5:1)       |
+| `--ink-faint`   | `oklch(0.5 0.012 255)`   | Grip handle, decorative icons (non-text only)                                         |
+| `--hair`        | `oklch(0.8 0.008 255)`   | 1px inner hairline ring on resting raised/pressed surfaces                            |
+| `--hair-strong` | `oklch(0.72 0.012 255)`  | 1px inner ring on selected/raised controls                                            |
+| `--accent`      | `oklch(0.42 0.016 255)`  | Monochrome dark focus/selection accent; primary fill                                  |
+| `--on-accent`   | `oklch(0.96 0.004 255)`  | Near-white ink on the dark primary fill (never `#fff`)                                |
+| `--hover-tint`  | `oklch(0.918 0.032 250)` | Restrained cool-cobalt hover tint — decorative feedback on cards & secondary controls |
+| `--danger`      | `oklch(0.48 0.13 25)`    | Muted clay-red error ink/icon                                                         |
+| `--danger-soft` | `oklch(0.88 0.03 25)`    | Pale clay error surface                                                               |
+| `--done`        | `oklch(0.45 0.1 152)`    | Muted green done state                                                                |
+| `--pri-high`    | `oklch(0.48 0.12 25)`    | Muted clay-red high priority                                                          |
+| `--pri-medium`  | `oklch(0.48 0.09 65)`    | Muted amber medium priority                                                           |
 
 - **Neutrals are tinted** toward hue 255 (cool gray), never pure grey/black/white. `--on-accent` is a near-white, not `#fff`.
 - **No gradients, no backdrop blur, no translucency** anywhere. The only depth cues are the dual extrusion shadows and the hairline ring.
-- **Monochrome by default:** cards, columns, labels, controls, dividers, and dividers are all the cool-gray surface. The only color in the system is a tiny set of **whisper-chroma semantic cues** (chroma 0.04–0.13), each always paired with a text label or icon:
+- **Monochrome by default:** cards, columns, labels, controls, dividers, and dividers are all the cool-gray surface. The only color in the system is a tiny set of **whisper-chroma semantic cues** (chroma 0.04–0.13), each always paired with a text label or icon, plus one **decorative** cool-cobalt hover tint (`--hover-tint`, chroma 0.032) used only as hover feedback:
   - **Stage dots** (one per column header, chroma 0.02–0.05): Backlog slate `oklch(0.52 0.02 260)`, In Progress blue `oklch(0.52 0.05 250)`, In Review amber `oklch(0.6 0.05 70)`, Done green `oklch(0.54 0.05 152)`. They never become a colored side-stripe.
   - **Priority** (dot + capitalized word): high `oklch(0.48 0.12 25)`, medium `oklch(0.48 0.09 65)`.
   - **Done** due-date + check icon: `oklch(0.45 0.1 152)`.
@@ -92,8 +93,8 @@ This specimen is a single board with no route navigation. When extending to a fu
 
 ## Interaction and motion
 
-- Hover: card lifts 1px to `--raise`; primary button lifts 1px; icon buttons and add-card shift from ring-only to `--raise-sm`. Active filter/view presses _into_ its track (`--press-sm` + `--ring-strong`).
-- Normal UI transitions (hover, focus, press, active-state shadow) are **0.16s ease**, gated behind `@media (prefers-reduced-motion: no-preference)`. Hover-only effects are additionally gated behind `@media (hover: hover)` so touch devices don't get sticky hover states.
+- Hover: card lifts 1px to `--raise`; primary button lifts 1px; icon buttons and add-card shift from ring-only to `--raise-sm`. Active filter/view presses _into_ its track (`--press-sm` + `--ring-strong`). In addition, a restrained **cool-cobalt hover tint** (`--hover-tint`, `oklch(0.918 0.032 250)`) is applied to cards and the secondary controls — inactive filter chips, inactive Board/List buttons, the column "more actions" icon button, and "Add a card". The tint is **decorative feedback only**: the paired light/dark shadow, the 1px hairline ring, the focus ring, and the pressed/selected semantics all remain, so hover color is never the sole state signal. The **primary button and the error Retry/dismiss actions are deliberately not recolored**, keeping their semantic role unambiguous. The tint holds AA — AA-dark ink on the slightly-lighter pale-cobalt background still clears 4.5:1.
+- Normal UI transitions (hover, focus, press, active-state shadow, and the hover tint) are **0.16s ease**, gated behind `@media (prefers-reduced-motion: no-preference)`. Hover-only effects are additionally gated behind `@media (hover: hover)` so touch devices don't get sticky hover states. Under `prefers-reduced-motion` the hover tint still applies (a color change is not motion) but **instantly**, with no fade; only the transform lifts and the fade are suppressed.
 - The loading skeleton's opacity pulse is a separate, slower **1.4s ease-in-out** loop, also gated behind `prefers-reduced-motion: no-preference`. It is the only repeating motion and has no reduced-motion counterpart by design (reduced-motion shows static skeleton grooves).
 - In both cases, reduced-motion users get a fully static board with no loss of function.
 - Never animate CSS layout properties (other than the small `transform` lifts); never use bounce/elastic easing.
@@ -176,5 +177,6 @@ Keep the token set + extrusion scale + hairline ring constant; adapt the layout 
 - [ ] All text meets WCAG 2.2 AA (≥4.5:1) against its cool-gray background; state is conveyed in text/tactile difference, not color/shape alone.
 - [ ] Layout is responsive: columns scroll horizontally on desktop and stack on mobile; no document horizontal overflow at 375/768/1280.
 - [ ] Normal UI transitions are ≤0.16s ease and the skeleton opacity pulse is a 1.4s loop, both gated behind `prefers-reduced-motion: no-preference` (reduced-motion shows a fully static board); hover effects gated behind `(hover: hover)`; no layout-property animation (besides small `transform` lifts); no bounce/elastic.
+- [ ] A restrained cool-cobalt hover tint (`--hover-tint`) is applied to cards and the secondary controls (inactive filter chips, inactive Board/List buttons, the column "more actions" icon button, "Add a card") as decorative feedback only — the shadow, hairline ring, focus ring, and pressed/selected semantics remain, so color is never the sole state signal; the primary and error actions are not recolored; AA-dark text still clears 4.5:1 on the tint; under `prefers-reduced-motion` the tint applies instantly with no fade.
 - [ ] The board content matches the locked `fixtures.ts` baseline; the empty-column state renders.
 - [ ] Loading (skeleton with opacity pulse on inset grooves, gradient-free), error (raised pale-clay banner), drag affordance (grip), empty, done, priority, and pressed-selection states are all shown; the skeleton pulse respects `prefers-reduced-motion`.
