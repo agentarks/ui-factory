@@ -86,22 +86,49 @@ test('opens the kanban-flat-material design and its isolated preview states', as
 	await mineBtn.click();
 	await expect(mineBtn).toHaveAttribute('aria-pressed', 'true');
 
-	// control targets: every filter chip and Board/List segmented button is >=44px tall
-	for (const name of ['Board', 'List', 'All', 'Mine']) {
-		const box = await frame.getByRole('button', { name, exact: true }).boundingBox();
-		expect(box?.height).toBeGreaterThanOrEqual(44);
-	}
-
-	// keyboard focus on the search field shows a contrasting container ring
-	await frame.getByRole('searchbox').focus();
-	await expect(frame.locator('.search')).toHaveCSS('outline-style', 'solid');
-	await expect(frame.locator('.search')).toHaveCSS('outline-width', '3px');
-
-	// no horizontal document overflow in the preview at mobile/tablet/desktop widths
+	// keyboard focus on the search field shows a container ring with meaningful
+	// contrast against the field background (>=3:1, the WCAG UI-component minimum),
+	// proving the ring is visible — not merely a non-zero outline that could still
+	// disappear against the near-white field.
 	const previewFrame = page.frame({ url: /kanban-flat-material\/preview$/ });
 	expect(previewFrame).toBeTruthy();
+	await frame.getByRole('searchbox').focus();
+	const focusContrast = await previewFrame!.evaluate(() => {
+		const el = document.querySelector('.search');
+		if (!(el instanceof HTMLElement)) return -1;
+		const cs = getComputedStyle(el);
+		// No focus ring present (regression) -> fail fast with a sentinel below 3.
+		if (cs.outlineStyle !== 'solid' || parseFloat(cs.outlineWidth) < 3) return -1;
+		// Parse any CSS color (oklch/rgb/named) via the browser's canvas color parser.
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return -1;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const oL = lum(cs.outlineColor);
+		const bL = lum(cs.backgroundColor);
+		return (Math.max(oL, bL) + 0.05) / (Math.min(oL, bL) + 0.05);
+	});
+	expect(focusContrast).toBeGreaterThanOrEqual(3);
+
+	// every filter/view control is >=44px, and the preview has no horizontal
+	// document overflow, at each of mobile/tablet/desktop widths
+	const controls = ['Board', 'List', 'All', 'Mine', 'Due this week'];
 	for (const width of [375, 768, 1280]) {
 		await page.setViewportSize({ width, height: 800 });
+		for (const name of controls) {
+			const box = await frame.getByRole('button', { name, exact: true }).boundingBox();
+			expect(box?.height).toBeGreaterThanOrEqual(44);
+		}
 		const overflow = await previewFrame!.evaluate(
 			() => document.documentElement.scrollWidth - document.documentElement.clientWidth
 		);

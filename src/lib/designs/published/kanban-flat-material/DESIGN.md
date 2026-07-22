@@ -106,7 +106,7 @@ This specimen is a single board with no route navigation. When extending to a fu
 
 ## States
 
-The states below are **visual state/affordance demonstrations only**, not functional behavior. Search, filtering, the Board/List toggle, Retry, dismiss, and drag-and-drop are specimen-only — they render the treatment and toggle `aria-pressed` selection state, but perform no real filtering, syncing, dismissal, or card movement. The drag treatment is static. Reuse these visual treatments when wiring real behavior:
+The states below are **visual state/affordance demonstrations only**, not functional behavior. The **filter chips and the Board/List segmented toggle are `aria-pressed` toggle controls** — they reflect selection state in the specimen but perform no real filtering or view switch. **Search, Retry, and dismiss render their affordance but perform no real search, sync, or dismissal.** The **drag grip is a static affordance** with no drag-and-drop logic. Reuse these visual treatments when wiring real behavior:
 
 - **Empty (shown):** a column with no cards renders a dashed tinted placeholder ("No cards yet") — see the **In Review** column.
 - **Loading (shown):** a **skeleton card** with solid placeholder bars (in Backlog). The skeleton uses an **opacity pulse** (not a gradient shimmer) so it stays gradient-free. The pulse animates only under `prefers-reduced-motion: no-preference`.
