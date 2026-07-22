@@ -278,23 +278,37 @@ test('opens the kanban-neumorphism design and its isolated preview states', asyn
 		expect(overflow).toBeLessThanOrEqual(0);
 	}
 
-	// Ambient hover feedback — the hovered element's OWN face stays at its resting
-	// neutral background; the correct parent surface (the column for a card, the
-	// segmented track for a filter/Board-List button) shifts to the documented
-	// cool-cobalt tint. AA-dark text contrast is maintained throughout.
+	// Shadow-only hover feedback — the hovered element's face AND every parent
+	// surface stay at their neutral resting background; only the computed
+	// box-shadow changes, gaining the documented cool-cobalt lower-right shadow.
+	// AA-dark text contrast is maintained on the unchanged neutral face.
 	const bgOf = (sel: string) =>
 		previewFrame!.evaluate((s) => {
 			const el = document.querySelector(s);
 			if (!(el instanceof HTMLElement)) return null;
-			const cs = getComputedStyle(el);
+			return { color: getComputedStyle(el).backgroundColor };
+		}, sel);
+	// Returns the computed box-shadow string plus the largest (blue - red) channel
+	// gap among its colors — a cobalt layer reads >=80; the neutral resting
+	// shadows read far below that.
+	const shadowOf = (sel: string) =>
+		previewFrame!.evaluate((s) => {
+			const el = document.querySelector(s);
+			if (!(el instanceof HTMLElement)) return null;
+			const shadow = getComputedStyle(el).boxShadow;
 			const ctx = document.createElement('canvas').getContext('2d');
 			if (!ctx) return null;
-			ctx.clearRect(0, 0, 2, 2);
-			ctx.fillStyle = '#000';
-			ctx.fillStyle = cs.backgroundColor;
-			ctx.fillRect(0, 0, 2, 2);
-			const d = ctx.getImageData(0, 0, 1, 1).data;
-			return { color: cs.backgroundColor, blue: d[2], red: d[0], alpha: d[3] };
+			const colors = shadow.match(/(rgba?|oklch)\([^)]*\)/g) ?? [];
+			let maxGap = 0;
+			for (const c of colors) {
+				ctx.clearRect(0, 0, 2, 2);
+				ctx.fillStyle = '#000';
+				ctx.fillStyle = c;
+				ctx.fillRect(0, 0, 2, 2);
+				const d = ctx.getImageData(0, 0, 1, 1).data;
+				maxGap = Math.max(maxGap, d[2] - d[0]);
+			}
+			return { shadow, maxCobaltGap: maxGap };
 		}, sel);
 	const contrastBetween = (textSel: string, bgSel: string) =>
 		previewFrame!.evaluate(
@@ -323,32 +337,35 @@ test('opens the kanban-neumorphism design and its isolated preview states', asyn
 			[textSel, bgSel] as [string, string]
 		);
 
-	// representative card: its face stays neutral while its column takes the tint
-	const cardRest = await bgOf('.card');
-	const colRest = await bgOf('.column');
-	expect(cardRest).not.toBeNull();
+	// representative card: face + column backgrounds unchanged; shadow -> cobalt
+	const cardRestBg = await bgOf('.card');
+	const colRestBg = await bgOf('.column');
+	const cardRestShadow = await shadowOf('.card');
+	expect(cardRestShadow).not.toBeNull();
 	await frame.locator('.card').first().hover();
-	await page.waitForTimeout(220); // let the 0.16s ambient tint settle
-	const cardHover = await bgOf('.card');
-	const colHover = await bgOf('.column');
-	expect(cardHover!.color).toBe(cardRest!.color); // hovered card face unchanged (neutral)
-	expect(colHover!.color).not.toBe(colRest!.color); // parent column changed
-	expect(colHover!.blue - colHover!.red).toBeGreaterThanOrEqual(8); // column is cobalt
-	// AA against the tinted parent: the column heading text sits directly on the
-	// tinted column surface (the card title sits on the neutral card, not the tint).
-	expect(await contrastBetween('.column h2', '.column')).toBeGreaterThanOrEqual(4.5);
+	await page.waitForTimeout(220); // let the 0.16s box-shadow transition settle
+	const cardHoverBg = await bgOf('.card');
+	const colHoverBg = await bgOf('.column');
+	const cardHoverShadow = await shadowOf('.card');
+	expect(cardHoverBg!.color).toBe(cardRestBg!.color); // hovered card face unchanged (neutral)
+	expect(colHoverBg!.color).toBe(colRestBg!.color); // parent column unchanged (no tint)
+	expect(cardRestShadow!.maxCobaltGap).toBeLessThan(80); // no cobalt at rest
+	expect(cardHoverShadow!.shadow).not.toBe(cardRestShadow!.shadow); // shadow changed
+	expect(cardHoverShadow!.maxCobaltGap).toBeGreaterThanOrEqual(80); // cobalt shadow present
+	expect(await contrastBetween('.card-title', '.card')).toBeGreaterThanOrEqual(4.5); // AA on neutral face
 
-	// representative secondary button (All filter chip): its face stays neutral
-	// while its segmented track takes the tint
-	const chipRest = await bgOf('.chip');
-	const trackRest = await bgOf('.segmented');
+	// representative secondary button (All filter chip): face + track backgrounds
+	// unchanged; shadow -> cobalt
+	const chipRestBg = await bgOf('.chip');
+	const trackRestBg = await bgOf('.segmented');
+	const chipRestShadow = await shadowOf('.chip');
 	await frame.getByRole('button', { name: 'All', exact: true }).hover();
 	await page.waitForTimeout(220);
-	const chipHover = await bgOf('.chip');
-	const trackHover = await bgOf('.segmented');
-	expect(chipHover!.color).toBe(chipRest!.color); // hovered chip face unchanged (neutral)
-	expect(chipHover!.alpha).toBe(255); // face is opaque neutral, not transparent (tint shows behind it)
-	expect(trackHover!.color).not.toBe(trackRest!.color); // parent track changed
-	expect(trackHover!.blue - trackHover!.red).toBeGreaterThanOrEqual(8); // track is cobalt
-	expect(await contrastBetween('.chip', '.segmented')).toBeGreaterThanOrEqual(4.5); // AA over tinted track
+	const chipHoverBg = await bgOf('.chip');
+	const trackHoverBg = await bgOf('.segmented');
+	const chipHoverShadow = await shadowOf('.chip');
+	expect(chipHoverBg!.color).toBe(chipRestBg!.color); // hovered chip face unchanged (neutral)
+	expect(trackHoverBg!.color).toBe(trackRestBg!.color); // parent track unchanged (no tint)
+	expect(chipHoverShadow!.shadow).not.toBe(chipRestShadow!.shadow); // shadow changed
+	expect(chipHoverShadow!.maxCobaltGap).toBeGreaterThanOrEqual(80); // cobalt shadow present
 });

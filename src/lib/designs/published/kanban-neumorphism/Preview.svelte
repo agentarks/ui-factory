@@ -351,9 +351,8 @@
 		--hair-strong: oklch(0.72 0.012 255); /* ring on selected/raised controls */
 		--accent: oklch(0.42 0.016 255); /* monochrome dark focus/selection accent */
 		--on-accent: oklch(0.96 0.004 255); /* near-white ink on dark fills (never #fff) */
-		--hover-tint: oklch(
-			0.918 0.032 250
-		); /* restrained cool-cobalt ambient hover tint (parent surface) */
+		--hover-shadow:
+			4px 4px 12px rgba(38, 72, 168, 0.42), -3px -3px 7px rgba(248, 250, 254, 0.9); /* cool-cobalt lower-right hover shadow + preserved near-light upper-left */
 		--danger: oklch(0.48 0.13 25); /* muted clay-red error ink */
 		--danger-soft: oklch(0.88 0.03 25); /* pale clay error surface */
 		--done: oklch(0.45 0.1 152); /* muted green done */
@@ -539,10 +538,7 @@
 		font-weight: 600;
 		color: var(--ink-soft);
 		border: 0;
-		/* Opaque neutral face (+ hairline ring) so the tinted segmented track changes
-		   BEHIND the button without visually recoloring the hovered button face. */
-		background: var(--surface);
-		box-shadow: var(--ring);
+		background: transparent;
 		padding: 0 0.85rem;
 		min-width: 44px;
 		min-height: 44px;
@@ -707,7 +703,6 @@
 	@media (hover: hover) {
 		.icon-btn:hover {
 			color: var(--ink);
-			box-shadow: var(--raise-sm), var(--ring);
 		}
 	}
 
@@ -889,7 +884,6 @@
 	@media (hover: hover) {
 		.add-card:hover {
 			color: var(--ink);
-			box-shadow: var(--raise-sm), var(--ring);
 		}
 	}
 
@@ -991,22 +985,22 @@
 		outline-color: var(--accent);
 	}
 
-	/* Ambient cool-cobalt hover feedback — the hovered element's OWN face stays
-	   neutral (preserving the neumorphic surface/canvas match); instead the
-	   enclosing parent surface takes a restrained cool-cobalt tint. Hovering a
-	   task card or a column-local secondary control (more-actions icon, Add a
-	   card) tints that column; hovering a filter or Board/List button tints its
-	   segmented track. The tint is decorative and never the sole state signal
-	   (paired light/dark shadow, 1px hairline ring, focus ring, and
-	   pressed/selected semantics all remain). Primary and error actions are not
-	   involved. Native :has() is acceptable for this modern-browser specimen.
-	   Under prefers-reduced-motion the tint still applies (a color change, not
-	   motion) but instantly — the 0.16s fade and transform lifts below are gated
-	   behind reduced-motion. */
+	/* Shadow-only hover feedback — the hovered element's face AND every parent
+	   surface stay at their neutral resting background; only the cast/extrusion
+	   shadow changes, gaining a clearly contrasting cool-cobalt lower-right
+	   highlight while the near-light upper-left shadow and the 1px hairline ring
+	   are preserved (the ring is re-applied alongside --hover-shadow). Selected/
+	   pressed controls, the primary, and error actions are excluded so their
+	   semantic styles win. Native CSS only. Under prefers-reduced-motion the
+	   shadow still changes (a shadow change is not motion) but instantly — the
+	   0.16s fade and transform lifts below are gated behind reduced-motion. */
 	@media (hover: hover) {
-		.column:has(.card:hover, .add-card:hover, .icon-btn:hover),
-		.segmented:has(button:hover) {
-			background: var(--hover-tint);
+		.card:hover,
+		.chip:not([aria-pressed='true']):hover,
+		.segmented button:not([aria-pressed='true']):hover,
+		.icon-btn:not(.error-dismiss):hover,
+		.add-card:hover {
+			box-shadow: var(--hover-shadow), var(--ring);
 		}
 	}
 
@@ -1017,9 +1011,7 @@
 		.primary,
 		.add-card,
 		.icon-btn,
-		.error-retry,
-		.column,
-		.segmented {
+		.error-retry {
 			transition:
 				box-shadow 0.16s ease,
 				background 0.16s ease,
@@ -1029,7 +1021,6 @@
 
 		@media (hover: hover) {
 			.card:hover {
-				box-shadow: var(--raise), var(--ring);
 				transform: translateY(-1px);
 			}
 
