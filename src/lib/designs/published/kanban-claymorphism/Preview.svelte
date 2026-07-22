@@ -171,10 +171,10 @@
 					<header class="column-head">
 						<span class="column-dot" aria-hidden="true"></span>
 						<h2>{col.name}</h2>
-						<span
-							class="count"
-							aria-label="{col.cards.length} {col.cards.length === 1 ? 'card' : 'cards'}"
-							>{col.cards.length}</span
+						<span class="count"
+							>{col.cards.length}<span class="sr-only">
+								{col.cards.length === 1 ? 'card' : 'cards'}</span
+							></span
 						>
 						<!-- Visual-specimen-only affordance: opens no menu and performs no
 						     action; it demonstrates the column-level overflow control only. -->
@@ -347,6 +347,7 @@
 	:global(html, body) {
 		margin: 0;
 		min-height: 100%;
+		overflow-x: hidden;
 	}
 
 	.board-root,
@@ -379,16 +380,27 @@
 		--ink-bright-soft: oklch(0.7 0.035 285); /* meta on dark (~4.5:1+) */
 
 		/* Accent */
-		--accent: oklch(0.62 0.12 280); /* soft violet primary fill */
-		--on-accent: oklch(0.95 0.015 285); /* near-white ink on accent (never #fff) */
-		--accent-soft: oklch(0.42 0.07 280); /* darker violet for focus ring on pastel */
+		--accent: oklch(0.62 0.12 280); /* bright violet: focus ring on dark surfaces */
+		--accent-fill: oklch(
+			0.46 0.12 280
+		); /* darker violet: primary fill (>=4.5:1 for near-white text) */
+		--on-accent: oklch(0.95 0.015 285); /* near-white ink on accent fill (never #fff) */
+		--accent-soft: oklch(0.42 0.07 280); /* darker violet for search inner-ring focus on pastel */
 
-		/* Semantic (bright enough for dark surfaces, all paired with text/icons) */
-		--danger: oklch(0.68 0.17 25); /* coral-red error ink */
+		/*
+		 * Semantic tokens — bright decorative indicators separated from darker
+		 * text-ink variants so every normal-size text role passes AA (>=4.5:1)
+		 * on its actual opaque parent. Decorative dots keep the bright values;
+		 * text uses the darker -ink variants.
+		 */
+		--danger: oklch(0.74 0.16 25); /* coral-red: error text/icon on dark surface (>=4.5:1) */
 		--danger-soft: oklch(0.3 0.06 25); /* dark coral error surface */
-		--done: oklch(0.72 0.14 152); /* bright green done */
-		--pri-high: oklch(0.68 0.17 25); /* coral-red high priority */
-		--pri-medium: oklch(0.72 0.14 65); /* amber medium priority */
+		--done: oklch(0.72 0.14 152); /* bright green: decorative done checkmark/dot */
+		--done-ink: oklch(0.36 0.1 152); /* dark green: done date text on pastel (>=4.5:1) */
+		--pri-high: oklch(0.68 0.17 25); /* bright coral: decorative priority dot */
+		--pri-high-ink: oklch(0.36 0.12 25); /* dark coral: high-priority text on pastel (>=4.5:1) */
+		--pri-medium: oklch(0.72 0.14 65); /* bright amber: decorative priority dot */
+		--pri-medium-ink: oklch(0.36 0.1 65); /* dark amber: medium-priority text on pastel (>=4.5:1) */
 
 		/*
 		 * Clay shadow recipes — the claymorphic signature.
@@ -436,6 +448,7 @@
 			ui-monospace, 'SF Mono', 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
 
 		min-height: 100vh;
+		overflow-x: hidden;
 		font-family: var(--font-sans);
 		font-synthesis: none;
 		color: var(--ink);
@@ -626,7 +639,7 @@
 		padding: 0 1.05rem;
 		border-radius: var(--r-control);
 		cursor: pointer;
-		background: var(--accent);
+		background: var(--accent-fill);
 		box-shadow: var(--clay-accent);
 	}
 
@@ -867,7 +880,7 @@
 	}
 
 	.priority.pri-high {
-		color: var(--pri-high);
+		color: var(--pri-high-ink);
 	}
 
 	.priority.pri-high .dot {
@@ -875,7 +888,7 @@
 	}
 
 	.priority.pri-medium {
-		color: var(--pri-medium);
+		color: var(--pri-medium-ink);
 	}
 
 	.priority.pri-medium .dot {
@@ -892,7 +905,7 @@
 	}
 
 	.due.is-done {
-		color: var(--done);
+		color: var(--done-ink);
 	}
 
 	.assignees {
@@ -1024,6 +1037,20 @@
 		font-family: var(--font-mono);
 		font-size: 0.72rem;
 		font-weight: 600;
+	}
+
+	/* ---------- Visually hidden (accessible text) ---------- */
+
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
 	}
 
 	/* ---------- Focus + motion ---------- */

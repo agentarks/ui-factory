@@ -14,29 +14,33 @@ A Kanban board for a small product team: a board header (project identity, team 
 1. **Bright opaque pastel faces on dark putty masses.** The claymorphic signature: cards and controls are clearly puffy raised shapes with opaque light pastel faces, floating on dark indigo structural surfaces (app bar, columns). Depth comes from paired inset highlight + inset shadow + outer cast extrusion, never from translucency or glass.
 2. **Clay recipe is the depth language.** Every raised surface carries the same four-layer shadow: inset upper-left highlight (tinted near-white on pastel, soft violet on dark), inset lower-right shadow (tinted indigo), outer cast drop shadow, and a restrained low-radius glow. The glow is a secondary material cue, never the sole state signal.
 3. **Selection = pressed in.** Active toggles and filters become inverted-inset wells — the clay squishes down — rather than colored fills. Tactile state is the interaction language.
-4. **Legibility over purity.** Pastel card faces carry dark indigo ink (≥7:1); dark structural surfaces carry light pastel text (≥7:1). No pure black or white. Semantic colors are bright enough for the dark theme and always paired with text/icons. Monospace for metrics/dates/counts adds a tactile terminal accent.
+4. **Legibility over purity.** Pastel card faces carry dark indigo ink (≥7:1); dark structural surfaces carry light pastel text (≥7:1). No pure black or white. Semantic text roles (priority labels, done dates, error text, primary action text) use **dedicated darker `-ink` variants** (L 0.36) that pass AA on pastel faces; bright decorative tokens (L 0.68–0.74) are reserved for dots and checkmarks. Monospace for metrics/dates/counts adds a tactile terminal accent.
 
 ## Color system (OKLCH)
 
-| Token               | Value                   | Role                                                         |
-| ------------------- | ----------------------- | ------------------------------------------------------------ |
-| `--canvas`          | `oklch(0.21 0.05 272)`  | Deep tinted-indigo page background                           |
-| `--clay-dark`       | `oklch(0.27 0.05 275)`  | Dark indigo clay: columns                                    |
-| `--bar-bg`          | `oklch(0.24 0.048 274)` | App bar dark clay (slightly deeper than columns)             |
-| `--surface`         | `oklch(0.84 0.028 285)` | Bright opaque pastel-clay card face (the luminous element)   |
-| `--ink`             | `oklch(0.24 0.035 278)` | Dark indigo ink on pastel surfaces (≈7:1)                    |
-| `--ink-soft`        | `oklch(0.38 0.035 278)` | Meta on pastel: due dates, checklist, labels (≈4.5:1+)       |
-| `--ink-faint`       | `oklch(0.48 0.03 278)`  | Grip handle, decorative icons (non-text only)                |
-| `--ink-bright`      | `oklch(0.9 0.025 285)`  | Light pastel text on dark surfaces (≈10:1)                   |
-| `--ink-bright-soft` | `oklch(0.7 0.035 285)`  | Meta on dark: column counts, subtitle (≈4.5:1+)              |
-| `--accent`          | `oklch(0.62 0.12 280)`  | Soft violet primary fill + focus ring on dark surfaces       |
-| `--on-accent`       | `oklch(0.95 0.015 285)` | Near-white ink on accent fill (never `#fff`)                 |
-| `--accent-soft`     | `oklch(0.42 0.07 280)`  | Darker violet for search inner-ring focus on pastel surfaces |
-| `--danger`          | `oklch(0.68 0.17 25)`   | Coral-red error ink/icon (bright enough for dark surfaces)   |
-| `--danger-soft`     | `oklch(0.3 0.06 25)`    | Dark coral error banner surface                              |
-| `--done`            | `oklch(0.72 0.14 152)`  | Bright green done state                                      |
-| `--pri-high`        | `oklch(0.68 0.17 25)`   | Coral-red high priority                                      |
-| `--pri-medium`      | `oklch(0.72 0.14 65)`   | Amber medium priority                                        |
+| Token               | Value                   | Role                                                             |
+| ------------------- | ----------------------- | ---------------------------------------------------------------- |
+| `--canvas`          | `oklch(0.21 0.05 272)`  | Deep tinted-indigo page background                               |
+| `--clay-dark`       | `oklch(0.27 0.05 275)`  | Dark indigo clay: columns                                        |
+| `--bar-bg`          | `oklch(0.24 0.048 274)` | App bar dark clay (slightly deeper than columns)                 |
+| `--surface`         | `oklch(0.84 0.028 285)` | Bright opaque pastel-clay card face (the luminous element)       |
+| `--ink`             | `oklch(0.24 0.035 278)` | Dark indigo ink on pastel surfaces (≈7:1)                        |
+| `--ink-soft`        | `oklch(0.38 0.035 278)` | Meta on pastel: due dates, checklist, labels (≈4.5:1+)           |
+| `--ink-faint`       | `oklch(0.48 0.03 278)`  | Grip handle, decorative icons (non-text only)                    |
+| `--ink-bright`      | `oklch(0.9 0.025 285)`  | Light pastel text on dark surfaces (≈10:1)                       |
+| `--ink-bright-soft` | `oklch(0.7 0.035 285)`  | Meta on dark: column counts, subtitle (≈4.5:1+)                  |
+| `--accent`          | `oklch(0.62 0.12 280)`  | Bright violet: focus ring on dark surfaces (≈4.7:1)              |
+| `--accent-fill`     | `oklch(0.46 0.12 280)`  | Darker violet: primary button fill (>=4.5:1 for near-white text) |
+| `--on-accent`       | `oklch(0.95 0.015 285)` | Near-white ink on accent fill (never `#fff`)                     |
+| `--accent-soft`     | `oklch(0.42 0.07 280)`  | Darker violet for search inner-ring focus on pastel surfaces     |
+| `--danger`          | `oklch(0.74 0.16 25)`   | Coral-red: error text/icon on dark surface (>=4.5:1)             |
+| `--danger-soft`     | `oklch(0.3 0.06 25)`    | Dark coral error banner surface                                  |
+| `--done`            | `oklch(0.72 0.14 152)`  | Bright green: decorative done checkmark/dot                      |
+| `--done-ink`        | `oklch(0.36 0.1 152)`   | Dark green: done date text on pastel (>=4.5:1)                   |
+| `--pri-high`        | `oklch(0.68 0.17 25)`   | Bright coral: decorative priority dot                            |
+| `--pri-high-ink`    | `oklch(0.36 0.12 25)`   | Dark coral: high-priority text on pastel (>=4.5:1)               |
+| `--pri-medium`      | `oklch(0.72 0.14 65)`   | Bright amber: decorative priority dot                            |
+| `--pri-medium-ink`  | `oklch(0.36 0.1 65)`    | Dark amber: medium-priority text on pastel (>=4.5:1)             |
 
 - **No pure black or white.** Neutrals are tinted toward indigo (hue 272–285). `--on-accent` is a near-white, not `#fff`. Shadow layers use tinted rgba (`rgba(250,245,255,…)` for highlights, `rgba(70,65,120,…)` for indigo shadows, `rgba(12,12,35,…)` for cast drops, `rgba(120,100,200,…)` for glow) — never pure `#000`/`#fff`.
 - **No gradients, no backdrop blur, no translucency** anywhere. The only depth cues are the four-layer clay shadow.
@@ -115,10 +119,10 @@ The states below are **visual state/affordance demonstrations only**, not functi
 ## Accessibility
 
 - Landmarks: `<header>` (banner) + `<main>` + `<section aria-label="Kanban board">` (region); one `<section>` per column with an `<h2>`, cards as `<h3>` inside `<article>`. Heading order h1→h2→h3 is strict.
-- All controls are real `<button>`/`<input>`; filters and view toggle carry `aria-pressed`; counts and icon buttons carry `aria-label`; icons are `aria-hidden`.
+- All controls are real `<button>`/`<input>`; filters and view toggle carry `aria-pressed`; count badges expose "N cards" via visually hidden unit text (not `aria-label` on a non-interactive span); icon buttons carry `aria-label`; icons are `aria-hidden`.
 - **Avatars expose the full name** via `aria-label` (initials alone are not enough; `title` is not reliably announced).
 - **Visible focus:** the default focus ring is `outline: 3px solid var(--accent)` (bright violet, L 0.62) with `outline-offset: 2px` — it contrasts ≥3:1 (≈4.7:1) against the dark indigo surfaces (app bar, columns, error banner) where every button sits. The primary inherits this ring; at `outline-offset: 2px` it seats outside the violet fill, against the dark app-bar surface, where the bright-violet ring reads at ≈4.7:1. The search field uses a contrasting **dark-violet inner-ring groove** (`outline: 3px solid var(--accent-soft)` at `outline-offset: -3px`) drawn inside the pastel surface, so the ring is visible regardless of the surrounding dark bar — the inner groove reads at ≈3.4:1 against the pastel face; the `<input>` remains the semantic focus target, with its own redundant outline suppressed.
-- **WCAG 2.2 AA** is met by construction: dark indigo ink (L 0.24) on the pastel surface (L 0.84) gives ≈7:1; light pastel text (L 0.9) on dark clay (L 0.24) gives ≈10:1; meta inks (L 0.38 on pastel, L 0.7 on dark) give ≥4.5:1; avatar initials (L 0.24) on pastel fills (L 0.68) give ≈5:1; label/priority/done/error text is always dark enough on the surface for AA. Meaning is never conveyed by color/shape alone (priority and status are always labelled in text, and state is reinforced by the pressed/raised tactile difference).
+- **WCAG 2.2 AA** is met by construction: dark indigo ink (L 0.24) on the pastel surface (L 0.84) gives ≈7:1; light pastel text (L 0.9) on dark clay (L 0.24) gives ≈10:1; meta inks (L 0.38 on pastel, L 0.7 on dark) give ≥4.5:1; avatar initials (L 0.24) on pastel fills (L 0.68) give ≈5:1; primary text (L 0.95 near-white on L 0.46 accent-fill) gives ≈5:1; error text (L 0.74 coral on L 0.3 dark-coral) gives ≈4.7:1; done/priority text uses dedicated darker `-ink` variants (L 0.36 on L 0.84 pastel, ≈5:1) — bright decorative tokens (L 0.68–0.74) appear only on non-text indicators (dots, checkmarks). Meaning is never conveyed by color/shape alone (priority and status are always labelled in text, and state is reinforced by the pressed/raised tactile difference).
 
 ## Extending the design to new pages
 
@@ -175,7 +179,7 @@ Keep the token set + clay shadow scale constant; adapt the layout shell. Any new
 - [ ] All colors are OKLCH; neutrals tinted toward indigo (hue 272–285); no `#000`/`#fff`; no gradient text; no colored side-stripes; shadow layers use tinted rgba (never pure black/white).
 - [ ] Typography uses system sans for UI text and system monospace only for compact metrics/counts/dates; hierarchy via scale + weight.
 - [ ] Every interactive element has the focus ring — the bright-violet outline (L 0.62) on every button control including the primary (whose ring seats against the dark surrounding surface at `outline-offset`), and the dark-violet inner-ring groove on the search (at `outline-offset: -3px` on the pastel face) — is ≥44×44px at all viewports (every filter chip, Board/List segmented button, and every icon button including column "more actions" and error dismiss), and has a real role/label; avatars expose the full name.
-- [ ] All text meets WCAG 2.2 AA (≥4.5:1) against its actual opaque background: dark indigo ink on pastel faces, light pastel text on dark surfaces; state is conveyed in text/tactile difference, not color/shape alone.
+- [ ] All text meets WCAG 2.2 AA (≥4.5:1) against its actual opaque background: dark indigo ink on pastel faces, light pastel text on dark surfaces, primary text (near-white on accent-fill), error text (coral on dark-coral), and priority/done date text using dedicated darker `-ink` variants (L 0.36, not the bright decorative dot tokens); state is conveyed in text/tactile difference, not color/shape alone.
 - [ ] Layout is responsive: columns scroll horizontally on desktop and stack on mobile; no document horizontal overflow at 375/768/1280.
 - [ ] Normal UI transitions are 0.18s ease-out and the skeleton opacity pulse is a 1.6s loop, both gated behind `prefers-reduced-motion: no-preference` (reduced-motion shows a fully static board with shadows applied instantly); hover effects gated behind `(hover: hover)`; no layout-property animation (besides small `transform` lifts); no bounce/elastic.
 - [ ] The board content matches the locked `fixtures.ts` baseline; the empty-column state renders.
