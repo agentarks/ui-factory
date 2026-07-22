@@ -11,34 +11,34 @@ A Kanban board for a small product team: a board header (project identity, team 
 
 ## Design principles
 
-1. **Surfaces match the canvas.** The neumorphic signature: at rest, raised cards, columns, and controls are the _same_ cool-gray color as the page background. Depth comes only from paired light/dark extrusion shadows, never from fills, gradients, or translucency. (The single allowed exception is the documented _transient_ cool-cobalt hover tint on cards and secondary controls — see Interaction and motion.)
+1. **Surfaces match the canvas.** The neumorphic signature: at rest, raised cards, columns, and controls are the _same_ cool-gray color as the page background, and the hovered card/control itself stays neutral. Depth comes only from paired light/dark extrusion shadows, never from fills, gradients, or translucency. (The single allowed color exception is the documented _transient_ cool-cobalt ambient hover tint, which lights only the enclosing parent surface — the column or segmented track — never the hovered element; see Interaction and motion.)
 2. **Hairline rings carry the boundary.** Because same-color-on-same-color relief can vanish against the canvas, every raised or pressed surface also carries a 1px darker inner hairline ring (an inset `box-shadow` layer). The ring is what keeps edges readable at AA — it is non-negotiable.
 3. **Selection = pressed in.** Active toggles and filters become inset (pressed) wells rather than colored fills. Tactile state is the interaction language; no colored "active" pill is needed.
-4. **Legibility over purity.** Ink is AA-dark, neutrals are tinted near-white rather than pure white, and a tiny set of whisper-chroma semantic cues (stage dots, priority, done, error) is retained — always paired with text/icons — so meaning never relies on the barely-there relief alone. Whisper-chroma is otherwise semantic-only; the one non-semantic chroma in the system is the documented decorative hover tint.
+4. **Legibility over purity.** Ink is AA-dark, neutrals are tinted near-white rather than pure white, and a tiny set of whisper-chroma semantic cues (stage dots, priority, done, error) is retained — always paired with text/icons — so meaning never relies on the barely-there relief alone. Whisper-chroma is otherwise semantic-only; the one non-semantic chroma in the system is the documented decorative ambient hover tint on parent surfaces.
 
 ## Color system (OKLCH)
 
-| Token           | Value                    | Role                                                                                  |
-| --------------- | ------------------------ | ------------------------------------------------------------------------------------- |
-| `--canvas`      | `oklch(0.9 0.006 255)`   | Neumorphic page base; raised surfaces share this exact color at rest                  |
-| `--surface`     | `oklch(0.9 0.006 255)`   | Cards, columns, controls (identical to canvas at rest)                                |
-| `--ink`         | `oklch(0.26 0.014 255)`  | AA-dark primary text (≈7:1 on surface)                                                |
-| `--ink-soft`    | `oklch(0.37 0.014 255)`  | Meta: due dates, counts, checklist, empty-state copy, search placeholder (≈5:1)       |
-| `--ink-faint`   | `oklch(0.5 0.012 255)`   | Grip handle, decorative icons (non-text only)                                         |
-| `--hair`        | `oklch(0.8 0.008 255)`   | 1px inner hairline ring on resting raised/pressed surfaces                            |
-| `--hair-strong` | `oklch(0.72 0.012 255)`  | 1px inner ring on selected/raised controls                                            |
-| `--accent`      | `oklch(0.42 0.016 255)`  | Monochrome dark focus/selection accent; primary fill                                  |
-| `--on-accent`   | `oklch(0.96 0.004 255)`  | Near-white ink on the dark primary fill (never `#fff`)                                |
-| `--hover-tint`  | `oklch(0.918 0.032 250)` | Restrained cool-cobalt hover tint — decorative feedback on cards & secondary controls |
-| `--danger`      | `oklch(0.48 0.13 25)`    | Muted clay-red error ink/icon                                                         |
-| `--danger-soft` | `oklch(0.88 0.03 25)`    | Pale clay error surface                                                               |
-| `--done`        | `oklch(0.45 0.1 152)`    | Muted green done state                                                                |
-| `--pri-high`    | `oklch(0.48 0.12 25)`    | Muted clay-red high priority                                                          |
-| `--pri-medium`  | `oklch(0.48 0.09 65)`    | Muted amber medium priority                                                           |
+| Token           | Value                    | Role                                                                                                    |
+| --------------- | ------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `--canvas`      | `oklch(0.9 0.006 255)`   | Neumorphic page base; raised surfaces share this exact color at rest                                    |
+| `--surface`     | `oklch(0.9 0.006 255)`   | Cards, columns, controls (identical to canvas at rest)                                                  |
+| `--ink`         | `oklch(0.26 0.014 255)`  | AA-dark primary text (≈7:1 on surface)                                                                  |
+| `--ink-soft`    | `oklch(0.37 0.014 255)`  | Meta: due dates, counts, checklist, empty-state copy, search placeholder (≈5:1)                         |
+| `--ink-faint`   | `oklch(0.5 0.012 255)`   | Grip handle, decorative icons (non-text only)                                                           |
+| `--hair`        | `oklch(0.8 0.008 255)`   | 1px inner hairline ring on resting raised/pressed surfaces                                              |
+| `--hair-strong` | `oklch(0.72 0.012 255)`  | 1px inner ring on selected/raised controls                                                              |
+| `--accent`      | `oklch(0.42 0.016 255)`  | Monochrome dark focus/selection accent; primary fill                                                    |
+| `--on-accent`   | `oklch(0.96 0.004 255)`  | Near-white ink on the dark primary fill (never `#fff`)                                                  |
+| `--hover-tint`  | `oklch(0.918 0.032 250)` | Restrained cool-cobalt ambient hover tint — applied to the parent column/track, not the hovered element |
+| `--danger`      | `oklch(0.48 0.13 25)`    | Muted clay-red error ink/icon                                                                           |
+| `--danger-soft` | `oklch(0.88 0.03 25)`    | Pale clay error surface                                                                                 |
+| `--done`        | `oklch(0.45 0.1 152)`    | Muted green done state                                                                                  |
+| `--pri-high`    | `oklch(0.48 0.12 25)`    | Muted clay-red high priority                                                                            |
+| `--pri-medium`  | `oklch(0.48 0.09 65)`    | Muted amber medium priority                                                                             |
 
 - **Neutrals are tinted** toward hue 255 (cool gray), never pure grey/black/white. `--on-accent` is a near-white, not `#fff`.
 - **No gradients, no backdrop blur, no translucency** anywhere. The only depth cues are the dual extrusion shadows and the hairline ring.
-- **Monochrome by default:** at rest and persistently, cards, columns, labels, controls, dividers, and dividers are all the cool-gray surface — large surfaces are never given a persistent color fill. The only color in the system is a tiny set of **whisper-chroma semantic cues** (chroma 0.04–0.13), each always paired with a text label or icon, plus one **decorative** cool-cobalt hover tint (`--hover-tint`, chroma 0.032) that applies only transiently on hover to cards and secondary controls (never a persistent fill):
+- **Monochrome by default:** at rest and persistently, cards, columns, labels, controls, dividers, and dividers are all the cool-gray surface — large surfaces are never given a persistent color fill, and the hovered card/control itself always stays neutral. The only color in the system is a tiny set of **whisper-chroma semantic cues** (chroma 0.04–0.13), each always paired with a text label or icon, plus one **decorative** cool-cobalt ambient hover tint (`--hover-tint`, chroma 0.032) that lights only the enclosing parent surface (the column for a card or column-local control, the segmented track for a filter/Board-List button) transiently on hover — never a fill on the hovered element:
   - **Stage dots** (one per column header, chroma 0.02–0.05): Backlog slate `oklch(0.52 0.02 260)`, In Progress blue `oklch(0.52 0.05 250)`, In Review amber `oklch(0.6 0.05 70)`, Done green `oklch(0.54 0.05 152)`. They never become a colored side-stripe.
   - **Priority** (dot + capitalized word): high `oklch(0.48 0.12 25)`, medium `oklch(0.48 0.09 65)`.
   - **Done** due-date + check icon: `oklch(0.45 0.1 152)`.
@@ -93,7 +93,7 @@ This specimen is a single board with no route navigation. When extending to a fu
 
 ## Interaction and motion
 
-- Hover: card lifts 1px to `--raise`; primary button lifts 1px; icon buttons and add-card shift from ring-only to `--raise-sm`. Active filter/view presses _into_ its track (`--press-sm` + `--ring-strong`). In addition, a restrained **cool-cobalt hover tint** (`--hover-tint`, `oklch(0.918 0.032 250)`) is applied to cards and the secondary controls — inactive filter chips, inactive Board/List buttons, the column "more actions" icon button, and "Add a card". The tint is **decorative feedback only**: the paired light/dark shadow, the 1px hairline ring, the focus ring, and the pressed/selected semantics all remain, so hover color is never the sole state signal. The **primary button and the error Retry/dismiss actions are deliberately not recolored**, keeping their semantic role unambiguous. The tint holds AA — AA-dark ink on the slightly-lighter pale-cobalt background still clears 4.5:1.
+- Hover: card lifts 1px to `--raise`; primary button lifts 1px; icon buttons and add-card shift from ring-only to `--raise-sm`. Active filter/view presses _into_ its track (`--press-sm` + `--ring-strong`). In addition, a restrained **cool-cobalt ambient hover tint** (`--hover-tint`, `oklch(0.918 0.032 250)`) lights the enclosing parent surface — **not the hovered element**: hovering a task card or a column-local secondary control (the "more actions" icon, "Add a card") tints that **column**; hovering a filter or Board/List button tints its **segmented track**. The hovered card/control stays at its neutral resting background, preserving the neumorphic surface/canvas match. Implemented with native `:has()` (`.column:has(.card:hover, …)`, `.segmented:has(button:hover)`). The tint is **decorative feedback only**: the paired light/dark shadow, the 1px hairline ring, the focus ring, and the pressed/selected semantics all remain, so hover color is never the sole state signal. The **primary button and the error Retry/dismiss actions are not involved**, keeping their semantic role unambiguous. The tint holds AA — AA-dark ink on the slightly-lighter pale-cobalt parent surface still clears 4.5:1.
 - Normal UI transitions (hover, focus, press, active-state shadow, and the hover tint) are **0.16s ease**, gated behind `@media (prefers-reduced-motion: no-preference)`. Hover-only effects are additionally gated behind `@media (hover: hover)` so touch devices don't get sticky hover states. Under `prefers-reduced-motion` the hover tint still applies (a color change is not motion) but **instantly**, with no fade; only the transform lifts and the fade are suppressed.
 - The loading skeleton's opacity pulse is a separate, slower **1.4s ease-in-out** loop, also gated behind `prefers-reduced-motion: no-preference`. It is the only repeating motion and has no reduced-motion counterpart by design (reduced-motion shows static skeleton grooves).
 - In both cases, reduced-motion users get a fully static board with no loss of function.
@@ -134,7 +134,7 @@ Keep the token set + extrusion scale + hairline ring constant; adapt the layout 
 
 **Do**
 
-- At rest, make every raised or pressed surface the **same cool-gray color as the canvas**; derive depth only from paired light/dark extrusion shadows. (The documented _transient_ cool-cobalt hover tint on cards/secondary controls is the one allowed exception — decorative, non-persistent.)
+- At rest, make every raised or pressed surface the **same cool-gray color as the canvas**; derive depth only from paired light/dark extrusion shadows. (Hover lights only the enclosing column/segmented-track parent via the documented _transient_ cool-cobalt ambient tint — the raised surfaces themselves stay neutral.)
 - Always layer the **1px darker inner hairline ring** onto columns, cards, and selected/raised controls — it is what keeps low-contrast relief legible.
 - Express selection as a **pressed-in** state, not a colored fill.
 - Keep shadows tinted (near-white light, dark cool-gray shade), never pure white/black; keep all colors OKLCH; tint neutrals toward hue 255.
@@ -145,7 +145,7 @@ Keep the token set + extrusion scale + hairline ring constant; adapt the layout 
 - Don't use gradients, backdrop blur, translucency, glass, clay, flat-material elevation, or illustration treatments — this is the neumorphic direction.
 - Don't use `#000`/`#fff` or gradient text.
 - Don't use a colored side-stripe (`border-left > 1px`) as an accent — use a pressed chip, a dot, or a leading icon.
-- Don't colorize label chips or give large surfaces a _persistent_ color fill; keep the board monochrome at rest and let whisper-chroma live only in the tiny semantic cues (dots, priority, done, error), each paired with text. (The documented _transient_ cool-cobalt hover tint on cards/secondary controls is the one allowed exception — decorative, non-persistent, never the sole state signal.)
+- Don't colorize label chips or give large surfaces a _persistent_ color fill; keep the board monochrome at rest and let whisper-chroma live only in the tiny semantic cues (dots, priority, done, error), each paired with text. (The documented _transient_ cool-cobalt ambient hover tint on the enclosing column/track parent is the one allowed exception — decorative, non-persistent, never on the hovered element, never the sole state signal.)
 - Don't remove the hairline ring to chase "purer" neumorphism — legibility over purity.
 - Don't use a gradient shimmer for loading skeletons; use the opacity pulse on inset grooves.
 - Don't animate layout properties (besides small `transform` lifts) or use bounce/elastic easing; don't ship motion without a reduced-motion fallback.
@@ -167,16 +167,16 @@ Keep the token set + extrusion scale + hairline ring constant; adapt the layout 
 
 ## Acceptance checklist (for AI coding agents implementing this direction)
 
-- [ ] Cool-gray canvas (`oklch(0.9 0.006 255)`) sits behind every surface; raised cards/columns/controls use the **same** surface color at rest (the documented transient cool-cobalt hover tint is the only allowed deviation).
+- [ ] Cool-gray canvas (`oklch(0.9 0.006 255)`) sits behind every surface; raised cards/columns/controls use the **same** surface color at rest and the hovered card/control stays neutral (only the enclosing column/segmented-track parent takes the documented transient cool-cobalt ambient hover tint).
 - [ ] Depth comes only from paired light/dark extrusion shadows (tinted near-white + dark cool-gray, no pure white/black) plus the hairline ring. No gradients, no `backdrop-filter`, no translucency, no glass/clay/flat-material/illustration treatments.
 - [ ] A **1px darker inner hairline ring** (`inset 0 0 0 1px var(--hair)`, or `--hair-strong` on selected/raised controls) is layered onto every column, card, and selected/raised control.
 - [ ] Selection/active state is a **pressed-in** well (`--press-sm` + `--ring-strong`), not a colored fill.
-- [ ] All colors are OKLCH; neutrals tinted toward hue 255; no `#000`/`#fff`; no gradient text; no colored side-stripes; label chips and large surfaces are monochrome at rest (no persistent color fill); whisper-chroma lives only in stage dots/priority/done/error, each paired with text — except the single documented transient cool-cobalt hover tint on cards/secondary controls.
+- [ ] All colors are OKLCH; neutrals tinted toward hue 255; no `#000`/`#fff`; no gradient text; no colored side-stripes; label chips and large surfaces are monochrome at rest (no persistent color fill); whisper-chroma lives only in stage dots/priority/done/error, each paired with text — except the single documented transient cool-cobalt ambient hover tint on parent column/track surfaces.
 - [ ] Typography uses the system stack and the documented scale; hierarchy via scale + weight.
 - [ ] Every interactive element has the focus ring — the dark accent outline on every control including the primary (whose ring seats against the surrounding surface at `outline-offset`, not against the dark fill) — is ≥44×44px at all viewports (every filter chip, Board/List segmented button, and every icon button including column "more actions" and error dismiss), and has a real role/label; avatars expose the full name; the search field shows a contrasting dark `:focus-within` ring with the input kept as the semantic focus target.
 - [ ] All text meets WCAG 2.2 AA (≥4.5:1) against its cool-gray background; state is conveyed in text/tactile difference, not color/shape alone.
 - [ ] Layout is responsive: columns scroll horizontally on desktop and stack on mobile; no document horizontal overflow at 375/768/1280.
 - [ ] Normal UI transitions are ≤0.16s ease and the skeleton opacity pulse is a 1.4s loop, both gated behind `prefers-reduced-motion: no-preference` (reduced-motion shows a fully static board); hover effects gated behind `(hover: hover)`; no layout-property animation (besides small `transform` lifts); no bounce/elastic.
-- [ ] A restrained cool-cobalt hover tint (`--hover-tint`) is applied to cards and the secondary controls (inactive filter chips, inactive Board/List buttons, the column "more actions" icon button, "Add a card") as decorative feedback only — the shadow, hairline ring, focus ring, and pressed/selected semantics remain, so color is never the sole state signal; the primary and error actions are not recolored; AA-dark text still clears 4.5:1 on the tint; under `prefers-reduced-motion` the tint applies instantly with no fade.
+- [ ] A restrained cool-cobalt ambient hover tint (`--hover-tint`) lights the enclosing parent surface — the column when a card, the "more actions" icon, or "Add a card" is hovered, and the segmented track when a filter/Board-List button is hovered — while the hovered element itself stays at its neutral resting background. Decorative only: the shadow, hairline ring, focus ring, and pressed/selected semantics remain, so color is never the sole state signal; the primary and error actions are not involved; AA-dark text still clears 4.5:1 on the tinted parent; implemented with native `:has()`; under `prefers-reduced-motion` the tint applies instantly with no fade.
 - [ ] The board content matches the locked `fixtures.ts` baseline; the empty-column state renders.
 - [ ] Loading (skeleton with opacity pulse on inset grooves, gradient-free), error (raised pale-clay banner), drag affordance (grip), empty, done, priority, and pressed-selection states are all shown; the skeleton pulse respects `prefers-reduced-motion`.
