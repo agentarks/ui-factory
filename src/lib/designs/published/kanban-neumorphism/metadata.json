@@ -1,0 +1,15 @@
+{
+	"schemaVersion": 1,
+	"slug": "kanban-neumorphism",
+	"version": "1.0.0",
+	"title": "Kanban Board · Neumorphism",
+	"summary": "A soft Hairline-Ringed Neumorphic Kanban board with a cool-gray monochrome base, paired light/dark extrusion shadows, inset pressed states, and an explicit 1px darker inner hairline ring so tactile relief stays legible at WCAG 2.2 AA.",
+	"pageType": "data-management",
+	"applicationTypes": ["project-management", "productivity", "team-collaboration"],
+	"visualStyles": ["neumorphism", "soft-ui"],
+	"theme": "light",
+	"density": "comfortable",
+	"platforms": ["web", "desktop", "tablet", "mobile"],
+	"status": "production-ready",
+	"tags": ["kanban", "board", "neumorphism", "soft-ui", "monochrome", "tactile"]
+}
