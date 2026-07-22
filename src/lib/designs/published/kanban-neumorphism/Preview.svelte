@@ -94,6 +94,9 @@
 				</button>
 			</div>
 
+			<!-- Visual-specimen-only affordance: renders the primary-action treatment
+			     but performs no task creation. Like Search/Retry/dismiss/drag, it is
+			     inert in the specimen; wire real behavior when reusing the treatment. -->
 			<button type="button" class="primary">
 				<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
 					<path
@@ -158,6 +161,8 @@
 							aria-label="{col.cards.length} {col.cards.length === 1 ? 'card' : 'cards'}"
 							>{col.cards.length}</span
 						>
+						<!-- Visual-specimen-only affordance: opens no menu and performs no
+						     action; it demonstrates the column-level overflow control only. -->
 						<button type="button" class="icon-btn" aria-label="More actions for {col.name}">
 							<svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true">
 								<circle cx="3.5" cy="8" r="1.5" fill="currentColor" />
@@ -294,6 +299,8 @@
 						{/if}
 
 						<li>
+							<!-- Visual-specimen-only affordance: demonstrates the pressed
+							     "drop zone" treatment but creates no card. -->
 							<button type="button" class="add-card">
 								<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
 									<path
@@ -498,7 +505,7 @@
 	}
 
 	.search input::placeholder {
-		color: var(--ink-faint);
+		color: var(--ink-soft);
 	}
 
 	.search:focus-within {
@@ -970,9 +977,12 @@
 		outline-offset: 2px;
 	}
 
-	/* Dark-filled primary needs a light ring to read against its own fill. */
+	/* The primary's focus outline renders against the surrounding app-bar surface
+	   (outline-offset seats it outside the dark fill), so the dark accent ring —
+	   the same indicator every other control uses — is the one that reads at
+	   >=3:1 here. A near-white ring would sit on the near-white surface and vanish. */
 	.primary:focus-visible {
-		outline-color: var(--on-accent);
+		outline-color: var(--accent);
 	}
 
 	@media (prefers-reduced-motion: no-preference) {

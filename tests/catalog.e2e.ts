@@ -217,6 +217,39 @@ test('opens the kanban-neumorphism design and its isolated preview states', asyn
 	});
 	expect(focusContrast).toBeGreaterThanOrEqual(3);
 
+	// the New task primary is a dark-filled button; its focus outline renders
+	// against the surrounding app-bar surface (outline-offset seats it outside
+	// the fill), so the dark accent ring must still read at >=3:1 there — a
+	// near-white ring would vanish against the near-white surface. Reach it by
+	// Tabbing from the preceding control so :focus-visible legitimately applies
+	// (a programmatic .focus() would not match the keyboard-only heuristic).
+	await frame.getByRole('button', { name: 'List', exact: true }).press('Tab');
+	const primaryFocus = await previewFrame!.evaluate(() => {
+		const el = document.querySelector('.primary');
+		const surround = el?.closest('.app-bar');
+		if (!(el instanceof HTMLElement) || !(surround instanceof HTMLElement)) return -1;
+		const cs = getComputedStyle(el);
+		if (cs.outlineStyle !== 'solid' || parseFloat(cs.outlineWidth) < 3) return -1;
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return -1;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const oL = lum(cs.outlineColor);
+		const bL = lum(getComputedStyle(surround).backgroundColor);
+		return (Math.max(oL, bL) + 0.05) / (Math.min(oL, bL) + 0.05);
+	});
+	expect(primaryFocus).toBeGreaterThanOrEqual(3);
+
 	// every filter/view control is >=44px, and the preview has no horizontal
 	// document overflow, at each of mobile/tablet/desktop widths
 	const controls = ['Board', 'List', 'All', 'Mine', 'Due this week'];

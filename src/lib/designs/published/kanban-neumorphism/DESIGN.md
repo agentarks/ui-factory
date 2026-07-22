@@ -18,22 +18,22 @@ A Kanban board for a small product team: a board header (project identity, team 
 
 ## Color system (OKLCH)
 
-| Token           | Value                   | Role                                                         |
-| --------------- | ----------------------- | ------------------------------------------------------------ |
-| `--canvas`      | `oklch(0.9 0.006 255)`  | Neumorphic page base; raised surfaces share this exact color |
-| `--surface`     | `oklch(0.9 0.006 255)`  | Cards, columns, controls (identical to canvas)               |
-| `--ink`         | `oklch(0.26 0.014 255)` | AA-dark primary text (≈7:1 on surface)                       |
-| `--ink-soft`    | `oklch(0.37 0.014 255)` | Meta: due dates, counts, checklist, empty-state copy (≈5:1)  |
-| `--ink-faint`   | `oklch(0.5 0.012 255)`  | Grip handle, decorative icons (non-text only)                |
-| `--hair`        | `oklch(0.8 0.008 255)`  | 1px inner hairline ring on resting raised/pressed surfaces   |
-| `--hair-strong` | `oklch(0.72 0.012 255)` | 1px inner ring on selected/raised controls                   |
-| `--accent`      | `oklch(0.42 0.016 255)` | Monochrome dark focus/selection accent; primary fill         |
-| `--on-accent`   | `oklch(0.96 0.004 255)` | Near-white ink on the dark primary fill (never `#fff`)       |
-| `--danger`      | `oklch(0.48 0.13 25)`   | Muted clay-red error ink/icon                                |
-| `--danger-soft` | `oklch(0.88 0.03 25)`   | Pale clay error surface                                      |
-| `--done`        | `oklch(0.45 0.1 152)`   | Muted green done state                                       |
-| `--pri-high`    | `oklch(0.48 0.12 25)`   | Muted clay-red high priority                                 |
-| `--pri-medium`  | `oklch(0.48 0.09 65)`   | Muted amber medium priority                                  |
+| Token           | Value                   | Role                                                                            |
+| --------------- | ----------------------- | ------------------------------------------------------------------------------- |
+| `--canvas`      | `oklch(0.9 0.006 255)`  | Neumorphic page base; raised surfaces share this exact color                    |
+| `--surface`     | `oklch(0.9 0.006 255)`  | Cards, columns, controls (identical to canvas)                                  |
+| `--ink`         | `oklch(0.26 0.014 255)` | AA-dark primary text (≈7:1 on surface)                                          |
+| `--ink-soft`    | `oklch(0.37 0.014 255)` | Meta: due dates, counts, checklist, empty-state copy, search placeholder (≈5:1) |
+| `--ink-faint`   | `oklch(0.5 0.012 255)`  | Grip handle, decorative icons (non-text only)                                   |
+| `--hair`        | `oklch(0.8 0.008 255)`  | 1px inner hairline ring on resting raised/pressed surfaces                      |
+| `--hair-strong` | `oklch(0.72 0.012 255)` | 1px inner ring on selected/raised controls                                      |
+| `--accent`      | `oklch(0.42 0.016 255)` | Monochrome dark focus/selection accent; primary fill                            |
+| `--on-accent`   | `oklch(0.96 0.004 255)` | Near-white ink on the dark primary fill (never `#fff`)                          |
+| `--danger`      | `oklch(0.48 0.13 25)`   | Muted clay-red error ink/icon                                                   |
+| `--danger-soft` | `oklch(0.88 0.03 25)`   | Pale clay error surface                                                         |
+| `--done`        | `oklch(0.45 0.1 152)`   | Muted green done state                                                          |
+| `--pri-high`    | `oklch(0.48 0.12 25)`   | Muted clay-red high priority                                                    |
+| `--pri-medium`  | `oklch(0.48 0.09 65)`   | Muted amber medium priority                                                     |
 
 - **Neutrals are tinted** toward hue 255 (cool gray), never pure grey/black/white. `--on-accent` is a near-white, not `#fff`.
 - **No gradients, no backdrop blur, no translucency** anywhere. The only depth cues are the dual extrusion shadows and the hairline ring.
@@ -100,7 +100,7 @@ This specimen is a single board with no route navigation. When extending to a fu
 
 ## States
 
-The states below are **visual state/affordance demonstrations only**, not functional behavior. The **filter chips and the Board/List segmented toggle are `aria-pressed` toggle controls** — they reflect selection state in the specimen but perform no real filtering or view switch. **Search, Retry, and dismiss render their affordance but perform no real search, sync, or dismissal.** The **drag grip is a static affordance** with no drag-and-drop logic. Reuse these visual treatments when wiring real behavior:
+The states below are **visual state/affordance demonstrations only**, not functional behavior. The **filter chips and the Board/List segmented toggle are `aria-pressed` toggle controls** — they reflect selection state in the specimen but perform no real filtering or view switch. **Search, the New task primary, the column "More actions" overflow, the "Add a card" drop zone, Retry, and dismiss all render their affordance but perform no real search, creation, menu, sync, or dismissal** — they are inert specimen controls that exist only to demonstrate their visual treatment. The **drag grip is a static affordance** with no drag-and-drop logic. Reuse these visual treatments when wiring real behavior:
 
 - **Empty (shown):** a column with no cards renders a pressed well ("No cards yet") — see the **In Review** column.
 - **Loading (shown):** a **skeleton card** with inset placeholder grooves (in Backlog). The skeleton uses an **opacity pulse** (not a gradient shimmer) so it stays gradient-free. The pulse animates only under `prefers-reduced-motion: no-preference`.
@@ -116,7 +116,7 @@ The states below are **visual state/affordance demonstrations only**, not functi
 - Landmarks: `<header>` (banner) + `<main>` + `<section aria-label="Kanban board">` (region); one `<section>` per column with an `<h2>`, cards as `<h3>` inside `<article>`. Heading order h1→h2→h3 is strict.
 - All controls are real `<button>`/`<input>`; filters and view toggle carry `aria-pressed`; counts and icon buttons carry `aria-label`; icons are `aria-hidden`.
 - **Avatars expose the full name** via `aria-label` (initials alone are not enough; `title` is not reliably announced).
-- **Visible focus:** `outline: 3px solid var(--accent)` with `outline-offset: 2px` on every interactive element — the dark cool-gray accent contrasts ≥3:1 (≈4:1) against the cool-gray surface. The dark-filled primary switches its outline to near-white so it reads against its own fill. The composite search field shows focus on its container via a contrasting **dark `:focus-within` ring** (the same-color surface would otherwise hide an input outline); the `<input>` remains the semantic focus target, with its own redundant outline suppressed so keyboard users see one clear indicator.
+- **Visible focus:** `outline: 3px solid var(--accent)` with `outline-offset: 2px` on every interactive element — the dark cool-gray accent contrasts ≥3:1 (≈4:1) against the cool-gray surface. The primary button uses the **same dark accent ring**: its `outline-offset` seats the ring outside the dark fill, against the surrounding app-bar surface, where the dark ring reads at ≥3:1 (a near-white ring would vanish against the near-white surface). The composite search field shows focus on its container via a contrasting **dark `:focus-within` ring** (the same-color surface would otherwise hide an input outline); the `<input>` remains the semantic focus target, with its own redundant outline suppressed so keyboard users see one clear indicator.
 - **WCAG 2.2 AA** is met by construction: dark cool-gray ink (L 0.26) on the cool-gray surface (L 0.9) gives ≈7:1; meta ink (L 0.37) gives ≈5:1; near-white initials (L 0.96) on avatar fills (L 0.45) give ≈4.9:1; label/priority/done/error text is always dark enough on the surface for AA. **The hairline ring is the accessibility-critical fallback** for low-contrast relief — never remove it. Meaning is never conveyed by color/shape alone (priority and status are always labelled in text, and state is reinforced by the pressed/raised tactile difference).
 
 ## Extending the design to new pages
@@ -172,7 +172,7 @@ Keep the token set + extrusion scale + hairline ring constant; adapt the layout 
 - [ ] Selection/active state is a **pressed-in** well (`--press-sm` + `--ring-strong`), not a colored fill.
 - [ ] All colors are OKLCH; neutrals tinted toward hue 255; no `#000`/`#fff`; no gradient text; no colored side-stripes; label chips and large surfaces are monochrome; whisper-chroma lives only in stage dots/priority/done/error, each paired with text.
 - [ ] Typography uses the system stack and the documented scale; hierarchy via scale + weight.
-- [ ] Every interactive element has the focus ring (dark accent on surfaces, near-white on the dark primary), is ≥44×44px at all viewports (every filter chip, Board/List segmented button, and every icon button including column "more actions" and error dismiss), and has a real role/label; avatars expose the full name; the search field shows a contrasting dark `:focus-within` ring with the input kept as the semantic focus target.
+- [ ] Every interactive element has the focus ring — the dark accent outline on every control including the primary (whose ring seats against the surrounding surface at `outline-offset`, not against the dark fill) — is ≥44×44px at all viewports (every filter chip, Board/List segmented button, and every icon button including column "more actions" and error dismiss), and has a real role/label; avatars expose the full name; the search field shows a contrasting dark `:focus-within` ring with the input kept as the semantic focus target.
 - [ ] All text meets WCAG 2.2 AA (≥4.5:1) against its cool-gray background; state is conveyed in text/tactile difference, not color/shape alone.
 - [ ] Layout is responsive: columns scroll horizontally on desktop and stack on mobile; no document horizontal overflow at 375/768/1280.
 - [ ] Normal UI transitions are ≤0.16s ease and the skeleton opacity pulse is a 1.4s loop, both gated behind `prefers-reduced-motion: no-preference` (reduced-motion shows a fully static board); hover effects gated behind `(hover: hover)`; no layout-property animation (besides small `transform` lifts); no bounce/elastic.
