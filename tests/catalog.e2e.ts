@@ -294,7 +294,7 @@ test('opens the kanban-neumorphism design and its isolated preview states', asyn
 			ctx.fillStyle = cs.backgroundColor;
 			ctx.fillRect(0, 0, 2, 2);
 			const d = ctx.getImageData(0, 0, 1, 1).data;
-			return { color: cs.backgroundColor, blue: d[2], red: d[0] };
+			return { color: cs.backgroundColor, blue: d[2], red: d[0], alpha: d[3] };
 		}, sel);
 	const contrastBetween = (textSel: string, bgSel: string) =>
 		previewFrame!.evaluate(
@@ -334,7 +334,9 @@ test('opens the kanban-neumorphism design and its isolated preview states', asyn
 	expect(cardHover!.color).toBe(cardRest!.color); // hovered card face unchanged (neutral)
 	expect(colHover!.color).not.toBe(colRest!.color); // parent column changed
 	expect(colHover!.blue - colHover!.red).toBeGreaterThanOrEqual(8); // column is cobalt
-	expect(await contrastBetween('.card-title', '.card')).toBeGreaterThanOrEqual(4.5); // AA on card face
+	// AA against the tinted parent: the column heading text sits directly on the
+	// tinted column surface (the card title sits on the neutral card, not the tint).
+	expect(await contrastBetween('.column h2', '.column')).toBeGreaterThanOrEqual(4.5);
 
 	// representative secondary button (All filter chip): its face stays neutral
 	// while its segmented track takes the tint
@@ -345,6 +347,7 @@ test('opens the kanban-neumorphism design and its isolated preview states', asyn
 	const chipHover = await bgOf('.chip');
 	const trackHover = await bgOf('.segmented');
 	expect(chipHover!.color).toBe(chipRest!.color); // hovered chip face unchanged (neutral)
+	expect(chipHover!.alpha).toBe(255); // face is opaque neutral, not transparent (tint shows behind it)
 	expect(trackHover!.color).not.toBe(trackRest!.color); // parent track changed
 	expect(trackHover!.blue - trackHover!.red).toBeGreaterThanOrEqual(8); // track is cobalt
 	expect(await contrastBetween('.chip', '.segmented')).toBeGreaterThanOrEqual(4.5); // AA over tinted track

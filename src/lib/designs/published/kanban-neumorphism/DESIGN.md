@@ -68,7 +68,7 @@ A Kanban board for a small product team: a board header (project identity, team 
 ## Layout and composition
 
 - The board floats on the cool-gray canvas: the canvas has outer padding, and the app bar, error banner, and each column are raised slabs that cast dual shadows into that padding. On ≥768px the columns form a horizontal flex row that scrolls horizontally when they overflow (authentic Kanban); below 768px they stack vertically. The app bar wraps its controls onto further rows on narrow widths.
-- Depth is layered by extrusion, not nested fills: the app bar is the most pronounced raise; columns and cards are `--raise-sm` resting (cards lift to `--raise` on hover). Selected controls press _in_. Surfaces are always the canvas color — never a panel-on-panel tint.
+- Depth is layered by extrusion, not nested fills: the app bar is the most pronounced raise; columns and cards are `--raise-sm` resting (cards lift to `--raise` on hover). Selected controls press _in_. At rest, surfaces are always the canvas color — never a panel-on-panel tint. (The documented _transient_ cool-cobalt ambient hover tint is the one exception: it lights only the enclosing column or segmented-track parent on hover, never the hovered card/control face.)
 
 ## Components and behavior
 
@@ -77,7 +77,7 @@ A Kanban board for a small product team: a board header (project identity, team 
 - **Card** (raised slab, 12px radius, `--raise-sm` + ring): title (`<h3>`), monochrome pressed label pills, an optional checklist progress line, and a footer (separated by a pressed groove) with the priority indicator, due date, and assignee avatars. Hover lifts the card 1px to `--raise` (reduced-motion: static).
 - **Label chip:** monochrome pressed-in pill + `--ink-soft` text; meaning is the text.
 - **Avatar:** near-white initials on a whisper-chroma OKLCH fill with a neumorphic ring; exposes the full name via `aria-label`. Two sizes: header 34px, card 28px.
-- **Controls:** search input (pressed-in well, 44px height, dark text), segmented tracks holding pressed-in active options (`aria-pressed`), primary button (inverted dark fill with near-white text, 44px), icon buttons (column "more actions" and error dismiss, full 44×44px). Every header filter/view control is a full 44px tap. The search field shows a contrasting dark `:focus-within` ring.
+- **Controls:** search input (pressed-in well, 44px height, dark text), segmented tracks holding pressed-in active options (`aria-pressed`) over opaque neutral inactive faces with the hairline ring (so an ambient-tinted track recolors the gaps behind a button, not the button's own face), primary button (inverted dark fill with near-white text, 44px), icon buttons (column "more actions" and error dismiss, full 44×44px). Every header filter/view control is a full 44px tap. The search field shows a contrasting dark `:focus-within` ring.
 - **Empty state:** a pressed well with a small inset square mark and "No cards yet" renders in any column with zero cards.
 - **Loading skeleton:** a pressed groove card holding inset placeholder bars with an opacity pulse (gradient-free).
 

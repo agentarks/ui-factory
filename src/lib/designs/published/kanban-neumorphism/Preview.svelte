@@ -539,7 +539,10 @@
 		font-weight: 600;
 		color: var(--ink-soft);
 		border: 0;
-		background: transparent;
+		/* Opaque neutral face (+ hairline ring) so the tinted segmented track changes
+		   BEHIND the button without visually recoloring the hovered button face. */
+		background: var(--surface);
+		box-shadow: var(--ring);
 		padding: 0 0.85rem;
 		min-width: 44px;
 		min-height: 44px;
