@@ -532,8 +532,8 @@ test('opens the kanban-claymorphism design and its isolated preview states', asy
 	await expect(page.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
 
 	// Table-driven WCAG AA contrast audit: every distinct semantic text role
-	// against its actual opaque parent surface. Each entry returns the computed
-	// contrast ratio; all must be >= 4.5 (normal text AA).
+	// against its actual opaque parent surface, including all repeated color
+	// variants (avatars, labels, active/inactive controls, placeholder).
 	const contrastResults = await page.evaluate(() => {
 		const ctx = document.createElement('canvas').getContext('2d');
 		if (!ctx) return null;
@@ -549,45 +549,77 @@ test('opens the kanban-claymorphism design and its isolated preview states', asy
 			};
 			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
 		};
-		const ratio = (textSel: string, bgSel: string) => {
+		const ratio = (textSel: string, bgSel: string, pseudo?: string) => {
 			const textEl = document.querySelector(textSel);
 			const bgEl = document.querySelector(bgSel);
 			if (!(textEl instanceof HTMLElement) || !(bgEl instanceof HTMLElement)) return -1;
-			const tL = lum(getComputedStyle(textEl).color);
+			const cs = pseudo ? getComputedStyle(textEl, pseudo) : getComputedStyle(textEl);
+			const tL = lum(cs.color);
 			const bL = lum(getComputedStyle(bgEl).backgroundColor);
 			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
 		};
-		return [
+		const selfRatio = (sel: string) => ratio(sel, sel);
+		const elRatio = (el: Element) => {
+			if (!(el instanceof HTMLElement)) return -1;
+			const tL = lum(getComputedStyle(el).color);
+			const bL = lum(getComputedStyle(el).backgroundColor);
+			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+		};
+		const results: { role: string; ratio: number }[] = [
 			{ role: 'card-title', ratio: ratio('.card-title', '.card') },
 			{ role: 'checklist', ratio: ratio('.checklist', '.card') },
 			{ role: 'due-regular', ratio: ratio('.due:not(.is-done)', '.card') },
 			{ role: 'due-done', ratio: ratio('.due.is-done', '.card') },
 			{ role: 'pri-high', ratio: ratio('.pri-high', '.card') },
 			{ role: 'pri-medium', ratio: ratio('.pri-medium', '.card') },
-			{ role: 'label', ratio: ratio('.label', '.label') },
 			{ role: 'board-title', ratio: ratio('.title-block h1', '.app-bar') },
 			{ role: 'subtitle', ratio: ratio('.subtitle', '.app-bar') },
 			{ role: 'column-heading', ratio: ratio('.column-head h2', '.column') },
-			{ role: 'count-badge', ratio: ratio('.count', '.count') },
+			{ role: 'count-badge', ratio: selfRatio('.count') },
 			{ role: 'empty-state', ratio: ratio('.empty-col p', '.empty-col') },
 			{ role: 'error-body', ratio: ratio('.error-banner p', '.error-banner') },
 			{ role: 'error-strong', ratio: ratio('.error-banner strong', '.error-banner') },
-			{ role: 'primary-text', ratio: ratio('.primary', '.primary') },
+			{ role: 'primary-text', ratio: selfRatio('.primary') },
+			{ role: 'add-card-text', ratio: selfRatio('.add-card') },
+			{ role: 'retry-text', ratio: selfRatio('.error-retry') },
+			{ role: 'project-chip', ratio: selfRatio('.project-chip') },
+			{ role: 'chip-active', ratio: selfRatio('.chip[aria-pressed="true"]') },
 			{
 				role: 'chip-inactive',
-				ratio: ratio('.chip:not([aria-pressed="true"])', '.chip:not([aria-pressed="true"])')
+				ratio: selfRatio('.chip:not([aria-pressed="true"])')
 			},
-			{ role: 'add-card-text', ratio: ratio('.add-card', '.add-card') },
-			{ role: 'retry-text', ratio: ratio('.error-retry', '.error-retry') }
+			{
+				role: 'view-active',
+				ratio: selfRatio('.view-toggle button[aria-pressed="true"]')
+			},
+			{
+				role: 'view-inactive',
+				ratio: selfRatio('.view-toggle button:not([aria-pressed="true"])')
+			},
+			{ role: 'search-placeholder', ratio: ratio('.search input', '.search', '::placeholder') },
+			{ role: 'search-input', ratio: ratio('.search input', '.search') }
 		];
+		// Every label-tone variant (each has a distinct pastel background)
+		document.querySelectorAll('.label').forEach((el) => {
+			const name = el.textContent?.trim() || '?';
+			results.push({ role: `label:${name}`, ratio: elRatio(el) });
+		});
+		// Every avatar variant (each member has a distinct hue fill)
+		document.querySelectorAll('.avatar').forEach((el) => {
+			const initials = el.textContent?.trim() || '?';
+			results.push({ role: `avatar:${initials}`, ratio: elRatio(el) });
+		});
+		return results;
 	});
 	expect(contrastResults).not.toBeNull();
 	for (const { role, ratio } of contrastResults!) {
 		expect(ratio, `${role} text contrast >= 4.5:1`).toBeGreaterThanOrEqual(4.5);
 	}
 
-	// Exact-width responsive: target sizes + no horizontal overflow on the
-	// direct preview route (not the narrower detail-page iframe).
+	// Exact-width responsive: target sizes + no horizontal document overflow on
+	// the direct preview route at exact 375/768/1280. The overflow check uses
+	// documentElement.scrollWidth/clientWidth and scrollX to catch real document
+	// overflow (e.g. from uncontained absolutely-positioned nodes).
 	const controls = ['Board', 'List', 'All', 'Mine', 'Due this week'];
 	for (const width of [375, 768, 1280]) {
 		await page.setViewportSize({ width, height: 800 });
@@ -605,12 +637,10 @@ test('opens the kanban-claymorphism design and its isolated preview states', asy
 			.boundingBox();
 		expect(dismiss?.width).toBeGreaterThanOrEqual(44);
 		expect(dismiss?.height).toBeGreaterThanOrEqual(44);
-		// No horizontal document overflow: check body.scrollWidth (not
-		// documentElement.scrollWidth, which in Chrome includes overflow
-		// from nested scroll containers like the board-body's intentional
-		// Kanban column scroll).
 		const overflow = await page.evaluate(
-			() => document.body.scrollWidth - document.body.clientWidth
+			() =>
+				document.documentElement.scrollWidth - document.documentElement.clientWidth ||
+				window.scrollX
 		);
 		expect(overflow, `horizontal overflow at ${width}`).toBeLessThanOrEqual(0);
 	}

@@ -347,7 +347,6 @@
 	:global(html, body) {
 		margin: 0;
 		min-height: 100%;
-		overflow-x: hidden;
 	}
 
 	.board-root,
@@ -448,7 +447,6 @@
 			ui-monospace, 'SF Mono', 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
 
 		min-height: 100vh;
-		overflow-x: hidden;
 		font-family: var(--font-sans);
 		font-synthesis: none;
 		color: var(--ink);
@@ -738,6 +736,7 @@
 	}
 
 	.count {
+		position: relative;
 		min-width: 1.5rem;
 		text-align: center;
 		font-family: var(--font-mono);
