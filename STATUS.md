@@ -10,6 +10,7 @@
 
 - Established the SvelteKit, Svelte 5, TypeScript, Tailwind CSS, Vite, Zod, Vitest, and Playwright scaffold.
 - Implemented a build-time, file-backed catalog that validates required entry files and metadata, preserves each `DESIGN.md`, and lazy-loads previews.
+- Added the project-local `ui-factory-design-loop` Pi skill to make the remaining style workflow repeatable across sessions: Herdr-visible concept/implementation/review/server topology, exactly ten concepts, only concept-selection and final-live-approval user gates, isolated worktrees, remediation until frontend approval, full verification, PR creation after approval, and post-merge cleanup.
 - Established `published/` as the runtime publication boundary and `workbench/` as authoring-only: server catalog code imports only production-ready published metadata and handoffs, while client code imports only published preview modules.
 - Added a test-only incomplete workbench fixture plus unit and post-build gates that fail if server or client discovery widens across the publication boundary.
 - Made non-production entries under `published/` fail production builds; workbench, hidden, deprecated, and unknown slugs remain unavailable to public routes.
@@ -40,6 +41,7 @@
 - Detail-page happy-path browser coverage is deferred until the first real published design provides a stable subject.
 - Catalog direction is set in `docs/catalog-roadmap.md`: one page type (Kanban board) rendered in ten distinct visual styles (flat, glass, neumorphism, claymorphism, illustration, editorial, Swiss, brutalism, dark-neon, skeuomorphic), built one at a time. Style comparison on a fixed subject is the primary value.
 - `kanban-glassmorphism` is the first published entry (dispatch priority) and therefore **locks the shared Kanban content baseline**: its `fixtures.ts` is canonical. Later styles copy it and change only the visual language. (Earlier advisory build order had `kanban-flat-material` locking the baseline; superseded by publication order.)
+- Remaining catalog styles use `.pi/skills/ui-factory-design-loop/SKILL.md`; every worker and server must have a visible Herdr resource, and routine agent completion/review/remediation never creates an extra user checkpoint.
 
 ## Blockers
 
@@ -56,3 +58,4 @@ None.
 - `node scripts/check-client-publication-boundary.mjs`
 - Mutation checks: widened client discovery fails the post-build scan; widened server preview discovery fails registry startup for missing metadata.
 - `git diff --check` (against base `8d3b878`)
+- Skill RED/GREEN checks with fresh agents: baseline omitted the exact ten-concept/Herdr/two-gate contract; loading `ui-factory-design-loop` produced the required topology, pause policy, PR timing, and cleanup.
