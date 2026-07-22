@@ -369,3 +369,181 @@ test('opens the kanban-neumorphism design and its isolated preview states', asyn
 	expect(chipHoverShadow!.shadow).not.toBe(chipRestShadow!.shadow); // shadow changed
 	expect(chipHoverShadow!.maxCobaltGap).toBeGreaterThanOrEqual(80); // cobalt shadow present
 });
+
+test('opens the kanban-claymorphism design and its isolated preview states', async ({ page }) => {
+	await page.goto('/designs/kanban-claymorphism');
+
+	await expect(
+		page.getByRole('heading', { name: 'Kanban Board · Luminous Putty', exact: false })
+	).toBeVisible();
+	await expect(page.getByText('dark claymorphism Kanban board', { exact: false })).toBeVisible();
+
+	const frame = page.frameLocator('iframe[title*="preview"i]');
+	await expect(frame.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'New task' })).toBeVisible();
+	await expect(frame.getByText('Backlog', { exact: true })).toBeVisible();
+	await expect(frame.getByRole('heading', { name: 'In Review' })).toBeVisible();
+	await expect(frame.getByText('No cards yet')).toBeVisible();
+	await expect(frame.getByText('Sync paused', { exact: false })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'Retry' })).toBeVisible();
+	await expect(frame.locator('.skeleton-card')).toBeVisible();
+
+	// interaction smoke: toggling a filter updates its pressed state (claymorphic
+	// "selected = pressed in")
+	const mineBtn = frame.getByRole('button', { name: 'Mine', exact: true });
+	await mineBtn.click();
+	await expect(mineBtn).toHaveAttribute('aria-pressed', 'true');
+
+	// keyboard focus on the search field shows a container ring with meaningful
+	// contrast (>=3:1, the WCAG UI-component minimum) against the field surface,
+	// proving the ring is visible on the dark claymorphic field.
+	const previewFrame = page.frame({ url: /kanban-claymorphism\/preview$/ });
+	expect(previewFrame).toBeTruthy();
+	await frame.getByRole('searchbox').focus();
+	const focusContrast = await previewFrame!.evaluate(() => {
+		const el = document.querySelector('.search');
+		if (!(el instanceof HTMLElement)) return -1;
+		const cs = getComputedStyle(el);
+		if (cs.outlineStyle !== 'solid' || parseFloat(cs.outlineWidth) < 3) return -1;
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return -1;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const oL = lum(cs.outlineColor);
+		const bL = lum(cs.backgroundColor);
+		return (Math.max(oL, bL) + 0.05) / (Math.min(oL, bL) + 0.05);
+	});
+	expect(focusContrast).toBeGreaterThanOrEqual(3);
+
+	// The New task primary is a violet-filled button; its focus outline renders
+	// against the surrounding app-bar surface (outline-offset seats it outside
+	// the fill), so the focus ring must still read at >=3:1 there. Reach it by
+	// Tabbing from the preceding control so :focus-visible legitimately applies.
+	await frame.getByRole('button', { name: 'List', exact: true }).press('Tab');
+	const primaryFocus = await previewFrame!.evaluate(() => {
+		const el = document.querySelector('.primary');
+		const surround = el?.closest('.app-bar');
+		if (!(el instanceof HTMLElement) || !(surround instanceof HTMLElement)) return -1;
+		const cs = getComputedStyle(el);
+		if (cs.outlineStyle !== 'solid' || parseFloat(cs.outlineWidth) < 3) return -1;
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return -1;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const oL = lum(cs.outlineColor);
+		const bL = lum(getComputedStyle(surround).backgroundColor);
+		return (Math.max(oL, bL) + 0.05) / (Math.min(oL, bL) + 0.05);
+	});
+	expect(primaryFocus).toBeGreaterThanOrEqual(3);
+
+	// every filter/view control + icon button is >=44px, and the preview has no
+	// horizontal document overflow, at each of mobile/tablet/desktop widths
+	const controls = ['Board', 'List', 'All', 'Mine', 'Due this week'];
+	for (const width of [375, 768, 1280]) {
+		await page.setViewportSize({ width, height: 800 });
+		for (const name of controls) {
+			const box = await frame.getByRole('button', { name, exact: true }).boundingBox();
+			expect(box?.height).toBeGreaterThanOrEqual(44);
+		}
+		const moreActions = await frame
+			.getByRole('button', { name: 'More actions for Backlog' })
+			.boundingBox();
+		expect(moreActions?.width).toBeGreaterThanOrEqual(44);
+		expect(moreActions?.height).toBeGreaterThanOrEqual(44);
+		const dismiss = await frame
+			.getByRole('button', { name: 'Dismiss error', exact: true })
+			.boundingBox();
+		expect(dismiss?.width).toBeGreaterThanOrEqual(44);
+		expect(dismiss?.height).toBeGreaterThanOrEqual(44);
+		const overflow = await previewFrame!.evaluate(
+			() => document.documentElement.scrollWidth - document.documentElement.clientWidth
+		);
+		expect(overflow).toBeLessThanOrEqual(0);
+	}
+
+	// Hover material behavior: the card face stays opaque pastel (unchanged
+	// background); only the computed box-shadow changes (deeper extrusion), so
+	// text contrast on the unchanged opaque face is preserved at AA.
+	const bgOf = (sel: string) =>
+		previewFrame!.evaluate((s) => {
+			const el = document.querySelector(s);
+			if (!(el instanceof HTMLElement)) return null;
+			return { color: getComputedStyle(el).backgroundColor };
+		}, sel);
+	const shadowOf = (sel: string) =>
+		previewFrame!.evaluate((s) => {
+			const el = document.querySelector(s);
+			if (!(el instanceof HTMLElement)) return null;
+			return { shadow: getComputedStyle(el).boxShadow };
+		}, sel);
+	const contrastBetween = (textSel: string, bgSel: string) =>
+		previewFrame!.evaluate(
+			([t, b]: [string, string]) => {
+				const text = document.querySelector(t);
+				const bg = document.querySelector(b);
+				if (!(text instanceof HTMLElement) || !(bg instanceof HTMLElement)) return -1;
+				const ctx = document.createElement('canvas').getContext('2d');
+				if (!ctx) return -1;
+				const lum = (css: string) => {
+					ctx.clearRect(0, 0, 2, 2);
+					ctx.fillStyle = '#000';
+					ctx.fillStyle = css;
+					ctx.fillRect(0, 0, 2, 2);
+					const d = ctx.getImageData(0, 0, 1, 1).data;
+					const ch = (v: number) => {
+						const x = v / 255;
+						return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+					};
+					return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+				};
+				const tL = lum(getComputedStyle(text).color);
+				const bL = lum(getComputedStyle(bg).backgroundColor);
+				return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+			},
+			[textSel, bgSel] as [string, string]
+		);
+
+	// representative card: face background unchanged on hover; shadow changed
+	const cardRestBg = await bgOf('.card');
+	const cardRestShadow = await shadowOf('.card');
+	expect(cardRestShadow).not.toBeNull();
+	await frame.locator('.card').first().hover();
+	await page.waitForTimeout(260); // let the ease-out box-shadow transition settle
+	const cardHoverBg = await bgOf('.card');
+	const cardHoverShadow = await shadowOf('.card');
+	expect(cardHoverBg!.color).toBe(cardRestBg!.color); // opaque pastel face unchanged
+	expect(cardHoverShadow!.shadow).not.toBe(cardRestShadow!.shadow); // shadow changed (deeper extrusion)
+	expect(await contrastBetween('.card-title', '.card')).toBeGreaterThanOrEqual(4.5); // AA on opaque face
+
+	// reduced-motion: skeleton pulse animation is suppressed; the skeleton
+	// remains visible but static (no infinite animation).
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	const skeletonAnimating = await previewFrame!.evaluate(() => {
+		const el = document.querySelector('.skel');
+		if (!(el instanceof HTMLElement)) return null;
+		const cs = getComputedStyle(el);
+		// Under reduced-motion the animation-name should be 'none' (no pulse).
+		return cs.animationName === 'none';
+	});
+	expect(skeletonAnimating).toBe(true);
+});
