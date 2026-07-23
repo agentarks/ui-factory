@@ -1,0 +1,15 @@
+{
+	"schemaVersion": 1,
+	"slug": "kanban-brutalism",
+	"version": "1.0.0",
+	"title": "Kanban Board · Blueprint",
+	"summary": "A compact brutalist Blueprint / technical-schematic Kanban board on off-white drafting paper with near-black ink, one deep technical-blue accent, raw monospace throughout, a foregrounded graph-paper grid, harsh exposed 2–3px structural rules, and coordinate/dimension notation with drafting crosshairs.",
+	"pageType": "data-management",
+	"applicationTypes": ["project-management", "productivity", "team-collaboration"],
+	"visualStyles": ["brutalism"],
+	"theme": "light",
+	"density": "compact",
+	"platforms": ["web", "desktop", "tablet", "mobile"],
+	"status": "production-ready",
+	"tags": ["kanban", "board", "brutalism", "blueprint", "monospace", "technical", "drafting"]
+}

@@ -1551,3 +1551,328 @@ test('opens the kanban-swiss design and its isolated preview states', async ({ p
 		expect(overflow, `horizontal overflow at ${width}`).toBeLessThanOrEqual(0);
 	}
 });
+
+test('opens the kanban-brutalism design and its isolated preview states', async ({ page }) => {
+	// ---- Detail page: exact approved public summary + identity ----
+	await page.goto('/designs/kanban-brutalism');
+
+	await expect(
+		page.getByRole('heading', { name: 'Kanban Board · Blueprint', exact: false })
+	).toBeVisible();
+	await expect(
+		page.getByText(
+			'A compact brutalist Blueprint / technical-schematic Kanban board on off-white drafting paper with near-black ink, one deep technical-blue accent, raw monospace throughout, a foregrounded graph-paper grid, harsh exposed 2–3px structural rules, and coordinate/dimension notation with drafting crosshairs.',
+			{ exact: true }
+		)
+	).toBeVisible();
+
+	// ---- Isolated preview: locked content + empty/error/loading states ----
+	const frame = page.frameLocator('iframe[title*="preview"i]');
+	await expect(frame.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'New task' })).toBeVisible();
+	await expect(frame.getByText('Backlog', { exact: true })).toBeVisible();
+	await expect(frame.getByRole('heading', { name: 'In Review' })).toBeVisible();
+	await expect(frame.getByText('No cards yet')).toBeVisible();
+	await expect(frame.getByText('Sync paused', { exact: false })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'Retry' })).toBeVisible();
+	await expect(frame.locator('.skeleton-card')).toBeVisible();
+
+	// interaction smoke: toggling a filter updates its pressed state (ink-fill selected)
+	const mineBtn = frame.getByRole('button', { name: 'Mine', exact: true });
+	await mineBtn.click();
+	await expect(mineBtn).toHaveAttribute('aria-pressed', 'true');
+
+	// keyboard focus on the search field shows a container ring with meaningful
+	// contrast (>=3:1, the WCAG UI-component minimum) against the drafting paper.
+	const previewFrame = page.frame({ url: /kanban-brutalism\/preview$/ });
+	expect(previewFrame).toBeTruthy();
+	await frame.getByRole('searchbox').focus();
+	const focusContrast = await previewFrame!.evaluate(() => {
+		const el = document.querySelector('.search');
+		if (!(el instanceof HTMLElement)) return -1;
+		const cs = getComputedStyle(el);
+		if (cs.outlineStyle !== 'solid' || parseFloat(cs.outlineWidth) < 3) return -1;
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return -1;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const oL = lum(cs.outlineColor);
+		const bL = lum(cs.backgroundColor);
+		return (Math.max(oL, bL) + 0.05) / (Math.min(oL, bL) + 0.05);
+	});
+	expect(focusContrast).toBeGreaterThanOrEqual(3);
+
+	// reduced-motion: skeleton blink animation is suppressed; the skeleton
+	// remains visible but static (no infinite animation).
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	const skeletonStatic = await previewFrame!.evaluate(() => {
+		const el = document.querySelector('.skel');
+		if (!(el instanceof HTMLElement)) return null;
+		return getComputedStyle(el).animationName === 'none';
+	});
+	expect(skeletonStatic).toBe(true);
+	await page.emulateMedia({ reducedMotion: null });
+
+	// ------------------------------------------------------------------
+	// Direct preview route: visual-signature, a11y, and responsive checks.
+	// The detail page embeds the preview in a narrower iframe, so these run
+	// on the standalone /preview route at exact 375/768/1280 widths.
+	// ------------------------------------------------------------------
+	await page.goto('/designs/kanban-brutalism/preview');
+	await expect(page.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
+	await page.setViewportSize({ width: 1280, height: 800 });
+
+	// --- Locked content: all five team members render as accessible avatars
+	//     in the header (complete fixed content, brutalist-styled). ---
+	const memberNames = ['Maya Rivera', 'Devon Chen', 'Priya Nair', 'Sam Okafor', 'Lena Foss'];
+	expect(await page.locator('.team-avatars [aria-label]').count()).toBe(5);
+	for (const name of memberNames) {
+		await expect(page.locator(`.team-avatars [aria-label="${name}"]`)).toBeVisible();
+	}
+
+	// --- Showcased states exposed programmatically (no interaction added):
+	//     the active column announces its state, and the selected card's
+	//     computed accessible NAME includes "selected". ---
+	await expect(page.locator('.column.is-active')).toHaveAttribute('aria-label', /active/i);
+	await expect(page.getByRole('article', { name: /selected/i })).toBeVisible();
+
+	// --- BLUEPRINT signature: light compact brutalist technical schematic.
+	//     Foregrounded graph-paper grid (an SVG url background, not a
+	//     gradient), raw monospace throughout, near-black ink on off-white
+	//     drafting paper (never pure #000/#fff), harsh exposed 2–3px solid
+	//     structural rules, near-square cards, coordinate/dimension
+	//     notation (✛ crosshair ticks, N= counts) in the one deep
+	//     technical-blue accent. No gradients, no shadows, no backdrop
+	//     blur anywhere. Unmistakably rougher/more technical than the
+	//     published Swiss (sans, hidden grid) and Editorial (serif)
+	//     directions. ---
+	const sig = await page.evaluate(() => {
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const cs = (sel: string) => {
+			const el = document.querySelector(sel);
+			return el instanceof HTMLElement ? getComputedStyle(el) : null;
+		};
+		const channels = (cssColor: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = cssColor;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			return { r: d[0], g: d[1], b: d[2] };
+		};
+		// Walk every element, collecting any gradient background, any
+		// box-shadow, or any backdrop blur (brutalism forbids all three).
+		let gradientFound = false;
+		let shadowFound = false;
+		let backdropFound = false;
+		const fonts = new Set<string>();
+		document.querySelectorAll('.board-root, .board-root *').forEach((el) => {
+			const c = getComputedStyle(el);
+			if (/gradient/i.test(c.backgroundImage)) gradientFound = true;
+			if (c.boxShadow !== 'none') shadowFound = true;
+			if (c.backdropFilter !== 'none') backdropFound = true;
+			fonts.add(c.fontFamily.toLowerCase());
+		});
+		const rootCs = cs('.board-root');
+		const cardCs = cs('.card');
+		const tickCs = cs('.tick');
+		const tickCh = tickCs ? channels(tickCs.color) : { r: -1, g: -1, b: -1 };
+		return {
+			rootBgImage: rootCs?.backgroundImage ?? '',
+			rootBgColorLum: lum(rootCs?.backgroundColor ?? '#fff'),
+			rootBorderWidth: parseFloat(rootCs?.borderWidth ?? '0'),
+			rootBorderStyle: rootCs?.borderStyle ?? '',
+			cardBgImage: cardCs?.backgroundImage ?? '',
+			cardBorderStyle: cardCs?.borderStyle ?? '',
+			cardBorderWidth: parseFloat(cardCs?.borderWidth ?? '0'),
+			cardRadius: parseFloat(cardCs?.borderRadius ?? '0'),
+			cardBgLum: lum(cardCs?.backgroundColor ?? '#fff'),
+			inkLum: lum(cs('.card-title')?.color ?? '#000'),
+			anySerif: Array.from(fonts).some((f) => /georgia|times|serif/.test(f) && !/sans/.test(f)),
+			anySans: Array.from(fonts).some((f) => /sans/.test(f)),
+			allMono: Array.from(fonts).every((f) => /mono/.test(f)),
+			gradientFound,
+			shadowFound,
+			backdropFound,
+			tickBlueOverRed: tickCh.b - tickCh.r,
+			tickBlueOverGreen: tickCh.b - tickCh.g,
+			notationCrosshair: document.body.textContent?.includes('✛') ?? false,
+			notationCount: document.body.textContent?.includes('N=') ?? false
+		};
+	});
+	expect(sig).not.toBeNull();
+	expect(sig!.rootBgImage, 'foregrounded graph-paper grid present').toMatch(/^url\(/);
+	expect(sig!.rootBgImage, 'root background is a url, not a gradient').not.toMatch(/gradient/i);
+	expect(sig!.cardBgImage, 'no background image on cards').toBe('none');
+	expect(sig!.rootBgColorLum, 'canvas off-white drafting paper (not pure white)').toBeLessThan(
+		0.95
+	);
+	expect(sig!.rootBgColorLum, 'canvas light').toBeGreaterThan(0.78);
+	expect(sig!.cardBgLum, 'card brighter surface').toBeGreaterThanOrEqual(sig!.rootBgColorLum);
+	expect(sig!.inkLum, 'near-black ink (not pure black)').toBeGreaterThan(0.005);
+	expect(sig!.inkLum, 'ink dark').toBeLessThan(0.22);
+	expect(sig!.rootBorderWidth, 'board frame harsh rule >=2px').toBeGreaterThanOrEqual(2);
+	expect(sig!.rootBorderStyle, 'board frame solid').toBe('solid');
+	expect(sig!.cardBorderStyle, 'card harsh border solid').toBe('solid');
+	expect(sig!.cardBorderWidth, 'card harsh border >=1.5px').toBeGreaterThanOrEqual(1.5);
+	expect(sig!.cardRadius, 'card near-square (<=3px radius)').toBeLessThanOrEqual(3);
+	expect(sig!.anySerif, 'no serif anywhere (not Editorial)').toBe(false);
+	expect(sig!.anySans, 'no sans anywhere (not Swiss/flat)').toBe(false);
+	expect(sig!.allMono, 'raw monospace throughout').toBe(true);
+	expect(sig!.gradientFound, 'no gradient anywhere').toBe(false);
+	expect(sig!.shadowFound, 'no box-shadow anywhere').toBe(false);
+	expect(sig!.backdropFound, 'no backdrop blur anywhere').toBe(false);
+	expect(sig!.tickBlueOverRed, 'accent blue channel > red').toBeGreaterThan(40);
+	expect(sig!.tickBlueOverGreen, 'accent blue channel > green').toBeGreaterThan(20);
+	expect(sig!.notationCrosshair, 'drafting crosshair (✛) notation present').toBe(true);
+	expect(sig!.notationCount, 'dimension count (N=) notation present').toBe(true);
+
+	// --- Table-driven WCAG AA contrast audit: every distinct semantic text
+	//     role against its actual opaque parent surface (climbing through
+	//     transparency), including all repeated variants (tags, avatars,
+	//     active/inactive controls, placeholder). Brutalism is monochrome +
+	//     one accent, so the audit covers the accent text roles too. ---
+	const contrastResults = await page.evaluate(() => {
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const isOpaque = (cssColor: string) => {
+			const m = cssColor.match(/rgba?\([^)]*\)/);
+			if (!m) return true;
+			const p = m[0].replace(/[^\d.,]/g, '').split(',');
+			return p.length < 4 || parseFloat(p[3]) > 0;
+		};
+		const bgLumOf = (el: Element | null): number => {
+			let node: Element | null = el;
+			while (node) {
+				const bg = getComputedStyle(node).backgroundColor;
+				if (isOpaque(bg)) return lum(bg);
+				node = node.parentElement;
+			}
+			return lum('rgb(255,255,255)');
+		};
+		const ratio = (textSel: string, bgSel: string, pseudo?: string) => {
+			const textEl = document.querySelector(textSel);
+			const bgEl = document.querySelector(bgSel);
+			if (!(textEl instanceof HTMLElement) || !(bgEl instanceof HTMLElement)) return -1;
+			const cs = pseudo ? getComputedStyle(textEl, pseudo) : getComputedStyle(textEl);
+			const tL = lum(cs.color);
+			const bL = bgLumOf(bgEl);
+			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+		};
+		const selfRatio = (sel: string) => ratio(sel, sel);
+		const elRatio = (el: Element) => {
+			if (!(el instanceof HTMLElement)) return -1;
+			const tL = lum(getComputedStyle(el).color);
+			const bL = bgLumOf(el);
+			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+		};
+		const results: { role: string; ratio: number }[] = [
+			{ role: 'card-title', ratio: ratio('.card-title', '.card') },
+			{ role: 'card-id', ratio: ratio('.cid', '.card') },
+			{ role: 'tick', ratio: ratio('.tick', '.card') },
+			{ role: 'checklist', ratio: ratio('.checklist', '.card') },
+			{ role: 'due-regular', ratio: ratio('.due:not(.is-done)', '.card') },
+			{ role: 'due-done', ratio: ratio('.due.is-done', '.card') },
+			{ role: 'pri-high', ratio: ratio('.pri-high', '.card') },
+			{ role: 'pri-medium', ratio: ratio('.pri-medium', '.card') },
+			{ role: 'board-title', ratio: ratio('.title-block h1', '.board-head') },
+			{ role: 'subtitle', ratio: ratio('.subtitle', '.board-head') },
+			{ role: 'project-chip', ratio: selfRatio('.project-chip') },
+			{ role: 'column-heading', ratio: ratio('.col-name', '.col-head') },
+			{ role: 'count', ratio: ratio('.count', '.col-head') },
+			{ role: 'empty-state', ratio: ratio('.empty-col p', '.empty-col') },
+			{ role: 'error-body', ratio: ratio('.error-banner p', '.error-banner') },
+			{ role: 'error-strong', ratio: ratio('.error-banner strong', '.error-banner') },
+			{ role: 'primary-text', ratio: selfRatio('.primary') },
+			{ role: 'add-card-text', ratio: selfRatio('.add-card') },
+			{ role: 'retry-text', ratio: selfRatio('.error-retry') },
+			{ role: 'chip-active', ratio: selfRatio('.chip[aria-pressed="true"]') },
+			{ role: 'chip-inactive', ratio: selfRatio('.chip:not([aria-pressed="true"])') },
+			{
+				role: 'view-active',
+				ratio: selfRatio('.view-toggle button[aria-pressed="true"]')
+			},
+			{
+				role: 'view-inactive',
+				ratio: selfRatio('.view-toggle button:not([aria-pressed="true"])')
+			},
+			{ role: 'search-placeholder', ratio: ratio('.search input', '.search', '::placeholder') },
+			{ role: 'search-input', ratio: ratio('.search input', '.search') }
+		];
+		document.querySelectorAll('.tag').forEach((el) => {
+			const name = el.textContent?.trim() || '?';
+			results.push({ role: `tag:${name}`, ratio: elRatio(el) });
+		});
+		document.querySelectorAll('.avatar').forEach((el) => {
+			const initials = el.textContent?.trim() || '?';
+			results.push({ role: `avatar:${initials}`, ratio: elRatio(el) });
+		});
+		return results;
+	});
+	expect(contrastResults).not.toBeNull();
+	for (const { role, ratio } of contrastResults!) {
+		expect(ratio, `${role} text contrast >= 4.5:1`).toBeGreaterThanOrEqual(4.5);
+	}
+
+	// Exact-width responsive: every named control is >=44px and there is no
+	// horizontal document overflow at each of 375/768/1280.
+	const controls = ['Board', 'List', 'All', 'Mine', 'Due this week'];
+	for (const width of [375, 768, 1280]) {
+		await page.setViewportSize({ width, height: 800 });
+		for (const name of controls) {
+			const box = await page.getByRole('button', { name, exact: true }).boundingBox();
+			expect(box?.height, `${name} height at ${width}`).toBeGreaterThanOrEqual(44);
+		}
+		const moreActions = await page
+			.getByRole('button', { name: 'More actions for Backlog' })
+			.boundingBox();
+		expect(moreActions?.width, `more-actions width at ${width}`).toBeGreaterThanOrEqual(44);
+		expect(moreActions?.height, `more-actions height at ${width}`).toBeGreaterThanOrEqual(44);
+		const dismiss = await page
+			.getByRole('button', { name: 'Dismiss error', exact: true })
+			.boundingBox();
+		expect(dismiss?.width, `dismiss width at ${width}`).toBeGreaterThanOrEqual(44);
+		expect(dismiss?.height, `dismiss height at ${width}`).toBeGreaterThanOrEqual(44);
+		const overflow = await page.evaluate(
+			() =>
+				document.documentElement.scrollWidth - document.documentElement.clientWidth ||
+				window.scrollX
+		);
+		expect(overflow, `horizontal overflow at ${width}`).toBeLessThanOrEqual(0);
+	}
+});
