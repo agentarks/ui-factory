@@ -59,7 +59,7 @@ Solid colour tokens are OKLCH. No pure black or white anywhere. The canvas is th
 ## Layout and composition rules
 
 - Mobile-first: columns stack vertically; the header is a wrapping flex row. No element forces document width.
-- At `≥48rem` the board body becomes a horizontal row of `flex: 1 0 15rem` columns (they grow to fill wide screens, leaving no empty gutter) inside an `overflow-x: auto` scroller with `4px` internal padding so offset focus rings never clip; on narrower tablet widths the columns keep their basis and the board scrolls internally. The document never scrolls horizontally.
+- At `≥48rem` the board body becomes a horizontal row of `flex: 1 0 15rem` columns (they grow to fill wide screens, leaving no empty gutter) inside an `overflow-x: auto` scroller with `6px` internal padding so offset focus rings (5px extent: 3px outline + 2px offset) never clip; on narrower tablet widths the columns keep their basis and the board scrolls internally. The document never scrolls horizontally.
 - Header leads with the project chip + title block + team avatars (left) and search / filters / Board-List toggle / New task (right); it wraps on narrow viewports.
 - The error banner is a full-width, full-border transparent panel directly under the header.
 
@@ -90,7 +90,7 @@ All non-data states keep the zero-fill wireframe contract: they are transparent 
 ## Responsive behavior
 
 - Single-column mobile reading order; header and controls wrap without horizontal document overflow at 375/768/1280.
-- Board body switches from vertical stack (mobile) to a contained horizontal scroller (≥48rem); the internal `4px` padding never clips focus rings.
+- Board body switches from vertical stack (mobile) to a contained horizontal scroller (≥48rem); the internal `6px` padding (≥ the 5px focus extent) never clips focus rings.
 - Type sizes are fixed (compact); only layout reflows. Every target stays ≥44×44 at every width.
 
 ## Interaction and motion guidance

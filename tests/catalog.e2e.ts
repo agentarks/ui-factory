@@ -2456,19 +2456,17 @@ test('opens the kanban-dark-neon design and its isolated preview states', async 
 	const contrastResults = await page.evaluate(() => {
 		const ctx = document.createElement('canvas').getContext('2d');
 		if (!ctx) return null;
+		// Parse a CSS color to RGBA by rendering it to a 1px canvas and reading
+		// the pixel — including the alpha channel (d[3]/255). This is the single
+		// source of truth for alpha: it handles comma-rgba, space/slash modern
+		// syntax (rgb(... / a)), AND oklch(... / a), which a regex cannot.
 		const parseRgb = (css: string) => {
 			ctx.clearRect(0, 0, 2, 2);
 			ctx.fillStyle = '#000';
 			ctx.fillStyle = css;
 			ctx.fillRect(0, 0, 2, 2);
 			const d = ctx.getImageData(0, 0, 1, 1).data;
-			return { r: d[0], g: d[1], b: d[2] };
-		};
-		const alphaOf = (css: string) => {
-			const m = css.match(/rgba?\(([^)]*)\)/);
-			if (!m) return 1;
-			const p = m[1].split(',').map((x) => x.trim());
-			return p.length === 4 ? parseFloat(p[3]) : 1;
+			return { r: d[0], g: d[1], b: d[2], a: d[3] / 255 };
 		};
 		const lumOfRgb = ({ r, g, b }: { r: number; g: number; b: number }) => {
 			const ch = (v: number) => {
@@ -2486,9 +2484,9 @@ test('opens the kanban-dark-neon design and its isolated preview states', async 
 			const layers: { rgb: { r: number; g: number; b: number }; a: number }[] = [];
 			let node: Element | null = start;
 			while (node instanceof HTMLElement) {
-				const bg = getComputedStyle(node).backgroundColor;
-				layers.push({ rgb: parseRgb(bg), a: alphaOf(bg) });
-				if (alphaOf(bg) >= 0.999) break;
+				const parsed = parseRgb(getComputedStyle(node).backgroundColor);
+				layers.push({ rgb: { r: parsed.r, g: parsed.g, b: parsed.b }, a: parsed.a });
+				if (parsed.a >= 0.999) break;
 				node = node.parentElement;
 			}
 			let acc = layers[layers.length - 1].rgb;
@@ -2513,9 +2511,9 @@ test('opens the kanban-dark-neon design and its isolated preview states', async 
 			}
 			return Math.min(Math.max(op, 0), 1);
 		};
-		// Composite the FOREGROUND rgba (+ element opacity) over the effective
-		// backdrop before computing luminance. Without this, rgba(255,255,255,.05)
-		// text would false-pass at ~20:1 instead of its true ~1.1:1.
+		// Composite the FOREGROUND rgba (alpha read from the rendered pixel,
+		// so oklch(... / a) and rgb(... / a) work too) + element/ancestor
+		// opacity over the effective backdrop before computing luminance.
 		const blendOver = (
 			fg: { r: number; g: number; b: number },
 			bg: { r: number; g: number; b: number },
@@ -2530,9 +2528,9 @@ test('opens the kanban-dark-neon design and its isolated preview states', async 
 			bgRgb: { r: number; g: number; b: number },
 			textEl: Element
 		) => {
-			const fgRgb = parseRgb(color);
-			const fgA = Math.min(alphaOf(color) * opacityOf(textEl), 1);
-			const eff = blendOver(fgRgb, bgRgb, fgA);
+			const fg = parseRgb(color);
+			const fgA = Math.min(fg.a * opacityOf(textEl), 1);
+			const eff = blendOver({ r: fg.r, g: fg.g, b: fg.b }, bgRgb, fgA);
 			const tL = lumOfRgb(eff);
 			const bL = lumOfRgb(bgRgb);
 			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
@@ -2591,30 +2589,47 @@ test('opens the kanban-dark-neon design and its isolated preview states', async 
 			results.push({ role: `avatar:${initials}`, ratio: elRatio(el) });
 		});
 
-		// Self-check: inject a near-transparent white text node on the canvas. A
-		// correct compositor must composite the foreground RGBA (and element
-		// opacity) over the effective backdrop, so rgba(255,255,255,.05) must
-		// read as ~1.1:1 — NOT the ~20:1 an alpha-blind compositor reports.
+		// Self-check: a translucent foreground in a color function the regex
+		// cannot parse — `oklch(... / a)` (getComputedStyle keeps it as oklch,
+		// not comma-rgba) — combined with element AND ancestor opacity.
+		// Effective alpha = 0.4 * 0.5 (element) * 0.5 (ancestor) = 0.1. A correct
+		// compositor must read alpha from the RENDERED pixel (canvas d[3]/255)
+		// and combine it with cumulative opacity — NOT a comma-rgba regex that
+		// ignores oklch and treats the text as opaque. `expected` is the
+		// analytic ratio for a_eff = 0.1 over the probe's real backdrop.
+		const host = document.createElement('div');
+		host.style.opacity = '0.5';
 		const probe = document.createElement('span');
 		probe.textContent = 'probe';
-		probe.style.color = 'rgba(255, 255, 255, 0.05)';
+		probe.style.color = 'oklch(1 0 0 / 0.4)';
+		probe.style.opacity = '0.5';
+		host.appendChild(probe);
 		const root = document.querySelector('.board-root');
-		(root ?? document.body).appendChild(probe);
-		const mutationRatio = elRatio(probe);
-		probe.remove();
+		(root ?? document.body).appendChild(host);
+		const measured = elRatio(probe);
+		const bgRgb = bgRgbOf(probe);
+		const expectedEff = blendOver({ r: 255, g: 255, b: 255 }, bgRgb, 0.1);
+		const expT = lumOfRgb(expectedEff);
+		const expB = lumOfRgb(bgRgb);
+		const expected = (Math.max(expT, expB) + 0.05) / (Math.min(expT, expB) + 0.05);
+		host.remove();
 
-		return { results, mutationRatio };
+		return { results, mutation: { measured, expected } };
 	});
 	expect(contrastResults).not.toBeNull();
 	for (const { role, ratio } of contrastResults!.results) {
 		expect(ratio, `${role} text contrast >= 4.5:1`).toBeGreaterThanOrEqual(4.5);
 	}
-	// Translucent foreground must be caught as low contrast: this proves the
-	// compositor accounts for foreground alpha + opacity, not just the backdrop.
+	// The compositor must match the analytic model that combines modern-syntax
+	// foreground alpha (read from the rendered pixel) with element AND ancestor
+	// opacity (effective alpha 0.4 * 0.5 * 0.5 = 0.1).
+	const mut = contrastResults!.mutation;
 	expect(
-		contrastResults!.mutationRatio,
-		'translucent text is NOT false-passed as high contrast'
-	).toBeLessThan(1.5);
+		Math.abs(mut.measured - mut.expected),
+		'mutation measured ~= expected (fg alpha x element x ancestor opacity)'
+	).toBeLessThan(0.03);
+	expect(mut.expected, 'mutation expected is a bounded LOW contrast (>1)').toBeGreaterThan(1.0);
+	expect(mut.expected, 'mutation expected is a bounded LOW contrast (<1.4)').toBeLessThan(1.4);
 
 	// The New task primary is a transparent cyan-edge button on the near-black
 	// app bar; its focus outline seats outside the face, so the cyan ring must
@@ -2725,13 +2740,17 @@ test('opens the kanban-dark-neon design and its isolated preview states', async 
 			expect(box?.height, `${name} height at ${width}`).toBeGreaterThanOrEqual(44);
 		}
 		// The Search field is a clickable <label> (clicking it focuses the
-		// input), so its clickable box must also meet the 44px minimum.
+		// input), so its clickable box must also meet the 44px minimum on both
+		// axes.
 		const searchBox = await page.locator('.search').boundingBox();
+		expect(searchBox?.width, `search label width at ${width}`).toBeGreaterThanOrEqual(44);
 		expect(searchBox?.height, `search label height at ${width}`).toBeGreaterThanOrEqual(44);
-		// Primary action + error Retry.
+		// Primary action + error Retry — both axes.
 		const primary = await page.getByRole('button', { name: 'New task', exact: true }).boundingBox();
+		expect(primary?.width, `New task width at ${width}`).toBeGreaterThanOrEqual(44);
 		expect(primary?.height, `New task height at ${width}`).toBeGreaterThanOrEqual(44);
 		const retry = await page.getByRole('button', { name: 'Retry', exact: true }).boundingBox();
+		expect(retry?.width, `Retry width at ${width}`).toBeGreaterThanOrEqual(44);
 		expect(retry?.height, `Retry height at ${width}`).toBeGreaterThanOrEqual(44);
 		for (const col of columnNames) {
 			const ma = await page
@@ -2740,11 +2759,12 @@ test('opens the kanban-dark-neon design and its isolated preview states', async 
 			expect(ma?.width, `${col} more-actions width at ${width}`).toBeGreaterThanOrEqual(44);
 			expect(ma?.height, `${col} more-actions height at ${width}`).toBeGreaterThanOrEqual(44);
 		}
-		// EVERY "Add a card" target (one per column).
+		// EVERY "Add a card" target (one per column) — both axes.
 		const addCards = await page.getByRole('button', { name: 'ADD A CARD', exact: true }).all();
 		expect(addCards.length, `one Add a card per column at ${width}`).toBe(columnNames.length);
 		for (const ac of addCards) {
 			const box = await ac.boundingBox();
+			expect(box?.width, `Add a card width at ${width}`).toBeGreaterThanOrEqual(44);
 			expect(box?.height, `Add a card height at ${width}`).toBeGreaterThanOrEqual(44);
 		}
 		const dismiss = await page
