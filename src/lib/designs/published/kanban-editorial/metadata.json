@@ -1,0 +1,15 @@
+{
+	"schemaVersion": 1,
+	"slug": "kanban-editorial",
+	"version": "1.0.0",
+	"title": "Kanban Board · Annual Report",
+	"summary": "A sober Editorial / Typographic Kanban board on near-white cool paper with dark navy ink, restrained teal accents, serif masthead and headings over system-sans data, teal column rules, and small-radius bordered cards in a formal two-colour print palette.",
+	"pageType": "data-management",
+	"applicationTypes": ["project-management", "productivity", "team-collaboration"],
+	"visualStyles": ["editorial", "typographic"],
+	"theme": "light",
+	"density": "spacious",
+	"platforms": ["web", "desktop", "tablet", "mobile"],
+	"status": "production-ready",
+	"tags": ["kanban", "board", "editorial", "typographic", "serif", "annual-report"]
+}

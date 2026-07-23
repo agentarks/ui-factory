@@ -708,3 +708,340 @@ test('opens the kanban-claymorphism design and its isolated preview states', asy
 		expect(overflow, `horizontal overflow at ${width}`).toBeLessThanOrEqual(0);
 	}
 });
+
+test('opens the kanban-editorial design and its isolated preview states', async ({ page }) => {
+	// ---- Detail page: exact approved public summary + identity ----
+	await page.goto('/designs/kanban-editorial');
+
+	await expect(
+		page.getByRole('heading', { name: 'Kanban Board · Annual Report', exact: false })
+	).toBeVisible();
+	await expect(
+		page.getByText(
+			'A sober Editorial / Typographic Kanban board on near-white cool paper with dark navy ink, restrained teal accents, serif masthead and headings over system-sans data, teal column rules, and small-radius bordered cards in a formal two-colour print palette.',
+			{ exact: true }
+		)
+	).toBeVisible();
+
+	// ---- Isolated preview: locked content + empty/error/loading states ----
+	const frame = page.frameLocator('iframe[title*="preview"i]');
+	await expect(frame.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'New task' })).toBeVisible();
+	await expect(frame.getByText('Backlog', { exact: true })).toBeVisible();
+	await expect(frame.getByRole('heading', { name: 'In Review' })).toBeVisible();
+	await expect(frame.getByText('No cards yet')).toBeVisible();
+	await expect(frame.getByText('Sync paused', { exact: false })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'Retry' })).toBeVisible();
+	await expect(frame.locator('.skeleton-card')).toBeVisible();
+
+	// interaction smoke: toggling a filter updates its pressed state (navy-fill selected)
+	const mineBtn = frame.getByRole('button', { name: 'Mine', exact: true });
+	await mineBtn.click();
+	await expect(mineBtn).toHaveAttribute('aria-pressed', 'true');
+
+	// keyboard focus on the search field shows a container ring with meaningful
+	// contrast (>=3:1) against the near-white paper field.
+	const previewFrame = page.frame({ url: /kanban-editorial\/preview$/ });
+	expect(previewFrame).toBeTruthy();
+	await frame.getByRole('searchbox').focus();
+	const focusContrast = await previewFrame!.evaluate(() => {
+		const el = document.querySelector('.search');
+		if (!(el instanceof HTMLElement)) return -1;
+		const cs = getComputedStyle(el);
+		if (cs.outlineStyle !== 'solid' || parseFloat(cs.outlineWidth) < 3) return -1;
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return -1;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const oL = lum(cs.outlineColor);
+		const bL = lum(cs.backgroundColor);
+		return (Math.max(oL, bL) + 0.05) / (Math.min(oL, bL) + 0.05);
+	});
+	expect(focusContrast).toBeGreaterThanOrEqual(3);
+
+	// The New task primary is a navy-filled button on the paper masthead; its
+	// focus outline (seated outside the fill via outline-offset) renders against
+	// the paper surface, so the ring must still read at >=3:1 there. Reach it by
+	// Tabbing from the preceding control so :focus-visible legitimately applies.
+	await frame.getByRole('button', { name: 'List', exact: true }).press('Tab');
+	const primaryFocus = await previewFrame!.evaluate(() => {
+		const el = document.querySelector('.primary');
+		const surround = el?.closest('.board-head');
+		if (!(el instanceof HTMLElement) || !(surround instanceof HTMLElement)) return -1;
+		const cs = getComputedStyle(el);
+		if (cs.outlineStyle !== 'solid' || parseFloat(cs.outlineWidth) < 3) return -1;
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return -1;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const oL = lum(cs.outlineColor);
+		const bL = lum(getComputedStyle(surround).backgroundColor);
+		return (Math.max(oL, bL) + 0.05) / (Math.min(oL, bL) + 0.05);
+	});
+	expect(primaryFocus).toBeGreaterThanOrEqual(3);
+
+	// reduced-motion: skeleton pulse animation is suppressed; the skeleton
+	// remains visible but static (no infinite animation).
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	const skeletonAnimating = await previewFrame!.evaluate(() => {
+		const el = document.querySelector('.skel');
+		if (!(el instanceof HTMLElement)) return null;
+		const cs = getComputedStyle(el);
+		return cs.animationName === 'none';
+	});
+	expect(skeletonAnimating).toBe(true);
+	await page.emulateMedia({ reducedMotion: null });
+
+	// ------------------------------------------------------------------
+	// Direct preview route: exact-width responsive + visual-signature +
+	// table-driven contrast audit. The detail page embeds the preview in a
+	// narrower iframe, so these checks run on the standalone /preview route
+	// at exact 375/768/1280 viewport widths.
+	// ------------------------------------------------------------------
+	await page.goto('/designs/kanban-editorial/preview');
+	await expect(page.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
+	await page.setViewportSize({ width: 1280, height: 800 });
+
+	// Visual signature: the selected Annual Report reference — near-white cool
+	// paper canvas, brighter paper card surfaces, dark navy ink, restrained
+	// teal accent. Serif masthead + headings; system-sans data. Teal 2px rules
+	// under column headings. Bordered near-square cards. No shadows, no
+	// gradients, no backdrop blur.
+	const sig = await page.evaluate(() => {
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const cs = (sel: string) => {
+			const el = document.querySelector(sel);
+			return el instanceof HTMLElement ? getComputedStyle(el) : null;
+		};
+		const bgLum = (sel: string) => {
+			const c = cs(sel);
+			return c ? lum(c.backgroundColor) : -1;
+		};
+		const colorLum = (sel: string) => {
+			const c = cs(sel);
+			return c ? lum(c.color) : -1;
+		};
+		const tealness = (cssColor: string) => {
+			// Teal/cyan reads as green channel >= red channel by a clear margin.
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = cssColor;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			return d[1] - d[0]; // green minus red
+		};
+		const cardCs = cs('.card');
+		const colHeadCs = cs('.column-head');
+		const ruleCs = cs('.card');
+		return {
+			canvasLum: bgLum('.board-root'),
+			cardBgLum: bgLum('.card'),
+			cardBgImage: cardCs?.backgroundImage ?? '',
+			cardBoxShadow: cardCs?.boxShadow ?? '',
+			cardBorderStyle: cardCs?.borderStyle ?? '',
+			cardBorderWidth: parseFloat(cardCs?.borderWidth ?? '0'),
+			cardRadius: parseFloat(cardCs?.borderRadius ?? '0'),
+			boardBgImage: cs('.board-root')?.backgroundImage ?? '',
+			mastheadFont: cs('.masthead')?.fontFamily ?? '',
+			titleFont: cs('.card-title')?.fontFamily ?? '',
+			labelFont: cs('.label')?.fontFamily ?? '',
+			dueFont: cs('.due')?.fontFamily ?? '',
+			colHeadRuleWidth: parseFloat(colHeadCs?.borderBottomWidth ?? '0'),
+			colHeadRuleTealness: colHeadCs ? tealness(colHeadCs.borderBottomColor) : -99,
+			cardRuleTealness: ruleCs ? tealness(ruleCs.borderColor) : -99,
+			backdropOnRoot: cs('.board-root')?.backdropFilter ?? '',
+			backdropOnCard: cardCs?.backdropFilter ?? '',
+			titleColorLum: colorLum('.card-title')
+		};
+	});
+	expect(sig).not.toBeNull();
+	expect(sig!.canvasLum, 'canvas near-white cool paper').toBeGreaterThan(0.9);
+	expect(sig!.cardBgLum, 'card brighter paper surface').toBeGreaterThan(0.9);
+	expect(sig!.cardBgLum, 'card brighter than or equal to canvas').toBeGreaterThanOrEqual(
+		sig!.canvasLum
+	);
+	expect(sig!.cardBgImage, 'no gradient on cards').toBe('none');
+	expect(sig!.boardBgImage, 'no gradient on canvas').toBe('none');
+	expect(sig!.cardBoxShadow, 'no decorative elevation on cards').toBe('none');
+	expect(sig!.cardBorderStyle, 'cards bordered').toBe('solid');
+	expect(sig!.cardBorderWidth, 'card hairline border >= 1px').toBeGreaterThanOrEqual(1);
+	expect(sig!.cardRadius, 'card near-square (<=4px radius)').toBeLessThanOrEqual(4);
+	expect(sig!.mastheadFont.toLowerCase(), 'masthead serif').toMatch(/serif|georgia/);
+	expect(sig!.titleFont.toLowerCase(), 'card title serif').toMatch(/serif|georgia/);
+	expect(sig!.labelFont.toLowerCase(), 'label sans data').toMatch(/sans|system/);
+	expect(sig!.dueFont.toLowerCase(), 'due sans data').toMatch(/sans|system/);
+	// Sans confirmation: the label must not resolve to the serif stack. (A bare
+	// /serif/ check would false-positive on "sans-serif".)
+	expect(sig!.labelFont.toLowerCase(), 'label not the serif stack').not.toMatch(/georgia|times/);
+	expect(sig!.colHeadRuleWidth, 'teal column rule 2px').toBeGreaterThanOrEqual(2);
+	expect(sig!.colHeadRuleTealness, 'column rule is teal (green>red)').toBeGreaterThan(15);
+	expect(sig!.cardRuleTealness, 'card border not teal (cool-gray hairline)').toBeLessThan(15);
+	expect(sig!.backdropOnRoot, 'no backdrop blur on canvas').toBe('none');
+	expect(sig!.backdropOnCard, 'no backdrop blur on cards').toBe('none');
+	expect(sig!.titleColorLum, 'card title dark navy ink').toBeLessThan(0.3);
+
+	// Table-driven WCAG AA contrast audit: every distinct semantic text role
+	// against its actual opaque parent surface, including all repeated color
+	// variants (avatars, labels, active/inactive controls, placeholder).
+	const contrastResults = await page.evaluate(() => {
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		// Resolve the effective background luminance by climbing to the nearest
+		// opaque ancestor. Editorial controls are intentionally transparent
+		// (flat paper design), so their "actual parent surface" is the paper
+		// canvas — a real contrast audit climbs through transparency rather
+		// than measuring text against rgba(0,0,0,0).
+		const isOpaque = (cssColor: string) => {
+			const m = cssColor.match(/rgba?\([^)]*\)/);
+			if (!m) return true; // named/hex/oklch are opaque
+			const parts = m[0].replace(/[^\d.,]/g, '').split(',');
+			return parts.length < 4 || parseFloat(parts[3]) > 0;
+		};
+		const bgLumOf = (el: Element | null): number => {
+			let node: Element | null = el;
+			while (node) {
+				const bg = getComputedStyle(node).backgroundColor;
+				if (isOpaque(bg)) return lum(bg);
+				node = node.parentElement;
+			}
+			return lum('rgb(255,255,255)'); // document fallback
+		};
+		const ratio = (textSel: string, bgSel: string, pseudo?: string) => {
+			const textEl = document.querySelector(textSel);
+			const bgEl = document.querySelector(bgSel);
+			if (!(textEl instanceof HTMLElement) || !(bgEl instanceof HTMLElement)) return -1;
+			const cs = pseudo ? getComputedStyle(textEl, pseudo) : getComputedStyle(textEl);
+			const tL = lum(cs.color);
+			const bL = bgLumOf(bgEl);
+			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+		};
+		const selfRatio = (sel: string) => ratio(sel, sel);
+		const elRatio = (el: Element) => {
+			if (!(el instanceof HTMLElement)) return -1;
+			const tL = lum(getComputedStyle(el).color);
+			const bL = bgLumOf(el);
+			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+		};
+		const results: { role: string; ratio: number }[] = [
+			{ role: 'card-title', ratio: ratio('.card-title', '.card') },
+			{ role: 'checklist', ratio: ratio('.checklist', '.card') },
+			{ role: 'due-regular', ratio: ratio('.due:not(.is-done)', '.card') },
+			{ role: 'due-done', ratio: ratio('.due.is-done', '.card') },
+			{ role: 'pri-high', ratio: ratio('.pri-high', '.card') },
+			{ role: 'pri-medium', ratio: ratio('.pri-medium', '.card') },
+			{ role: 'board-title', ratio: ratio('.title-block h1', '.board-head') },
+			{ role: 'subtitle', ratio: ratio('.subtitle', '.board-head') },
+			{ role: 'masthead', ratio: ratio('.masthead', '.board-head') },
+			{ role: 'column-heading', ratio: ratio('.column-head h2', '.column-head') },
+			{ role: 'count-badge', ratio: selfRatio('.count') },
+			{ role: 'empty-state', ratio: ratio('.empty-col p', '.empty-col') },
+			{ role: 'error-body', ratio: ratio('.error-banner p', '.error-banner') },
+			{ role: 'error-strong', ratio: ratio('.error-banner strong', '.error-banner') },
+			{ role: 'primary-text', ratio: selfRatio('.primary') },
+			{ role: 'add-card-text', ratio: selfRatio('.add-card') },
+			{ role: 'retry-text', ratio: selfRatio('.error-retry') },
+			{ role: 'chip-active', ratio: selfRatio('.chip[aria-pressed="true"]') },
+			{
+				role: 'chip-inactive',
+				ratio: selfRatio('.chip:not([aria-pressed="true"])')
+			},
+			{
+				role: 'view-active',
+				ratio: selfRatio('.view-toggle button[aria-pressed="true"]')
+			},
+			{
+				role: 'view-inactive',
+				ratio: selfRatio('.view-toggle button:not([aria-pressed="true"])')
+			},
+			{ role: 'search-placeholder', ratio: ratio('.search input', '.search', '::placeholder') },
+			{ role: 'search-input', ratio: ratio('.search input', '.search') }
+		];
+		document.querySelectorAll('.label').forEach((el) => {
+			const name = el.textContent?.trim() || '?';
+			results.push({ role: `label:${name}`, ratio: elRatio(el) });
+		});
+		document.querySelectorAll('.avatar').forEach((el) => {
+			const initials = el.textContent?.trim() || '?';
+			results.push({ role: `avatar:${initials}`, ratio: elRatio(el) });
+		});
+		return results;
+	});
+	expect(contrastResults).not.toBeNull();
+	for (const { role, ratio } of contrastResults!) {
+		expect(ratio, `${role} text contrast >= 4.5:1`).toBeGreaterThanOrEqual(4.5);
+	}
+
+	// Exact-width responsive: target sizes + no horizontal document overflow on
+	// the direct preview route at exact 375/768/1280.
+	const controls = ['Board', 'List', 'All', 'Mine', 'Due this week'];
+	for (const width of [375, 768, 1280]) {
+		await page.setViewportSize({ width, height: 800 });
+		for (const name of controls) {
+			const box = await page.getByRole('button', { name, exact: true }).boundingBox();
+			expect(box?.height, `${name} height at ${width}`).toBeGreaterThanOrEqual(44);
+		}
+		const moreActions = await page
+			.getByRole('button', { name: 'More actions for Backlog' })
+			.boundingBox();
+		expect(moreActions?.width).toBeGreaterThanOrEqual(44);
+		expect(moreActions?.height).toBeGreaterThanOrEqual(44);
+		const dismiss = await page
+			.getByRole('button', { name: 'Dismiss error', exact: true })
+			.boundingBox();
+		expect(dismiss?.width).toBeGreaterThanOrEqual(44);
+		expect(dismiss?.height).toBeGreaterThanOrEqual(44);
+		const newTask = await page.getByRole('button', { name: 'New task' }).boundingBox();
+		expect(newTask?.height).toBeGreaterThanOrEqual(44);
+		const overflow = await page.evaluate(
+			() =>
+				document.documentElement.scrollWidth - document.documentElement.clientWidth ||
+				window.scrollX
+		);
+		expect(overflow, `horizontal overflow at ${width}`).toBeLessThanOrEqual(0);
+	}
+});

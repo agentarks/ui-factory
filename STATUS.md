@@ -4,7 +4,7 @@
 
 **Phase:** Scaffold complete
 
-**Objective:** Publish the next independent, production-ready Kanban design; five catalog styles remain.
+**Objective:** Publish the next independent, production-ready Kanban design; four catalog styles remain.
 
 ## Completed
 
@@ -29,9 +29,11 @@
 
 - Published `kanban-claymorphism`, the fifth of the ten planned Kanban styles, in the user-approved reference-faithful **Luminous Putty** direction: a deep indigo canvas (`oklch(0.22 0.055 272)`), darker app bar (`oklch(0.17 0.05 273)`), and medium-dark indigo cards and controls (`oklch(0.3 0.058 275)`) with light lavender text. Columns are transparent and open rather than raised filled slabs; compact 6–10px radii, tight card spacing, tiny dark labels with pastel dots, and short layered inset/cast shadows preserve the dense tactile reference. Selection combines an accent fill with the pressed shadow; hover keeps faces unchanged, deepens the shadow, and lifts cards 1px only when motion is allowed. The semantic Svelte 5 specimen retains the locked content and demonstrated empty, loading, error, drag, done, priority, selection, hover, focus, and reduced-motion states with no added dependencies, fonts, or assets. The self-contained `DESIGN.md` now copies the actual tokens, shadow recipes, component rules, extension guidance, AA/focus behavior, and no-license status. Focused Playwright coverage locks the dark visual signature, audits semantic text roles at ≥4.5:1 against their opaque parents, verifies the search and primary focus indicators, confirms 44px targets at 375/768/1280 while transparent borders preserve the approved 38px segmented and 36px icon faces, and checks reduced motion and horizontal overflow.
 
+- Published `kanban-editorial`, the sixth of the ten planned Kanban styles and the **Editorial / Typographic** direction, faithful to the user-selected **Annual Report** concept: a near-white cool-paper canvas (`oklch(0.985 0.003 250)`), brighter paper card/control surfaces (`oklch(0.995 0.002 250)`), dark navy ink (`oklch(0.26 0.03 258)`), cool-gray hairlines (`oklch(0.84 0.006 255)`), and a restrained teal accent (`oklch(0.44 0.08 200)`) reserved for the 2px column rules, the done check, and the focus ring. A Georgia/Times system serif carries the masthead, column headings, and card titles; the system sans carries every control, label, date, count, and supporting datum. Composition preserves the concept: a sober serif report masthead, a compact uppercase sprint/board line, a thin dark navy 1px board rule, teal 2px rules under column headings, mostly-square bordered cards (3px radius) with **no decorative elevation, no gradients, no backdrop blur, no translucency**, crisp data-table rhythm, generous surrounding whitespace, and a formal two-colour print palette. Labels are tiny uppercase data keys with uniform navy dot separators; avatars are restrained uniform navy circles; done titles are struck through. Controls are understated outlined report controls; selected/primary state is a single dark navy fill. The concept's error side-stripe is overridden by the project's absolute side-stripe ban and translated to a full pale-red banner with a full `1px solid` hairline border plus icon/text. Walked the publication workflow end to end (workbench `draft` → `reviewed` → `production-ready` → moved to `published/`). `fixtures.ts` copied verbatim from the locked glass baseline; only the visual language changes. The self-contained `DESIGN.md` (18 sections plus header) meets the product-vision handoff bar (intent, canonical page, principles, exact OKLCH tokens, typography, spacing/sizing/radii/rules, layout, navigation, components/states, responsive, motion, accessibility, extension rules for settings/auth/forms/tables/detail pages, do/do-not, when-to-use/avoid/trade-offs, dependencies/assets/licenses with the no-license status, and an AI acceptance checklist). Focused Playwright smoke (test-first: confirmed RED on the missing entry before implementation) covers detail + isolated preview, the exact approved public summary, locked content, empty/error/loading states, an `aria-pressed` filter interaction, a full table-driven WCAG 2.2 AA contrast audit of every text role against its actual opaque parent surface (the audit climbs through intentionally-transparent editorial controls to the paper canvas), search and primary (navy-fill) focus rings at ≥3:1, all targets ≥44px at 375/768/1280, direct-preview exact-width overflow/responsive behavior, a reduced-motion static-skeleton check, and visual-signature assertions that prevent drift (cool paper/navy/teal palette, serif headings with sans data, teal column rules, bordered near-square cards, no box shadows/gradients/backdrop blur).
+
 ## Next
 
-- Build the remaining five Kanban styles defined in `docs/catalog-roadmap.md`, one entry at a time through the documented publication workflow. Each copies the locked baseline from `src/lib/designs/published/kanban-glassmorphism/fixtures.ts` and re-skins only the visuals.
+- Build the remaining four Kanban styles defined in `docs/catalog-roadmap.md`, one entry at a time through the documented publication workflow. Each copies the locked baseline from `src/lib/designs/published/kanban-glassmorphism/fixtures.ts` and re-skins only the visuals.
 
 ## Decisions
 
@@ -55,7 +57,7 @@ None.
 - `npm run lint`
 - `npm run check`
 - `npm test`
-- `npx playwright test tests/catalog.e2e.ts --grep "opens the kanban-claymorphism design"`
+- `npx playwright test tests/catalog.e2e.ts --grep "opens the kanban-editorial design"`
 - `npm run test:e2e`
 - `npm run build` (includes the client publication-boundary scan)
 - `node scripts/check-client-publication-boundary.mjs`
