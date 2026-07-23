@@ -2183,3 +2183,525 @@ test('kanban-brutalism hover does not stick on a touch pointer (hover: hover gat
 
 	await context.close();
 });
+
+test('opens the kanban-dark-neon design and its isolated preview states', async ({ page }) => {
+	// ---- Detail page: exact approved public summary + identity ----
+	await page.goto('/designs/kanban-dark-neon');
+
+	await expect(
+		page.getByRole('heading', { name: 'Kanban Board · Holodeck Wireframe', exact: false })
+	).toBeVisible();
+	await expect(
+		page.getByText(
+			'A dark Holodeck Wireframe Kanban board on a near-black canvas with transparent panels defined by luminous cyan wireframe edges, cool-white body text, cyan monospace metrics, restrained semantic glow, outlined labels/avatars/counts, and a pale-red full-border error treatment — no fills, gradients, or backdrop blur.',
+			{ exact: true }
+		)
+	).toBeVisible();
+
+	// ---- Isolated preview: locked content + empty/error/loading states ----
+	const frame = page.frameLocator('iframe[title*="preview"i]');
+	await expect(frame.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'New task' })).toBeVisible();
+	await expect(frame.getByText('Backlog', { exact: true })).toBeVisible();
+	await expect(frame.getByRole('heading', { name: 'In Review' })).toBeVisible();
+	await expect(frame.getByText('No cards yet')).toBeVisible();
+	await expect(frame.getByText('Sync paused', { exact: false })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'Retry' })).toBeVisible();
+	await expect(frame.locator('.skeleton-card')).toBeVisible();
+
+	// interaction smoke: toggling a filter updates its pressed state
+	// (selection = bright cyan edge + glow on a transparent face)
+	const mineBtn = frame.getByRole('button', { name: 'Mine', exact: true });
+	await mineBtn.click();
+	await expect(mineBtn).toHaveAttribute('aria-pressed', 'true');
+
+	// keyboard focus on the search field shows a container ring with meaningful
+	// contrast (>=3:1, the WCAG UI-component minimum) against its real effective
+	// backdrop. The field sits on a near-transparent app bar over the near-black
+	// canvas, so the surround is the composited panel-over-canvas — proving the
+	// cyan ring is visible, not lost against the dark field.
+	const previewFrame = page.frame({ url: /kanban-dark-neon\/preview$/ });
+	expect(previewFrame).toBeTruthy();
+	await frame.getByRole('searchbox').focus();
+	const focusContrast = await previewFrame!.evaluate(() => {
+		const el = document.querySelector('.search');
+		if (!(el instanceof HTMLElement)) return -1;
+		const cs = getComputedStyle(el);
+		if (cs.outlineStyle !== 'solid' || parseFloat(cs.outlineWidth) < 3) return -1;
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return -1;
+		const parseRgb = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			return { r: d[0], g: d[1], b: d[2] };
+		};
+		const lumOfRgb = ({ r, g, b }: { r: number; g: number; b: number }) => {
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b);
+		};
+		// Composite every translucent background layer (panel -> canvas) so the
+		// effective backdrop is measured, not the un-composited tint.
+		const alphaOf = (css: string) => {
+			const m = css.match(/rgba?\(([^)]*)\)/);
+			if (!m) return 1;
+			const p = m[1].split(',').map((x) => x.trim());
+			return p.length === 4 ? parseFloat(p[3]) : 1;
+		};
+		const bgLumOf = (start: Element): number => {
+			const layers: { rgb: { r: number; g: number; b: number }; a: number }[] = [];
+			let node: Element | null = start;
+			while (node instanceof HTMLElement) {
+				const bg = getComputedStyle(node).backgroundColor;
+				layers.push({ rgb: parseRgb(bg), a: alphaOf(bg) });
+				if (alphaOf(bg) >= 0.999) break;
+				node = node.parentElement;
+			}
+			let acc = layers[layers.length - 1].rgb;
+			for (let i = layers.length - 2; i >= 0; i--) {
+				const s = layers[i];
+				acc = {
+					r: s.rgb.r * s.a + acc.r * (1 - s.a),
+					g: s.rgb.g * s.a + acc.g * (1 - s.a),
+					b: s.rgb.b * s.a + acc.b * (1 - s.a)
+				};
+			}
+			return lumOfRgb(acc);
+		};
+		const oL = lumOfRgb(parseRgb(cs.outlineColor));
+		const bL = bgLumOf(el);
+		return (Math.max(oL, bL) + 0.05) / (Math.min(oL, bL) + 0.05);
+	});
+	expect(focusContrast).toBeGreaterThanOrEqual(3);
+
+	// reduced-motion: skeleton pulse animation is suppressed; the skeleton
+	// remains visible but static (no infinite animation).
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	const skeletonStatic = await previewFrame!.evaluate(() => {
+		const el = document.querySelector('.skel');
+		if (!(el instanceof HTMLElement)) return null;
+		return getComputedStyle(el).animationName === 'none';
+	});
+	expect(skeletonStatic).toBe(true);
+	await page.emulateMedia({ reducedMotion: null });
+
+	// ------------------------------------------------------------------
+	// Direct preview route: visual-signature, a11y, and responsive checks.
+	// The detail page embeds the preview in a narrower iframe, so these run
+	// on the standalone /preview route at exact 375/768/1280 widths.
+	// ------------------------------------------------------------------
+	await page.goto('/designs/kanban-dark-neon/preview');
+	await expect(page.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
+	await page.setViewportSize({ width: 1280, height: 800 });
+
+	// --- Locked content: all five team members render as accessible avatars
+	//     in the header (complete fixed content, wireframe-styled). ---
+	const memberNames = ['Maya Rivera', 'Devon Chen', 'Priya Nair', 'Sam Okafor', 'Lena Foss'];
+	expect(await page.locator('.team-avatars [aria-label]').count()).toBe(5);
+	for (const name of memberNames) {
+		await expect(page.locator(`.team-avatars [aria-label="${name}"]`)).toBeVisible();
+	}
+
+	// --- Showcased states exposed programmatically (no interaction added):
+	//     the active column announces its state, and the selected card's
+	//     computed accessible NAME includes "selected". ---
+	await expect(page.locator('.column.is-active')).toHaveAttribute('aria-label', /active/i);
+	await expect(page.getByRole('article', { name: /selected/i })).toBeVisible();
+
+	// --- HOLODECK WIREFRAME signature: near-black canvas; transparent /
+	//     near-transparent panels defined by luminous cyan wireframe edges;
+	//     cool-white body/title text; cyan monospace metrics; restrained
+	//     semantic glow on dots/active/selected/focus; outlined labels,
+	//     avatars, and counts; pale-red full-border error. No fills, no
+	//     gradients, no backdrop blur, no multi-hue signage, no side-stripes. ---
+	const sig = await page.evaluate(() => {
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const cs = (sel: string) => {
+			const el = document.querySelector(sel);
+			return el instanceof HTMLElement ? getComputedStyle(el) : null;
+		};
+		const channels = (cssColor: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = cssColor;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			return { r: d[0], g: d[1], b: d[2] };
+		};
+		// alpha of a background-color (returns 1 for opaque colour spaces)
+		const alphaOf = (cssColor: string) => {
+			const m = cssColor.match(/rgba?\(([^)]*)\)/);
+			if (!m) return 1;
+			const p = m[1].split(',').map((x) => x.trim());
+			return p.length === 4 ? parseFloat(p[3]) : 1;
+		};
+		// Walk every element: gradients? backdrop blur? max cyan glow alpha?
+		let gradientFound = false;
+		let backdropFound = false;
+		let maxCyanGlowAlpha = 0;
+		const fonts = new Set<string>();
+		const dotGlow = { hasBlur: false, cyan: false };
+		document.querySelectorAll('.board-root, .board-root *').forEach((el) => {
+			const c = getComputedStyle(el);
+			if (/gradient/i.test(c.backgroundImage)) gradientFound = true;
+			if (c.backdropFilter !== 'none') backdropFound = true;
+			fonts.add(c.fontFamily.toLowerCase());
+			// Parse box-shadow layers for cyan glow (blur radius > 0 + a
+			// blue-dominant colour). Track the highest alpha to prove restraint.
+			const shadows = c.boxShadow;
+			if (shadows !== 'none') {
+				const layerRe = /(rgba?\([^)]*\))\s+([-\d.]+px)\s+([-\d.]+px)\s+([-\d.]+px)?/g;
+				let m: RegExpExecArray | null;
+				while ((m = layerRe.exec(shadows))) {
+					const color = m[1];
+					const blur = m[4] ? parseFloat(m[4]) : 0;
+					const ch = channels(color);
+					// Cyan = both cool channels clearly above red (b>r and g>r),
+					// distinguishing cyan/teal from pure blue, red, or warm hues.
+					const cyanish = ch.b > ch.r + 40 && ch.g > ch.r + 40;
+					if (blur > 0 && cyanish) {
+						maxCyanGlowAlpha = Math.max(maxCyanGlowAlpha, alphaOf(color));
+					}
+				}
+			}
+		});
+		// Active column dot: cyan + glowing (blur > 0).
+		const dotCs = cs('.column.is-active .column-dot');
+		if (dotCs) {
+			const dotShadow = dotCs.boxShadow;
+			const dm = dotShadow.match(/([-\d.]+)px\s+([-\d.]+)px\s+([-\d.]+)px/);
+			if (dm) {
+				dotGlow.hasBlur = parseFloat(dm[3]) > 0;
+				const colorMatch = dotShadow.match(/(rgba?\([^)]*\))/);
+				if (colorMatch) {
+					const dch = channels(colorMatch[1]);
+					dotGlow.cyan = dch.b > dch.r + 40 && dch.g > dch.r + 40;
+				}
+			}
+		}
+		const cardCs = cs('.card');
+		const cardBorderCh = cardCs ? channels(cardCs.borderTopColor) : { r: -1, g: -1, b: -1 };
+		const errCs = cs('.error-banner');
+		const selCs = cs('.card.is-selected');
+		return {
+			canvasLum: lum(cs('.board-root')?.backgroundColor ?? '#000'),
+			canvasBg: cs('.board-root')?.backgroundColor ?? '',
+			cardBgAlpha: cardCs ? alphaOf(cardCs.backgroundColor) : -1,
+			cardBgImage: cardCs?.backgroundImage ?? '',
+			cardBorderBlueRed: cardBorderCh.b - cardBorderCh.r,
+			cardBgLum: cardCs ? lum(cardCs.backgroundColor) : -1,
+			columnBgAlpha: alphaOf(cs('.column')?.backgroundColor ?? 'transparent'),
+			titleColorLum: lum(cs('.card-title')?.color ?? '#fff'),
+			countFont: cs('.count')?.fontFamily ?? '',
+			cidFont: cs('.cid')?.fontFamily ?? '',
+			gradientFound,
+			backdropFound,
+			dotGlowHasBlur: dotGlow.hasBlur,
+			dotGlowCyan: dotGlow.cyan,
+			maxCyanGlowAlpha,
+			errorAllSides:
+				errCs &&
+				errCs.borderTopStyle === 'solid' &&
+				errCs.borderTopWidth === errCs.borderBottomWidth &&
+				errCs.borderLeftWidth === errCs.borderRightWidth &&
+				errCs.borderTopWidth === errCs.borderLeftWidth &&
+				parseFloat(errCs.borderTopWidth) >= 1,
+			selectedAllSides:
+				selCs &&
+				selCs.borderTopWidth === selCs.borderBottomWidth &&
+				selCs.borderLeftWidth === selCs.borderRightWidth &&
+				selCs.borderTopWidth === selCs.borderLeftWidth
+		};
+	});
+	expect(sig).not.toBeNull();
+	expect(sig!.canvasLum, 'canvas near-black').toBeLessThan(0.06);
+	expect(sig!.cardBgAlpha, 'card face near-transparent (no fill)').toBeLessThan(0.1);
+	expect(sig!.columnBgAlpha, 'column body transparent').toBe(0);
+	expect(sig!.cardBgImage, 'no background image / gradient on cards').toBe('none');
+	expect(sig!.cardBorderBlueRed, 'card wireframe edge is cyan').toBeGreaterThan(40);
+	expect(sig!.titleColorLum, 'card title cool-white').toBeGreaterThan(0.6);
+	expect(sig!.countFont.toLowerCase(), 'count metric is monospace').toMatch(/mono/);
+	expect(sig!.cidFont.toLowerCase(), 'card-id metric is monospace').toMatch(/mono/);
+	expect(sig!.gradientFound, 'no gradient anywhere').toBe(false);
+	expect(sig!.backdropFound, 'no backdrop blur anywhere').toBe(false);
+	expect(sig!.dotGlowHasBlur, 'active column dot glows (cyan blur)').toBe(true);
+	expect(sig!.dotGlowCyan, 'active column dot glow is cyan').toBe(true);
+	expect(sig!.maxCyanGlowAlpha, 'cyan glow is restrained').toBeLessThanOrEqual(0.4);
+	expect(sig!.errorAllSides, 'error is a full pale-red border (no side-stripe)').toBe(true);
+	expect(sig!.selectedAllSides, 'selection is a full cyan border (no side-stripe)').toBe(true);
+
+	// --- Table-driven WCAG AA contrast audit: every distinct semantic text
+	//     role against its actual opaque parent surface. Surfaces are
+	//     transparent/near-transparent, so the audit climbs to the nearest
+	//     opaque ancestor (the near-black canvas) — the real effective
+	//     background for text on a wireframe panel. ---
+	const contrastResults = await page.evaluate(() => {
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		// Composite every translucent panel layer over the near-black canvas so
+		// text on a near-transparent wireframe surface is measured against its
+		// real effective backdrop (canvas), not an un-composited cyan tint that
+		// would overstate background luminance. This is the honest contrast
+		// methodology for a zero-fill wireframe design.
+		const parseRgb = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			return { r: d[0], g: d[1], b: d[2] };
+		};
+		const alphaOf = (css: string) => {
+			const m = css.match(/rgba?\(([^)]*)\)/);
+			if (!m) return 1;
+			const p = m[1].split(',').map((x) => x.trim());
+			return p.length === 4 ? parseFloat(p[3]) : 1;
+		};
+		const lumOfRgb = ({ r, g, b }: { r: number; g: number; b: number }) => {
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b);
+		};
+		const bgLumOf = (start: Element | null): number => {
+			if (!(start instanceof HTMLElement)) return lum('rgb(0,0,0)');
+			const layers: { rgb: { r: number; g: number; b: number }; a: number }[] = [];
+			let node: Element | null = start;
+			while (node instanceof HTMLElement) {
+				const bg = getComputedStyle(node).backgroundColor;
+				layers.push({ rgb: parseRgb(bg), a: alphaOf(bg) });
+				if (alphaOf(bg) >= 0.999) break;
+				node = node.parentElement;
+			}
+			let acc = layers[layers.length - 1].rgb;
+			for (let i = layers.length - 2; i >= 0; i--) {
+				const s = layers[i];
+				acc = {
+					r: s.rgb.r * s.a + acc.r * (1 - s.a),
+					g: s.rgb.g * s.a + acc.g * (1 - s.a),
+					b: s.rgb.b * s.a + acc.b * (1 - s.a)
+				};
+			}
+			return lumOfRgb(acc);
+		};
+		const ratio = (textSel: string, bgSel: string, pseudo?: string) => {
+			const textEl = document.querySelector(textSel);
+			const bgEl = document.querySelector(bgSel);
+			if (!(textEl instanceof HTMLElement) || !(bgEl instanceof HTMLElement)) return -1;
+			const cs = pseudo ? getComputedStyle(textEl, pseudo) : getComputedStyle(textEl);
+			const tL = lum(cs.color);
+			const bL = bgLumOf(bgEl);
+			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+		};
+		const selfRatio = (sel: string) => ratio(sel, sel);
+		const elRatio = (el: Element) => {
+			if (!(el instanceof HTMLElement)) return -1;
+			const tL = lum(getComputedStyle(el).color);
+			const bL = bgLumOf(el);
+			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+		};
+		const results: { role: string; ratio: number }[] = [
+			{ role: 'card-title', ratio: ratio('.card-title', '.card') },
+			{ role: 'cid', ratio: ratio('.cid', '.card') },
+			{ role: 'checklist', ratio: ratio('.checklist', '.card') },
+			{ role: 'due-regular', ratio: ratio('.due:not(.is-done)', '.card') },
+			{ role: 'due-done', ratio: ratio('.due.is-done', '.card') },
+			{ role: 'pri-high', ratio: ratio('.pri-high', '.card') },
+			{ role: 'pri-medium', ratio: ratio('.pri-medium', '.card') },
+			{ role: 'board-title', ratio: ratio('.title-block h1', '.app-bar') },
+			{ role: 'subtitle', ratio: ratio('.subtitle', '.app-bar') },
+			{ role: 'column-heading', ratio: ratio('.column-head h2', '.column-head') },
+			{ role: 'count-badge', ratio: selfRatio('.count') },
+			{ role: 'empty-state', ratio: ratio('.empty-col p', '.empty-col') },
+			{ role: 'error-body', ratio: ratio('.error-banner p', '.error-banner') },
+			{ role: 'error-strong', ratio: ratio('.error-banner strong', '.error-banner') },
+			{ role: 'primary-text', ratio: selfRatio('.primary') },
+			{ role: 'add-card-text', ratio: selfRatio('.add-card') },
+			{ role: 'retry-text', ratio: selfRatio('.error-retry') },
+			{ role: 'project-chip', ratio: selfRatio('.project-chip') },
+			{ role: 'chip-active', ratio: selfRatio('.chip[aria-pressed="true"]') },
+			{ role: 'chip-inactive', ratio: selfRatio('.chip:not([aria-pressed="true"])') },
+			{
+				role: 'view-active',
+				ratio: selfRatio('.view-toggle button[aria-pressed="true"]')
+			},
+			{
+				role: 'view-inactive',
+				ratio: selfRatio('.view-toggle button:not([aria-pressed="true"])')
+			},
+			{ role: 'search-placeholder', ratio: ratio('.search input', '.search', '::placeholder') },
+			{ role: 'search-input', ratio: ratio('.search input', '.search') }
+		];
+		document.querySelectorAll('.label').forEach((el) => {
+			const name = el.textContent?.trim() || '?';
+			results.push({ role: `label:${name}`, ratio: elRatio(el) });
+		});
+		document.querySelectorAll('.avatar').forEach((el) => {
+			const initials = el.textContent?.trim() || '?';
+			results.push({ role: `avatar:${initials}`, ratio: elRatio(el) });
+		});
+		return results;
+	});
+	expect(contrastResults).not.toBeNull();
+	for (const { role, ratio } of contrastResults!) {
+		expect(ratio, `${role} text contrast >= 4.5:1`).toBeGreaterThanOrEqual(4.5);
+	}
+
+	// The New task primary is a transparent cyan-edge button on the near-black
+	// app bar; its focus outline seats outside the face, so the cyan ring must
+	// still read at >=3:1 against the canvas. We are on the standalone /preview
+	// route (no iframe), so drive focus in the page directly. Reach the primary
+	// by Tabbing from the preceding control so :focus-visible legitimately
+	// applies.
+	await page.getByRole('button', { name: 'List', exact: true }).press('Tab');
+	const primaryFocus = await page.evaluate(() => {
+		const el = document.querySelector('.primary');
+		if (!(el instanceof HTMLElement)) return -1;
+		const cs = getComputedStyle(el);
+		if (cs.outlineStyle !== 'solid' || parseFloat(cs.outlineWidth) < 3) return -1;
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return -1;
+		const parseRgb = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			return { r: d[0], g: d[1], b: d[2] };
+		};
+		const lumOfRgb = ({ r, g, b }: { r: number; g: number; b: number }) => {
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b);
+		};
+		// Composite the transparent primary face + faint app bar over the
+		// canvas to get the real effective surround for the focus ring.
+		const alphaOf = (css: string) => {
+			const m = css.match(/rgba?\(([^)]*)\)/);
+			if (!m) return 1;
+			const p = m[1].split(',').map((x) => x.trim());
+			return p.length === 4 ? parseFloat(p[3]) : 1;
+		};
+		const bgLumOf = (start: Element): number => {
+			const layers: { rgb: { r: number; g: number; b: number }; a: number }[] = [];
+			let node: Element | null = start;
+			while (node instanceof HTMLElement) {
+				const bg = getComputedStyle(node).backgroundColor;
+				layers.push({ rgb: parseRgb(bg), a: alphaOf(bg) });
+				if (alphaOf(bg) >= 0.999) break;
+				node = node.parentElement;
+			}
+			let acc = layers[layers.length - 1].rgb;
+			for (let i = layers.length - 2; i >= 0; i--) {
+				const s = layers[i];
+				acc = {
+					r: s.rgb.r * s.a + acc.r * (1 - s.a),
+					g: s.rgb.g * s.a + acc.g * (1 - s.a),
+					b: s.rgb.b * s.a + acc.b * (1 - s.a)
+				};
+			}
+			return lumOfRgb(acc);
+		};
+		const oL = lumOfRgb(parseRgb(cs.outlineColor));
+		const bL = bgLumOf(el);
+		return (Math.max(oL, bL) + 0.05) / (Math.min(oL, bL) + 0.05);
+	});
+	expect(primaryFocus).toBeGreaterThanOrEqual(3);
+
+	// --- Reduced-motion hover contract: hover is gated behind (hover: hover)
+	//     and lifts a card only when motion is allowed; under reduced motion
+	//     the wash/edge remain but no transform runs. Cards stay
+	//     non-interactive (no pointer/grab cursor). ---
+	const hoverState = () =>
+		page.evaluate(() => {
+			const card = document.querySelector('.card:not(.is-selected)');
+			if (!(card instanceof HTMLElement)) return null;
+			const cs = getComputedStyle(card);
+			return { transform: cs.transform, cursor: cs.cursor };
+		});
+	await page.emulateMedia({ reducedMotion: null });
+	await page.locator('.card:not(.is-selected)').first().hover();
+	await expect
+		.poll(async () => {
+			const s = await hoverState();
+			return !!s && s.transform !== 'none';
+		}, 'hover lifts the card when motion is allowed')
+		.toBe(true);
+	const hov = await hoverState();
+	expect(hov, 'hover measured').not.toBeNull();
+	expect(hov!.cursor, 'card stays non-interactive (no pointer/grab cursor)').toBe('auto');
+
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	await page.locator('.card:not(.is-selected)').first().hover();
+	await expect
+		.poll(async () => {
+			const s = await hoverState();
+			return !!s && s.transform === 'none';
+		}, 'reduced-motion suppresses the hover lift (no transform)')
+		.toBe(true);
+	await page.emulateMedia({ reducedMotion: null });
+
+	// Exact-width responsive: every named control, the column more-actions,
+	// and the dismiss control are >=44x44 targets, and there is no horizontal
+	// document overflow at each of 375/768/1280.
+	const controls = ['Board', 'List', 'All', 'Mine', 'Due this week'];
+	const columnNames = ['Backlog', 'In Progress', 'In Review', 'Done'];
+	for (const width of [375, 768, 1280]) {
+		await page.setViewportSize({ width, height: 800 });
+		for (const name of controls) {
+			const box = await page.getByRole('button', { name, exact: true }).boundingBox();
+			expect(box?.height, `${name} height at ${width}`).toBeGreaterThanOrEqual(44);
+		}
+		for (const col of columnNames) {
+			const ma = await page
+				.getByRole('button', { name: `More actions for ${col}`, exact: true })
+				.boundingBox();
+			expect(ma?.width, `${col} more-actions width at ${width}`).toBeGreaterThanOrEqual(44);
+			expect(ma?.height, `${col} more-actions height at ${width}`).toBeGreaterThanOrEqual(44);
+		}
+		const dismiss = await page
+			.getByRole('button', { name: 'Dismiss error', exact: true })
+			.boundingBox();
+		expect(dismiss?.width, `dismiss width at ${width}`).toBeGreaterThanOrEqual(44);
+		expect(dismiss?.height, `dismiss height at ${width}`).toBeGreaterThanOrEqual(44);
+		const overflow = await page.evaluate(
+			() =>
+				document.documentElement.scrollWidth - document.documentElement.clientWidth ||
+				window.scrollX
+		);
+		expect(overflow, `horizontal overflow at ${width}`).toBeLessThanOrEqual(0);
+	}
+});

@@ -1,0 +1,15 @@
+{
+	"schemaVersion": 1,
+	"slug": "kanban-dark-neon",
+	"version": "1.0.0",
+	"title": "Kanban Board · Holodeck Wireframe",
+	"summary": "A dark Holodeck Wireframe Kanban board on a near-black canvas with transparent panels defined by luminous cyan wireframe edges, cool-white body text, cyan monospace metrics, restrained semantic glow, outlined labels/avatars/counts, and a pale-red full-border error treatment — no fills, gradients, or backdrop blur.",
+	"pageType": "data-management",
+	"applicationTypes": ["project-management", "productivity", "team-collaboration"],
+	"visualStyles": ["dark-neon", "wireframe"],
+	"theme": "dark",
+	"density": "compact",
+	"platforms": ["web", "desktop", "tablet", "mobile"],
+	"status": "production-ready",
+	"tags": ["kanban", "board", "dark-neon", "wireframe", "holodeck", "monospace", "cyberpunk"]
+}
