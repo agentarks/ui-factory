@@ -180,8 +180,9 @@
 									class="card {card.done ? 'is-done-card' : ''} {card.id === selectedId
 										? 'is-selected'
 										: ''}"
-									aria-labelledby="title-{card.id}"
-									aria-label={card.id === selectedId ? `${card.title}, selected` : undefined}
+									{...card.id === selectedId
+										? { 'aria-label': `${card.title}, selected` }
+										: { 'aria-labelledby': `title-${card.id}` }}
 								>
 									<div class="card-main">
 										<div class="card-head">
@@ -358,8 +359,7 @@
 		--rule: oklch(0.86 0.005 90); /* hairline border */
 		--rule-soft: oklch(0.92 0.004 90); /* lighter hairline */
 		--rule-strong: oklch(0.5 0.008 90); /* control border (#8b8b8b-ish) */
-		--accent: oklch(0.5 0.21 264); /* cobalt (#1857c6) — diagonal motif + primary */
-		--accent-ink: oklch(0.45 0.19 264); /* darker cobalt — priority/done text + focus (AA) */
+		--accent: oklch(0.4886 0.1845 261.01); /* cobalt — exact #1857c6 = rgb(24,87,198) */
 		--on-ink: oklch(0.99 0.003 90); /* paper text on ink fills (never #fff) */
 
 		--sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
@@ -568,7 +568,7 @@
 	.chip:focus-visible > .face,
 	.view-toggle button:focus-visible > .face,
 	.primary:focus-visible > .face {
-		outline: 3px solid var(--accent-ink);
+		outline: 3px solid var(--accent);
 		outline-offset: 2px;
 	}
 
@@ -832,7 +832,7 @@
 	}
 
 	.priority.pri-high {
-		color: var(--accent-ink);
+		color: var(--accent);
 	}
 
 	.priority.pri-medium {
@@ -850,7 +850,7 @@
 	}
 
 	.due.is-done {
-		color: var(--accent-ink);
+		color: var(--accent);
 	}
 
 	.assignees {
@@ -989,7 +989,7 @@
 	/* ---------- Focus + motion ---------- */
 
 	.board-root :where(button, input):focus-visible {
-		outline: 3px solid var(--accent-ink);
+		outline: 3px solid var(--accent);
 		outline-offset: 2px;
 	}
 

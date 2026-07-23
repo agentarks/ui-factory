@@ -1273,9 +1273,11 @@ test('opens the kanban-swiss design and its isolated preview states', async ({ p
 	}
 
 	// --- Showcased states exposed programmatically (no interaction added): the
-	//     active column and the selected card announce their state via aria-label. ---
+	//     active column announces its state, and the selected card's computed
+	//     accessible NAME includes "selected" (aria-label must not be overridden
+	//     by a competing aria-labelledby). ---
 	await expect(page.locator('.column.is-active')).toHaveAttribute('aria-label', /active/i);
-	await expect(page.locator('.card.is-selected')).toHaveAttribute('aria-label', /selected/i);
+	await expect(page.getByRole('article', { name: /selected/i })).toBeVisible();
 
 	// --- Approved THEME 7 signature: a single cobalt accent, with the 45deg
 	//     diagonal limited to the active-column marker and the high-priority
@@ -1424,6 +1426,26 @@ test('opens the kanban-swiss design and its isolated preview states', async ({ p
 	expect(cobaltAA!.dueDone, 'done cobalt text AA on card').toBeGreaterThanOrEqual(4.5);
 	expect(cobaltAA!.cardTitle, 'card title AA on card').toBeGreaterThanOrEqual(4.5);
 	expect(cobaltAA!.primaryText, 'primary text AA on cobalt fill').toBeGreaterThanOrEqual(4.5);
+
+	// The accent is the exact approved cobalt #1857c6 = rgb(24, 87, 198),
+	// rendered (within sRGB rounding) from the OKLCH token. Lock the computed
+	// pixels so a drifted approximation (e.g. #2154d8) cannot ship.
+	const accent = await page.evaluate(() => {
+		const el = document.querySelector('.col-axis');
+		if (!(el instanceof HTMLElement)) return null;
+		const css = getComputedStyle(el).backgroundColor;
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		ctx.fillStyle = '#000';
+		ctx.fillStyle = css;
+		ctx.fillRect(0, 0, 2, 2);
+		const d = ctx.getImageData(0, 0, 1, 1).data;
+		return { r: d[0], g: d[1], b: d[2], css };
+	});
+	expect(accent).not.toBeNull();
+	expect(Math.abs(accent!.r - 24), 'accent red channel = 24').toBeLessThanOrEqual(3);
+	expect(Math.abs(accent!.g - 87), 'accent green channel = 87').toBeLessThanOrEqual(3);
+	expect(Math.abs(accent!.b - 198), 'accent blue channel = 198').toBeLessThanOrEqual(3);
 
 	// --- Focus perimeters are never clipped inside the desktop horizontal board
 	//     scroller. overflow-x:auto computes overflow-y:auto, so without internal

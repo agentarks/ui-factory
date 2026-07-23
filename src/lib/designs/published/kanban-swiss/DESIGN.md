@@ -18,19 +18,18 @@ A Kanban board for a small product team: a header carrying a brand chip ("Aurora
 
 ## Color system (OKLCH)
 
-| Token           | Value                  | Role                                                             |
-| --------------- | ---------------------- | ---------------------------------------------------------------- |
-| `--canvas`      | `oklch(0.97 0.004 90)` | Warm near-white canvas (`#f7f7f5`)                               |
-| `--paper`       | `oklch(0.99 0.003 90)` | Brighter warm paper card/control surfaces (`#fffefe`)            |
-| `--ink`         | `oklch(0.22 0.008 90)` | Near-black warm primary text (titles, headings) + ink fills      |
-| `--ink-soft`    | `oklch(0.44 0.006 90)` | Meta text: labels, counts, dates, subtitle, checklist (AA)       |
-| `--ink-faint`   | `oklch(0.58 0.005 90)` | Decorative drag-grip handle only (non-text)                      |
-| `--rule`        | `oklch(0.86 0.005 90)` | Hairline: card borders, skeleton, scrollbar                      |
-| `--rule-soft`   | `oklch(0.92 0.004 90)` | Lighter hairline: card-foot divider                              |
-| `--rule-strong` | `oklch(0.5 0.008 90)`  | Stronger hairline: header rule, control borders, inactive marker |
-| `--accent`      | `oklch(0.5 0.21 264)`  | Cobalt (`#1857c6`) — diagonal markers, primary fill, active rule |
-| `--accent-ink`  | `oklch(0.45 0.19 264)` | Darker cobalt — High-priority/done text + focus ring (AA)        |
-| `--on-ink`      | `oklch(0.99 0.003 90)` | Paper-coloured text on ink/cobalt fills (never `#fff`)           |
+| Token           | Value                         | Role                                                                                                                          |
+| --------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `--canvas`      | `oklch(0.97 0.004 90)`        | Warm near-white canvas (`#f7f7f5`)                                                                                            |
+| `--paper`       | `oklch(0.99 0.003 90)`        | Brighter warm paper card/control surfaces (`#fffefe`)                                                                         |
+| `--ink`         | `oklch(0.22 0.008 90)`        | Near-black warm primary text (titles, headings) + ink fills                                                                   |
+| `--ink-soft`    | `oklch(0.44 0.006 90)`        | Meta text: labels, counts, dates, subtitle, checklist (AA)                                                                    |
+| `--ink-faint`   | `oklch(0.58 0.005 90)`        | Decorative drag-grip handle only (non-text)                                                                                   |
+| `--rule`        | `oklch(0.86 0.005 90)`        | Hairline: card borders, skeleton, scrollbar                                                                                   |
+| `--rule-soft`   | `oklch(0.92 0.004 90)`        | Lighter hairline: card-foot divider                                                                                           |
+| `--rule-strong` | `oklch(0.5 0.008 90)`         | Stronger hairline: header rule, control borders, inactive marker                                                              |
+| `--accent`      | `oklch(0.4886 0.1845 261.01)` | Cobalt — exact `#1857c6` = `rgb(24,87,198)`: diagonal markers, primary fill, active rule, priority/done text, focus ring (AA) |
+| `--on-ink`      | `oklch(0.99 0.003 90)`        | Paper-coloured text on ink/cobalt fills (never `#fff`)                                                                        |
 
 - **Neutrals are tinted** toward hue 90 (warm), never pure grey/black/white. `--on-ink` is paper-coloured, not `#fff`.
 - **No gradients, no backdrop blur, no translucency, and no box shadows anywhere.** Overlapping avatars are separated by a crisp 2px canvas/paper-coloured `border`, not a shadow ring. Focus uses `outline`, not shadow.
@@ -97,7 +96,7 @@ The states below are **visual state/affordance demonstrations only**, not functi
 - **Error (shown):** an inline **flat paper banner** with a full `1px solid --rule-strong` hairline border — a cobalt warning icon, bold ink "Sync paused." label, ink-soft body, an ink Retry button, and a dismiss control (`role="status" aria-live="polite"`). **No red, no side-stripe.**
 - **Drag/move affordance (shown, static):** every card has a **grip handle** (faint by default, full on hover, `cursor: grab`) as a visual affordance only — no drag-and-drop logic.
 - **Done (shown):** completed cards show a **struck-through sans title**, a cobalt check icon, and a cobalt due-date treatment.
-- **Priority (shown):** High = a **cobalt diamond** + cobalt word (`--accent-ink`, AA); Medium = a square ink dot + ink word (monochrome). The diamond is the second of the design's two diagonal uses.
+- **Priority (shown):** High = a **cobalt diamond** + cobalt word (`--accent`, AA — ≈5.8:1 on paper); Medium = a square ink dot + ink word (monochrome). The diamond is the second of the design's two diagonal uses.
 - **Selection (shown, non-interactive):** the selected card (`au-137`) shows a **full 2px cobalt border** and is announced as "{title}, selected" via `aria-label` — never a side-stripe, never made interactive.
 - **Validation:** when implementing real card-edit forms, reuse the cobalt label + inline message pattern under each field, rendered as an austere outlined control.
 
@@ -107,8 +106,8 @@ The states below are **visual state/affordance demonstrations only**, not functi
 - All controls are real `<button>`/`<input>`; filters and view toggle carry `aria-pressed`; counts and icon buttons carry `aria-label`; icons are `aria-hidden`.
 - **Showcased states are exposed programmatically without adding interaction:** the active column region's `aria-label` notes "active column"; the selected card's `aria-label` is "{title}, selected" (it remains a static article, not a widget).
 - **Avatars expose the full name** via `aria-label` (initials alone are not enough; `title` is not reliably announced) — all five team members in the header and every assignee.
-- **Visible focus:** `outline: 3px solid --accent-ink` (cobalt) with `outline-offset: 2px`, ≥3:1 (the WCAG 2.2 UI-component minimum) against every paper surface, so keyboard focus is unmistakable. For the faced controls (search, filters, Board/List, primary) the ring renders on the **compact face**, not the 44px target, so it hugs the visible chrome; segmented groups have **no `overflow` clipping**, so every segmented button gets a **complete, unclipped focus perimeter**. The composite search field lights its face via `:focus-within`; the `<input>` remains the semantic focus target, with its own redundant outline suppressed. Inside the desktop horizontal board scroller, internal breathing room ensures focus perimeters on the column controls are never clipped at the top or at either scroll extreme.
-- **WCAG 2.2 AA** is met by construction: near-black ink (L 0.22) on near-white paper (L ≈ 0.97–0.99), and paper text (L 0.99) on ink/cobalt fills (L ≈ 0.22–0.5), both give large contrast margins. Meta text uses `--ink-soft` (L 0.44) which stays ≥4.5:1 on paper; the cobalt priority/done text uses `--accent-ink` (L 0.45, ≈5:1 on paper) and the cobalt primary fill carries paper text (≈5:1). Meaning is never conveyed by colour/shape alone (priority, status, and selection are always labelled or paired with a diamond + border; label dots are uniform).
+- **Visible focus:** `outline: 3px solid --accent` (cobalt) with `outline-offset: 2px`, ≥3:1 (the WCAG 2.2 UI-component minimum) against every paper surface, so keyboard focus is unmistakable. For the faced controls (search, filters, Board/List, primary) the ring renders on the **compact face**, not the 44px target, so it hugs the visible chrome; segmented groups have **no `overflow` clipping**, so every segmented button gets a **complete, unclipped focus perimeter**. The composite search field lights its face via `:focus-within`; the `<input>` remains the semantic focus target, with its own redundant outline suppressed. Inside the desktop horizontal board scroller, internal breathing room ensures focus perimeters on the column controls are never clipped at the top or at either scroll extreme.
+- **WCAG 2.2 AA** is met by construction: near-black ink (L 0.22) on near-white paper (L ≈ 0.97–0.99), and paper text (L 0.99) on ink/cobalt fills (L ≈ 0.22–0.49), both give large contrast margins. Meta text uses `--ink-soft` (L 0.44) which stays ≥4.5:1 on paper; the single cobalt accent (`#1857c6`, ≈5.8:1 on paper) carries priority/done text and the cobalt primary fill carries paper text (≈5.4:1). Meaning is never conveyed by colour/shape alone (priority, status, and selection are always labelled or paired with a diamond + border; label dots are uniform).
 
 ## Extending the design to new pages
 
