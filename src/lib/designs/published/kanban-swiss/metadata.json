@@ -1,0 +1,15 @@
+{
+	"schemaVersion": 1,
+	"slug": "kanban-swiss",
+	"version": "1.0.0",
+	"title": "Kanban Board · Diagonal Axis",
+	"summary": "A Swiss / Minimal Kanban board on a warm near-white canvas with near-black ink and a single cobalt accent: a strict orthogonal grid of hairline rules and flat near-square cards set in an austere system sans, where a disciplined 45-degree diagonal marks only the active column and high-priority cards. Five team avatars, an accessible active-column and selected-card state, and demonstrated empty, loading, error, drag, done, priority, and selection states complete the specimen.",
+	"pageType": "data-management",
+	"applicationTypes": ["project-management", "productivity", "team-collaboration"],
+	"visualStyles": ["swiss", "minimal"],
+	"theme": "light",
+	"density": "comfortable",
+	"platforms": ["web", "desktop", "tablet", "mobile"],
+	"status": "production-ready",
+	"tags": ["kanban", "board", "swiss", "minimal", "diagonal", "grid"]
+}

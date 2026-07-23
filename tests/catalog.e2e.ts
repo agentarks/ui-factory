@@ -1188,3 +1188,366 @@ test('opens the kanban-editorial design and its isolated preview states', async 
 		expect(overflow, `horizontal overflow at ${width}`).toBeLessThanOrEqual(0);
 	}
 });
+
+test('opens the kanban-swiss design and its isolated preview states', async ({ page }) => {
+	// ---- Detail page: identity + approved summary ----
+	await page.goto('/designs/kanban-swiss');
+
+	await expect(
+		page.getByRole('heading', { name: 'Kanban Board · Diagonal Axis', exact: false })
+	).toBeVisible();
+	await expect(page.getByText('Swiss / Minimal Kanban board', { exact: false })).toBeVisible();
+
+	// ---- Isolated preview: locked content + empty/error/loading states ----
+	const frame = page.frameLocator('iframe[title*="preview"i]');
+	await expect(frame.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'New task' })).toBeVisible();
+	await expect(frame.getByText('Backlog', { exact: true })).toBeVisible();
+	await expect(frame.getByRole('heading', { name: 'In Review' })).toBeVisible();
+	await expect(frame.getByText('No cards yet')).toBeVisible();
+	await expect(frame.getByText('Sync paused', { exact: false })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'Retry' })).toBeVisible();
+	await expect(frame.locator('.skeleton-card')).toBeVisible();
+
+	// interaction smoke: toggling a filter updates its pressed state (ink-fill selected)
+	const mineBtn = frame.getByRole('button', { name: 'Mine', exact: true });
+	await mineBtn.click();
+	await expect(mineBtn).toHaveAttribute('aria-pressed', 'true');
+
+	// keyboard focus on the search field shows a ring on the compact visible
+	// face with meaningful contrast (>=3:1) against the warm paper surface.
+	const previewFrame = page.frame({ url: /kanban-swiss\/preview$/ });
+	expect(previewFrame).toBeTruthy();
+	await frame.getByRole('searchbox').focus();
+	const focusContrast = await previewFrame!.evaluate(() => {
+		const el = document.querySelector('.search .face');
+		if (!(el instanceof HTMLElement)) return -1;
+		const cs = getComputedStyle(el);
+		if (cs.outlineStyle !== 'solid' || parseFloat(cs.outlineWidth) < 3) return -1;
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return -1;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const oL = lum(cs.outlineColor);
+		const bL = lum(cs.backgroundColor);
+		return (Math.max(oL, bL) + 0.05) / (Math.min(oL, bL) + 0.05);
+	});
+	expect(focusContrast).toBeGreaterThanOrEqual(3);
+
+	// reduced-motion: skeleton pulse animation is suppressed; the skeleton
+	// remains visible but static (no infinite animation).
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	const skeletonStatic = await previewFrame!.evaluate(() => {
+		const el = document.querySelector('.skel');
+		if (!(el instanceof HTMLElement)) return null;
+		return getComputedStyle(el).animationName === 'none';
+	});
+	expect(skeletonStatic).toBe(true);
+	await page.emulateMedia({ reducedMotion: null });
+
+	// ------------------------------------------------------------------
+	// Direct preview route: visual-signature, a11y, and responsive checks.
+	// The detail page embeds the preview in a narrower iframe, so these run
+	// on the standalone /preview route at exact 375/768/1280 widths.
+	// ------------------------------------------------------------------
+	await page.goto('/designs/kanban-swiss/preview');
+	await expect(page.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
+	await page.setViewportSize({ width: 1280, height: 800 });
+
+	// --- Locked content: all five team members render as accessible avatars
+	//     in the header (complete fixed content, Swiss-styled). ---
+	const memberNames = ['Maya Rivera', 'Devon Chen', 'Priya Nair', 'Sam Okafor', 'Lena Foss'];
+	expect(await page.locator('.team-avatars [aria-label]').count()).toBe(5);
+	for (const name of memberNames) {
+		await expect(page.locator(`.team-avatars [aria-label="${name}"]`)).toBeVisible();
+	}
+
+	// --- Showcased states exposed programmatically (no interaction added): the
+	//     active column announces its state, and the selected card's computed
+	//     accessible NAME includes "selected" (aria-label must not be overridden
+	//     by a competing aria-labelledby). ---
+	await expect(page.locator('.column.is-active')).toHaveAttribute('aria-label', /active/i);
+	await expect(page.getByRole('article', { name: /selected/i })).toBeVisible();
+
+	// --- Approved THEME 7 signature: a single cobalt accent, with the 45deg
+	//     diagonal limited to the active-column marker and the high-priority
+	//     markers only (the artifact's only two rendered diagonal uses). The
+	//     earlier red header-slash / brand / selection / empty diamonds were an
+	//     invented expansion and must be gone. No serif (not Editorial), no
+	//     monospace (not Brutalism), no app-bar/elevation (not Flat Material),
+	//     no gradient/shadow/blur. ---
+	const sig = await page.evaluate(() => {
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const cs = (sel: string) => {
+			const el = document.querySelector(sel);
+			return el instanceof HTMLElement ? getComputedStyle(el) : null;
+		};
+		// cobalt-dominant: blue channel clearly greater than red and green
+		const isCobalt = (cssColor: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = cssColor;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			return d[2] > d[0] + 40 && d[2] > d[1] + 30;
+		};
+		const isRotated = (t: string) => t.startsWith('matrix') && t !== 'matrix(1, 0, 0, 1, 0, 0)';
+		const axis = cs('.col-axis');
+		const pri = cs('.pri-diamond');
+		const card = cs('.card');
+		const fonts = new Set<string>();
+		document.querySelectorAll('.board-root, .board-root *').forEach((el) => {
+			const f = getComputedStyle(el).fontFamily.toLowerCase();
+			if (f) fonts.add(f);
+		});
+		const anySerif = Array.from(fonts).some(
+			(f) => /georgia|times|serif/.test(f) && !/sans/.test(f)
+		);
+		return {
+			axisRotated: isRotated(axis?.transform ?? ''),
+			axisCobalt: axis ? isCobalt(axis.backgroundColor) : false,
+			priRotated: isRotated(pri?.transform ?? ''),
+			priCobalt: pri ? isCobalt(pri.backgroundColor) : false,
+			// every .diamond must be one of the two approved uses:
+			diamondsOnlyApproved:
+				document.querySelectorAll('.diamond').length ===
+				document.querySelectorAll('.col-axis, .pri-diamond').length,
+			inventedSlash: document.querySelectorAll('.axis-slash').length,
+			inventedBrand: document.querySelectorAll('.brand-diamond').length,
+			inventedSel: document.querySelectorAll('.sel-diamond').length,
+			inventedEmpty: document.querySelectorAll('.empty-diamond').length,
+			canvasLum: lum(cs('.board-root')?.backgroundColor ?? '#fff'),
+			cardBgLum: lum(card?.backgroundColor ?? '#fff'),
+			cardBgImage: card?.backgroundImage ?? '',
+			cardBoxShadow: card?.boxShadow ?? '',
+			boardBackdrop: cs('.board-root')?.backdropFilter ?? '',
+			anySerif
+		};
+	});
+	expect(sig).not.toBeNull();
+	expect(sig!.axisRotated, 'active-column marker is a 45deg diamond').toBe(true);
+	expect(sig!.axisCobalt, 'active-column marker is the cobalt accent').toBe(true);
+	expect(sig!.priRotated, 'high-priority marker is a 45deg diamond').toBe(true);
+	expect(sig!.priCobalt, 'high-priority marker is the cobalt accent').toBe(true);
+	expect(sig!.diamondsOnlyApproved, 'diagonals limited to active-column + high-priority only').toBe(
+		true
+	);
+	expect(sig!.inventedSlash, 'no invented header slash').toBe(0);
+	expect(sig!.inventedBrand, 'no invented brand diamond').toBe(0);
+	expect(sig!.inventedSel, 'no invented selection diamond').toBe(0);
+	expect(sig!.inventedEmpty, 'no invented empty-state diamond').toBe(0);
+	expect(sig!.canvasLum, 'canvas warm near-white').toBeGreaterThan(0.9);
+	expect(sig!.cardBgLum, 'card bright paper').toBeGreaterThan(0.9);
+	expect(sig!.cardBgImage, 'no gradient on cards').toBe('none');
+	expect(sig!.cardBoxShadow, 'no decorative elevation on cards').toBe('none');
+	expect(sig!.boardBackdrop, 'no backdrop blur').toBe('none');
+	expect(sig!.anySerif, 'no serif anywhere (all sans — not Editorial)').toBe(false);
+
+	// Cobalt text roles meet AA (>=4.5:1) on their actual parent surface — the
+	// key AA risk for a vivid single accent used for priority, done, and the
+	// cobalt-filled primary button.
+	const cobaltAA = await page.evaluate(() => {
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const isOpaque = (c: string) => {
+			const m = c.match(/rgba?\([^)]*\)/);
+			if (!m) return true;
+			const p = m[0].replace(/[^\d.,]/g, '').split(',');
+			return p.length < 4 || parseFloat(p[3]) > 0;
+		};
+		const bgLumOf = (el: Element | null): number => {
+			let node: Element | null = el;
+			while (node) {
+				const bg = getComputedStyle(node).backgroundColor;
+				if (isOpaque(bg)) return lum(bg);
+				node = node.parentElement;
+			}
+			return lum('rgb(255,255,255)');
+		};
+		const ratio = (textSel: string, bgSel: string) => {
+			const t = document.querySelector(textSel);
+			const b = document.querySelector(bgSel);
+			if (!(t instanceof HTMLElement) || !(b instanceof HTMLElement)) return -1;
+			const tL = lum(getComputedStyle(t).color);
+			const bL = bgLumOf(b);
+			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+		};
+		const selfRatio = (sel: string) => {
+			const el = document.querySelector(sel);
+			if (!(el instanceof HTMLElement)) return -1;
+			const tL = lum(getComputedStyle(el).color);
+			const bL = bgLumOf(el);
+			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+		};
+		return {
+			priHigh: ratio('.pri-high', '.card'),
+			dueDone: ratio('.due.is-done', '.card'),
+			cardTitle: ratio('.card-title', '.card'),
+			primaryText: selfRatio('.primary .face')
+		};
+	});
+	expect(cobaltAA).not.toBeNull();
+	expect(cobaltAA!.priHigh, 'high-priority cobalt text AA on card').toBeGreaterThanOrEqual(4.5);
+	expect(cobaltAA!.dueDone, 'done cobalt text AA on card').toBeGreaterThanOrEqual(4.5);
+	expect(cobaltAA!.cardTitle, 'card title AA on card').toBeGreaterThanOrEqual(4.5);
+	expect(cobaltAA!.primaryText, 'primary text AA on cobalt fill').toBeGreaterThanOrEqual(4.5);
+
+	// The accent is the exact approved cobalt #1857c6 = rgb(24, 87, 198),
+	// rendered (within sRGB rounding) from the OKLCH token. Lock the computed
+	// pixels so a drifted approximation (e.g. #2154d8) cannot ship.
+	const accent = await page.evaluate(() => {
+		const el = document.querySelector('.col-axis');
+		if (!(el instanceof HTMLElement)) return null;
+		const css = getComputedStyle(el).backgroundColor;
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		ctx.fillStyle = '#000';
+		ctx.fillStyle = css;
+		ctx.fillRect(0, 0, 2, 2);
+		const d = ctx.getImageData(0, 0, 1, 1).data;
+		return { r: d[0], g: d[1], b: d[2], css };
+	});
+	expect(accent).not.toBeNull();
+	expect(Math.abs(accent!.r - 24), 'accent red channel = 24').toBeLessThanOrEqual(3);
+	expect(Math.abs(accent!.g - 87), 'accent green channel = 87').toBeLessThanOrEqual(3);
+	expect(Math.abs(accent!.b - 198), 'accent blue channel = 198').toBeLessThanOrEqual(3);
+
+	// --- Focus perimeters are never clipped inside the desktop horizontal board
+	//     scroller. overflow-x:auto computes overflow-y:auto, so without internal
+	//     breathing room the column controls' offset focus rings get cut at the
+	//     scroll edges. Drive real keyboard focus (:focus-visible), then measure
+	//     the rendered outline box against the scroller's clip rect at both
+	//     extremes, at 1280 (fits, no scroll) and 768 (scrolls horizontally). ---
+	const measureFocus = () =>
+		page.evaluate(() => {
+			const el = document.activeElement;
+			const sc = el?.closest('.board-body');
+			if (!(el instanceof HTMLElement) || !(sc instanceof HTMLElement)) return null;
+			const cs = getComputedStyle(el);
+			if (cs.outlineStyle !== 'solid') {
+				return { label: el.getAttribute('aria-label'), clipped: true, reason: 'no-solid-outline' };
+			}
+			const ow = parseFloat(cs.outlineWidth);
+			const oo = parseFloat(cs.outlineOffset);
+			const er = el.getBoundingClientRect();
+			const sr = sc.getBoundingClientRect();
+			const top = er.top - oo - ow;
+			const right = er.right + oo + ow;
+			const bottom = er.bottom + oo + ow;
+			const left = er.left - oo - ow;
+			return {
+				label: el.getAttribute('aria-label'),
+				clipped: !(
+					top >= sr.top - 0.5 &&
+					right <= sr.right + 0.5 &&
+					bottom <= sr.bottom + 0.5 &&
+					left >= sr.left - 0.5
+				)
+			};
+		});
+	const tabTo = async (targetLabel: string) => {
+		await page.getByRole('searchbox').focus();
+		for (let i = 0; i < 50; i++) {
+			await page.keyboard.press('Tab');
+			const lbl = await page.evaluate(
+				() => document.activeElement?.getAttribute('aria-label') ?? ''
+			);
+			if (lbl === targetLabel) return true;
+		}
+		return false;
+	};
+
+	// 1280: first column's more-actions (top/left edge) and last column's
+	// more-actions (right edge).
+	await page.setViewportSize({ width: 1280, height: 800 });
+	expect(await tabTo('More actions for Backlog'), 'reached Backlog more-actions').toBe(true);
+	let m = await measureFocus();
+	expect(m, 'measured Backlog more-actions focus').not.toBeNull();
+	expect(m!.clipped, 'Backlog more-actions focus perimeter not clipped').toBe(false);
+	expect(await tabTo('More actions for Done'), 'reached Done more-actions').toBe(true);
+	m = await measureFocus();
+	expect(m, 'measured Done more-actions focus').not.toBeNull();
+	expect(m!.clipped, 'Done more-actions focus perimeter not clipped').toBe(false);
+
+	// 768: the board scrolls horizontally. Scroll to the right extreme and check
+	// the last column's more-actions; then back to the left extreme for the first.
+	await page.setViewportSize({ width: 768, height: 800 });
+	await page.evaluate(() => {
+		const sc = document.querySelector('.board-body');
+		if (sc instanceof HTMLElement) sc.scrollLeft = sc.scrollWidth;
+	});
+	expect(await tabTo('More actions for Done'), 'reached Done more-actions at 768').toBe(true);
+	m = await measureFocus();
+	expect(m, 'measured Done more-actions focus at 768').not.toBeNull();
+	expect(m!.clipped, 'Done more-actions focus not clipped at right extreme').toBe(false);
+	await page.evaluate(() => {
+		const sc = document.querySelector('.board-body');
+		if (sc instanceof HTMLElement) sc.scrollLeft = 0;
+	});
+	expect(await tabTo('More actions for Backlog'), 'reached Backlog more-actions at 768').toBe(true);
+	m = await measureFocus();
+	expect(m, 'measured Backlog more-actions focus at 768').not.toBeNull();
+	expect(m!.clipped, 'Backlog more-actions focus not clipped at left extreme').toBe(false);
+
+	// Exact-width responsive: every named control is >=44px and there is no
+	// horizontal document overflow at each of 375/768/1280.
+	const controls = ['Board', 'List', 'All', 'Mine', 'Due this week'];
+	for (const width of [375, 768, 1280]) {
+		await page.setViewportSize({ width, height: 800 });
+		for (const name of controls) {
+			const box = await page.getByRole('button', { name, exact: true }).boundingBox();
+			expect(box?.height, `${name} height at ${width}`).toBeGreaterThanOrEqual(44);
+		}
+		const moreActions = await page
+			.getByRole('button', { name: 'More actions for Backlog' })
+			.boundingBox();
+		expect(moreActions?.width, `more-actions width at ${width}`).toBeGreaterThanOrEqual(44);
+		expect(moreActions?.height, `more-actions height at ${width}`).toBeGreaterThanOrEqual(44);
+		const dismiss = await page
+			.getByRole('button', { name: 'Dismiss error', exact: true })
+			.boundingBox();
+		expect(dismiss?.width, `dismiss width at ${width}`).toBeGreaterThanOrEqual(44);
+		expect(dismiss?.height, `dismiss height at ${width}`).toBeGreaterThanOrEqual(44);
+		const overflow = await page.evaluate(
+			() =>
+				document.documentElement.scrollWidth - document.documentElement.clientWidth ||
+				window.scrollX
+		);
+		expect(overflow, `horizontal overflow at ${width}`).toBeLessThanOrEqual(0);
+	}
+});
