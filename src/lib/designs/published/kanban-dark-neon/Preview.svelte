@@ -1007,9 +1007,11 @@
 		.board-body {
 			flex-direction: row;
 			overflow-x: auto;
-			/* Internal padding keeps offset focus rings of column controls from
-			   clipping at the scroll extremes. */
-			padding: 4px;
+			/* Internal padding keeps offset focus rings of every column control
+			   from clipping at the scroll edges. The focus extent is 3px outline
+			   + 2px offset (5px), so >=6px breathing room is required on every
+			   side (overflow-x:auto also clips the block axis). */
+			padding: 6px;
 		}
 
 		.column {

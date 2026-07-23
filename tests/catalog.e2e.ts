@@ -2456,23 +2456,6 @@ test('opens the kanban-dark-neon design and its isolated preview states', async 
 	const contrastResults = await page.evaluate(() => {
 		const ctx = document.createElement('canvas').getContext('2d');
 		if (!ctx) return null;
-		const lum = (css: string) => {
-			ctx.clearRect(0, 0, 2, 2);
-			ctx.fillStyle = '#000';
-			ctx.fillStyle = css;
-			ctx.fillRect(0, 0, 2, 2);
-			const d = ctx.getImageData(0, 0, 1, 1).data;
-			const ch = (v: number) => {
-				const s = v / 255;
-				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
-			};
-			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
-		};
-		// Composite every translucent panel layer over the near-black canvas so
-		// text on a near-transparent wireframe surface is measured against its
-		// real effective backdrop (canvas), not an un-composited cyan tint that
-		// would overstate background luminance. This is the honest contrast
-		// methodology for a zero-fill wireframe design.
 		const parseRgb = (css: string) => {
 			ctx.clearRect(0, 0, 2, 2);
 			ctx.fillStyle = '#000';
@@ -2494,8 +2477,12 @@ test('opens the kanban-dark-neon design and its isolated preview states', async 
 			};
 			return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b);
 		};
-		const bgLumOf = (start: Element | null): number => {
-			if (!(start instanceof HTMLElement)) return lum('rgb(0,0,0)');
+		// Composite every translucent panel layer over the near-black canvas so
+		// text on a near-transparent wireframe surface is measured against its
+		// real effective backdrop (canvas), not an un-composited cyan tint that
+		// would overstate background luminance.
+		const bgRgbOf = (start: Element | null): { r: number; g: number; b: number } => {
+			if (!(start instanceof HTMLElement)) return parseRgb('rgb(0,0,0)');
 			const layers: { rgb: { r: number; g: number; b: number }; a: number }[] = [];
 			let node: Element | null = start;
 			while (node instanceof HTMLElement) {
@@ -2513,23 +2500,55 @@ test('opens the kanban-dark-neon design and its isolated preview states', async 
 					b: s.rgb.b * s.a + acc.b * (1 - s.a)
 				};
 			}
-			return lumOfRgb(acc);
+			return acc;
+		};
+		// Cumulative element + ancestor opacity: opacity dims the whole element
+		// render, so it multiplies the foreground's effective alpha.
+		const opacityOf = (el: Element): number => {
+			let op = 1;
+			let node: Element | null = el;
+			while (node instanceof HTMLElement) {
+				op *= parseFloat(getComputedStyle(node).opacity || '1');
+				node = node.parentElement;
+			}
+			return Math.min(Math.max(op, 0), 1);
+		};
+		// Composite the FOREGROUND rgba (+ element opacity) over the effective
+		// backdrop before computing luminance. Without this, rgba(255,255,255,.05)
+		// text would false-pass at ~20:1 instead of its true ~1.1:1.
+		const blendOver = (
+			fg: { r: number; g: number; b: number },
+			bg: { r: number; g: number; b: number },
+			a: number
+		) => ({
+			r: fg.r * a + bg.r * (1 - a),
+			g: fg.g * a + bg.g * (1 - a),
+			b: fg.b * a + bg.b * (1 - a)
+		});
+		const ratioOf = (
+			color: string,
+			bgRgb: { r: number; g: number; b: number },
+			textEl: Element
+		) => {
+			const fgRgb = parseRgb(color);
+			const fgA = Math.min(alphaOf(color) * opacityOf(textEl), 1);
+			const eff = blendOver(fgRgb, bgRgb, fgA);
+			const tL = lumOfRgb(eff);
+			const bL = lumOfRgb(bgRgb);
+			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
 		};
 		const ratio = (textSel: string, bgSel: string, pseudo?: string) => {
 			const textEl = document.querySelector(textSel);
 			const bgEl = document.querySelector(bgSel);
 			if (!(textEl instanceof HTMLElement) || !(bgEl instanceof HTMLElement)) return -1;
 			const cs = pseudo ? getComputedStyle(textEl, pseudo) : getComputedStyle(textEl);
-			const tL = lum(cs.color);
-			const bL = bgLumOf(bgEl);
-			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+			return ratioOf(cs.color, bgRgbOf(bgEl), textEl);
 		};
 		const selfRatio = (sel: string) => ratio(sel, sel);
 		const elRatio = (el: Element) => {
 			if (!(el instanceof HTMLElement)) return -1;
-			const tL = lum(getComputedStyle(el).color);
-			const bL = bgLumOf(el);
-			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+			const cs = getComputedStyle(el);
+			return ratioOf(cs.color, bgRgbOf(el), el);
 		};
 		const results: { role: string; ratio: number }[] = [
 			{ role: 'card-title', ratio: ratio('.card-title', '.card') },
@@ -2571,12 +2590,31 @@ test('opens the kanban-dark-neon design and its isolated preview states', async 
 			const initials = el.textContent?.trim() || '?';
 			results.push({ role: `avatar:${initials}`, ratio: elRatio(el) });
 		});
-		return results;
+
+		// Self-check: inject a near-transparent white text node on the canvas. A
+		// correct compositor must composite the foreground RGBA (and element
+		// opacity) over the effective backdrop, so rgba(255,255,255,.05) must
+		// read as ~1.1:1 — NOT the ~20:1 an alpha-blind compositor reports.
+		const probe = document.createElement('span');
+		probe.textContent = 'probe';
+		probe.style.color = 'rgba(255, 255, 255, 0.05)';
+		const root = document.querySelector('.board-root');
+		(root ?? document.body).appendChild(probe);
+		const mutationRatio = elRatio(probe);
+		probe.remove();
+
+		return { results, mutationRatio };
 	});
 	expect(contrastResults).not.toBeNull();
-	for (const { role, ratio } of contrastResults!) {
+	for (const { role, ratio } of contrastResults!.results) {
 		expect(ratio, `${role} text contrast >= 4.5:1`).toBeGreaterThanOrEqual(4.5);
 	}
+	// Translucent foreground must be caught as low contrast: this proves the
+	// compositor accounts for foreground alpha + opacity, not just the backdrop.
+	expect(
+		contrastResults!.mutationRatio,
+		'translucent text is NOT false-passed as high contrast'
+	).toBeLessThan(1.5);
 
 	// The New task primary is a transparent cyan-edge button on the near-black
 	// app bar; its focus outline seats outside the face, so the cyan ring must
@@ -2674,9 +2712,10 @@ test('opens the kanban-dark-neon design and its isolated preview states', async 
 		.toBe(true);
 	await page.emulateMedia({ reducedMotion: null });
 
-	// Exact-width responsive: every named control, the column more-actions,
-	// and the dismiss control are >=44x44 targets, and there is no horizontal
-	// document overflow at each of 375/768/1280.
+	// Exact-width responsive: every interactive target — named controls, the
+	// clickable Search label, New task, Retry, EVERY column more-actions, EVERY
+	// "Add a card", and the dismiss control — is >=44px tall, and there is no
+	// horizontal document overflow at each of 375/768/1280.
 	const controls = ['Board', 'List', 'All', 'Mine', 'Due this week'];
 	const columnNames = ['Backlog', 'In Progress', 'In Review', 'Done'];
 	for (const width of [375, 768, 1280]) {
@@ -2685,12 +2724,28 @@ test('opens the kanban-dark-neon design and its isolated preview states', async 
 			const box = await page.getByRole('button', { name, exact: true }).boundingBox();
 			expect(box?.height, `${name} height at ${width}`).toBeGreaterThanOrEqual(44);
 		}
+		// The Search field is a clickable <label> (clicking it focuses the
+		// input), so its clickable box must also meet the 44px minimum.
+		const searchBox = await page.locator('.search').boundingBox();
+		expect(searchBox?.height, `search label height at ${width}`).toBeGreaterThanOrEqual(44);
+		// Primary action + error Retry.
+		const primary = await page.getByRole('button', { name: 'New task', exact: true }).boundingBox();
+		expect(primary?.height, `New task height at ${width}`).toBeGreaterThanOrEqual(44);
+		const retry = await page.getByRole('button', { name: 'Retry', exact: true }).boundingBox();
+		expect(retry?.height, `Retry height at ${width}`).toBeGreaterThanOrEqual(44);
 		for (const col of columnNames) {
 			const ma = await page
 				.getByRole('button', { name: `More actions for ${col}`, exact: true })
 				.boundingBox();
 			expect(ma?.width, `${col} more-actions width at ${width}`).toBeGreaterThanOrEqual(44);
 			expect(ma?.height, `${col} more-actions height at ${width}`).toBeGreaterThanOrEqual(44);
+		}
+		// EVERY "Add a card" target (one per column).
+		const addCards = await page.getByRole('button', { name: 'ADD A CARD', exact: true }).all();
+		expect(addCards.length, `one Add a card per column at ${width}`).toBe(columnNames.length);
+		for (const ac of addCards) {
+			const box = await ac.boundingBox();
+			expect(box?.height, `Add a card height at ${width}`).toBeGreaterThanOrEqual(44);
 		}
 		const dismiss = await page
 			.getByRole('button', { name: 'Dismiss error', exact: true })
@@ -2704,4 +2759,112 @@ test('opens the kanban-dark-neon design and its isolated preview states', async 
 		);
 		expect(overflow, `horizontal overflow at ${width}`).toBeLessThanOrEqual(0);
 	}
+
+	// Focus perimeters are never clipped inside the desktop/tablet horizontal
+	// board scroller. The focus extent is 3px outline + 2px offset (5px), so
+	// the scroller must carry >=6px internal breathing room on every side. The
+	// full-width "Add a card" buttons sit flush with the scroller's side and
+	// bottom edges (unlike the inset more-actions), so they are the controls
+	// whose perimeters actually exercise the clip — measure them at both scroll
+	// extremes, alongside a direct lock on the breathing room.
+	await page.setViewportSize({ width: 1280, height: 800 });
+	const padding = await page.evaluate(() => {
+		const sc = document.querySelector('.board-body');
+		if (!(sc instanceof HTMLElement)) return null;
+		const cs = getComputedStyle(sc);
+		return {
+			top: parseFloat(cs.paddingTop),
+			right: parseFloat(cs.paddingRight),
+			bottom: parseFloat(cs.paddingBottom),
+			left: parseFloat(cs.paddingLeft)
+		};
+	});
+	expect(padding, 'scroller padding measurable').not.toBeNull();
+	// 5px focus extent (3px outline + 2px offset) needs >=6px breathing room.
+	expect(padding!.top, 'scroller top breathing room >= 6px').toBeGreaterThanOrEqual(6);
+	expect(padding!.right, 'scroller right breathing room >= 6px').toBeGreaterThanOrEqual(6);
+	expect(padding!.bottom, 'scroller bottom breathing room >= 6px').toBeGreaterThanOrEqual(6);
+	expect(padding!.left, 'scroller left breathing room >= 6px').toBeGreaterThanOrEqual(6);
+
+	const measureFocus = () =>
+		page.evaluate(() => {
+			const el = document.activeElement;
+			const sc = el?.closest('.board-body');
+			if (!(el instanceof HTMLElement) || !(sc instanceof HTMLElement)) return null;
+			const cs = getComputedStyle(el);
+			if (cs.outlineStyle !== 'solid') {
+				return {
+					label: el.getAttribute('aria-label'),
+					text: el.textContent?.trim(),
+					clipped: true
+				};
+			}
+			const ow = parseFloat(cs.outlineWidth);
+			const oo = parseFloat(cs.outlineOffset);
+			const er = el.getBoundingClientRect();
+			const sr = sc.getBoundingClientRect();
+			const top = er.top - oo - ow;
+			const right = er.right + oo + ow;
+			const bottom = er.bottom + oo + ow;
+			const left = er.left - oo - ow;
+			return {
+				label: el.getAttribute('aria-label'),
+				text: el.textContent?.trim(),
+				clipped: !(
+					top >= sr.top - 0.5 &&
+					right <= sr.right + 0.5 &&
+					bottom <= sr.bottom + 0.5 &&
+					left >= sr.left - 0.5
+				)
+			};
+		});
+	// Tab to the Nth "Add a card" (1 = first column, 4 = last column). These
+	// are full-width, edge-flush targets, so they exercise the scroller clip.
+	const tabToAddCard = async (ordinal: number) => {
+		await page.getByRole('searchbox').focus();
+		let count = 0;
+		for (let i = 0; i < 90; i++) {
+			await page.keyboard.press('Tab');
+			const isAdd = await page.evaluate(() => {
+				const el = document.activeElement;
+				return !!(el && (el.textContent ?? '').includes('ADD A CARD') && el.closest('.add-card'));
+			});
+			if (isAdd) {
+				count += 1;
+				if (count === ordinal) return true;
+			}
+		}
+		return false;
+	};
+
+	// 768 (scrolls horizontally): first column add-card at the left extreme,
+	// last column add-card at the right extreme.
+	await page.setViewportSize({ width: 768, height: 800 });
+	await page.evaluate(() => {
+		const sc = document.querySelector('.board-body');
+		if (sc instanceof HTMLElement) sc.scrollLeft = 0;
+	});
+	expect(await tabToAddCard(1), 'reached first column Add a card at 768').toBe(true);
+	let mf = await measureFocus();
+	expect(mf, 'measured first column Add a card focus at 768').not.toBeNull();
+	expect(mf!.clipped, 'first column Add a card focus not clipped at left extreme').toBe(false);
+	await page.evaluate(() => {
+		const sc = document.querySelector('.board-body');
+		if (sc instanceof HTMLElement) sc.scrollLeft = sc.scrollWidth;
+	});
+	expect(await tabToAddCard(4), 'reached last column Add a card at 768').toBe(true);
+	mf = await measureFocus();
+	expect(mf, 'measured last column Add a card focus at 768').not.toBeNull();
+	expect(mf!.clipped, 'last column Add a card focus not clipped at right extreme').toBe(false);
+
+	// 1280 (fits, no scroll): first and last column add-cards.
+	await page.setViewportSize({ width: 1280, height: 800 });
+	expect(await tabToAddCard(1), 'reached first column Add a card at 1280').toBe(true);
+	mf = await measureFocus();
+	expect(mf, 'measured first column Add a card focus at 1280').not.toBeNull();
+	expect(mf!.clipped, 'first column Add a card focus not clipped at 1280').toBe(false);
+	expect(await tabToAddCard(4), 'reached last column Add a card at 1280').toBe(true);
+	mf = await measureFocus();
+	expect(mf, 'measured last column Add a card focus at 1280').not.toBeNull();
+	expect(mf!.clipped, 'last column Add a card focus not clipped at 1280').toBe(false);
 });
