@@ -18,8 +18,8 @@
 
 	const cardTotal = columns.reduce((n, col) => n + col.cards.length, 0);
 
-	// Pastel stage dots: one per column, clearly distinguishable against the dark
-	// indigo header. Paired with the column name so meaning never relies on color.
+	// Bright pastel stage dots on dark headers — paired with the column name
+	// so meaning never relies on color.
 	const stageDot: Partial<Record<LabelTone, string>> = {
 		slate: 'oklch(0.62 0.03 275)',
 		blue: 'oklch(0.62 0.1 250)',
@@ -27,20 +27,20 @@
 		green: 'oklch(0.62 0.1 152)'
 	};
 
-	// Pastel label chip backgrounds — slightly more saturated than the card face
-	// so chip edges are visible on the pastel surface. All carry dark indigo text.
-	const labelBg: Partial<Record<LabelTone, string>> = {
-		violet: 'oklch(0.74 0.06 285)',
-		teal: 'oklch(0.74 0.06 180)',
-		blue: 'oklch(0.74 0.06 250)',
-		slate: 'oklch(0.74 0.014 275)',
-		indigo: 'oklch(0.74 0.06 270)',
-		green: 'oklch(0.74 0.06 152)',
-		pink: 'oklch(0.74 0.06 350)',
-		amber: 'oklch(0.74 0.06 70)',
-		rose: 'oklch(0.74 0.06 15)',
-		red: 'oklch(0.74 0.06 25)',
-		cyan: 'oklch(0.74 0.06 200)'
+	// Pastel dot indicators for label chips — decorative only, always paired
+	// with text. Label backgrounds stay dark indigo; only the dot carries hue.
+	const labelDot: Partial<Record<LabelTone, string>> = {
+		violet: 'oklch(0.65 0.12 285)',
+		teal: 'oklch(0.65 0.12 180)',
+		blue: 'oklch(0.65 0.12 250)',
+		slate: 'oklch(0.62 0.02 275)',
+		indigo: 'oklch(0.65 0.12 270)',
+		green: 'oklch(0.65 0.12 152)',
+		pink: 'oklch(0.65 0.12 350)',
+		amber: 'oklch(0.7 0.12 70)',
+		rose: 'oklch(0.65 0.12 15)',
+		red: 'oklch(0.65 0.12 25)',
+		cyan: 'oklch(0.65 0.12 200)'
 	};
 </script>
 
@@ -109,9 +109,6 @@
 				</button>
 			</div>
 
-			<!-- Visual-specimen-only affordance: renders the primary-action treatment
-			     but performs no task creation. Like Search/Retry/dismiss/drag, it is
-			     inert in the specimen; wire real behavior when reusing the treatment. -->
 			<button type="button" class="primary">
 				<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
 					<path
@@ -176,8 +173,6 @@
 								{col.cards.length === 1 ? 'card' : 'cards'}</span
 							></span
 						>
-						<!-- Visual-specimen-only affordance: opens no menu and performs no
-						     action; it demonstrates the column-level overflow control only. -->
 						<button type="button" class="icon-btn" aria-label="More actions for {col.name}">
 							<svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true">
 								<circle cx="3.5" cy="8" r="1.5" fill="currentColor" />
@@ -211,8 +206,9 @@
 												{#each card.labels as l (`${l.name}-${l.tone}`)}
 													<li
 														class="label"
-														style="--lb: {labelBg[l.tone] ?? 'oklch(0.74 0.014 275)'}"
+														style="--dot: {labelDot[l.tone] ?? 'oklch(0.62 0.02 275)'}"
 													>
+														<span class="label-dot" aria-hidden="true"></span>
 														{l.name}
 													</li>
 												{/each}
@@ -320,8 +316,6 @@
 						{/if}
 
 						<li>
-							<!-- Visual-specimen-only affordance: demonstrates the pressed
-							     "drop zone" treatment but creates no card. -->
 							<button type="button" class="add-card">
 								<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
 									<path
@@ -343,7 +337,6 @@
 </div>
 
 <style>
-	/* Preview documents render outside the factory CSS boundary, so reset here. */
 	:global(html, body) {
 		margin: 0;
 		min-height: 100%;
@@ -359,88 +352,57 @@
 	.board-root {
 		/*
 		 * Luminous Putty — dark claymorphism tokens (all OKLCH).
-		 * Deep tinted-indigo canvas with bright opaque pastel-clay card faces.
-		 * Depth from paired inset highlight/shadow + soft cast extrusion + a
-		 * restrained low-radius glow used only as a secondary material cue.
-		 * No pure black/white, no gradients, no backdrop blur.
+		 * Matches the selected reference: dark indigo canvas, dark bar,
+		 * medium-dark indigo card/control faces, light lavender text.
+		 * Depth from paired inset highlight/dark shadow + restrained glow.
+		 * No near-white surfaces, no pure black/white, no gradients, no blur.
 		 */
-		--canvas: oklch(0.21 0.05 272); /* deep tinted-indigo page background */
-		--clay-dark: oklch(0.27 0.05 275); /* dark indigo clay: columns, app bar */
-		--bar-bg: oklch(0.24 0.048 274); /* app bar dark clay (slightly deeper) */
-		--surface: oklch(0.84 0.028 285); /* bright opaque pastel-clay card face */
+		--canvas: oklch(0.22 0.055 272);
+		--bar-bg: oklch(0.17 0.05 273);
+		--surface: oklch(0.3 0.058 275);
+		--surface-hover: oklch(0.33 0.06 275);
 
-		/* Ink on pastel surfaces (cards, controls) */
-		--ink: oklch(0.24 0.035 278); /* dark indigo ink (~7:1 on surface) */
-		--ink-soft: oklch(0.38 0.035 278); /* meta: due, labels, checklist (~4.5:1+) */
-		--ink-faint: oklch(0.48 0.03 278); /* grip handle, decorative icons */
+		--ink: oklch(0.88 0.025 285);
+		--ink-soft: oklch(0.7 0.04 285);
+		--ink-faint: oklch(0.5 0.03 285);
 
-		/* Ink on dark surfaces (app bar, columns, error banner) */
-		--ink-bright: oklch(0.9 0.025 285); /* light pastel text (~10:1 on dark clay) */
-		--ink-bright-soft: oklch(0.7 0.035 285); /* meta on dark (~4.5:1+) */
+		--accent: oklch(0.65 0.09 280);
+		--accent-fill: oklch(0.46 0.1 280);
+		--on-accent: oklch(0.92 0.02 285);
+		--accent-soft: oklch(0.42 0.07 280);
 
-		/* Accent */
-		--accent: oklch(0.62 0.12 280); /* bright violet: focus ring on dark surfaces */
-		--accent-fill: oklch(
-			0.46 0.12 280
-		); /* darker violet: primary fill (>=4.5:1 for near-white text) */
-		--on-accent: oklch(0.95 0.015 285); /* near-white ink on accent fill (never #fff) */
-		--accent-soft: oklch(0.42 0.07 280); /* darker violet for search inner-ring focus on pastel */
+		--danger: oklch(0.72 0.16 25);
+		--danger-soft: oklch(0.25 0.05 25);
+		--done: oklch(0.72 0.14 152);
+		--pri-high: oklch(0.72 0.16 25);
+		--pri-medium: oklch(0.75 0.14 65);
 
-		/*
-		 * Semantic tokens — bright decorative indicators separated from darker
-		 * text-ink variants so every normal-size text role passes AA (>=4.5:1)
-		 * on its actual opaque parent. Decorative dots keep the bright values;
-		 * text uses the darker -ink variants.
-		 */
-		--danger: oklch(0.74 0.16 25); /* coral-red: error text/icon on dark surface (>=4.5:1) */
-		--danger-soft: oklch(0.3 0.06 25); /* dark coral error surface */
-		--done: oklch(0.72 0.14 152); /* bright green: decorative done checkmark/dot */
-		--done-ink: oklch(0.36 0.1 152); /* dark green: done date text on pastel (>=4.5:1) */
-		--pri-high: oklch(0.68 0.17 25); /* bright coral: decorative priority dot */
-		--pri-high-ink: oklch(0.36 0.12 25); /* dark coral: high-priority text on pastel (>=4.5:1) */
-		--pri-medium: oklch(0.72 0.14 65); /* bright amber: decorative priority dot */
-		--pri-medium-ink: oklch(0.36 0.1 65); /* dark amber: medium-priority text on pastel (>=4.5:1) */
-
-		/*
-		 * Clay shadow recipes — the claymorphic signature.
-		 * Each layer: inset upper-left highlight + inset lower-right shadow +
-		 * outer cast drop shadow + restrained glow (secondary cue only).
-		 * Tinted colors, never pure white/black.
-		 */
-
-		/* Pastel clay raised (cards — the luminous puffy faces) */
+		/* Clay shadow: dark lower inset + lavender upper inset + thin violet
+		   border + restrained glow + dark downward cast. */
 		--clay:
-			inset 0 0 0 1.5px rgba(110, 100, 170, 0.16), inset 2px 2px 5px rgba(250, 245, 255, 0.55),
-			inset -2px -2px 5px rgba(70, 65, 120, 0.12), 0 6px 14px rgba(12, 12, 35, 0.38),
-			0 0 12px rgba(120, 100, 200, 0.06);
-		/* Pastel clay raised, larger puff (hovered card) */
-		--clay-hover:
-			inset 0 0 0 1.5px rgba(110, 100, 170, 0.18), inset 2px 2px 5px rgba(250, 245, 255, 0.6),
-			inset -2px -2px 5px rgba(70, 65, 120, 0.14), 0 10px 22px rgba(12, 12, 35, 0.45),
-			0 0 16px rgba(120, 100, 200, 0.1);
-		/* Pastel clay small (chips, controls, add-card, skeleton) */
+			inset 0 -2px 4px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(140, 130, 210, 0.2),
+			inset 0 0 0 1.5px rgba(110, 100, 170, 0.3), 0 0 10px rgba(100, 80, 200, 0.12),
+			0 3px 8px rgba(0, 0, 0, 0.3);
 		--clay-sm:
-			inset 0 0 0 1px rgba(110, 100, 170, 0.12), inset 1px 1px 3px rgba(250, 245, 255, 0.5),
-			inset -1px -1px 3px rgba(70, 65, 120, 0.1), 0 3px 8px rgba(12, 12, 35, 0.28),
-			0 0 8px rgba(120, 100, 200, 0.05);
-		/* Pressed pastel clay (selected chips, active toggle, search well) */
+			inset 0 -1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 2px rgba(140, 130, 210, 0.15),
+			inset 0 0 0 1px rgba(110, 100, 170, 0.25), 0 0 6px rgba(100, 80, 200, 0.08),
+			0 2px 4px rgba(0, 0, 0, 0.2);
 		--clay-pressed:
-			inset 0 0 0 1px rgba(110, 100, 170, 0.2), inset 2px 2px 5px rgba(70, 65, 120, 0.18),
-			inset -2px -2px 5px rgba(250, 245, 255, 0.35);
-		/* Dark clay raised (columns, app bar, error banner) */
-		--clay-dark-raise:
-			inset 1.5px 1.5px 4px rgba(140, 130, 210, 0.12), inset -1.5px -1.5px 4px rgba(5, 5, 20, 0.4),
-			0 5px 12px rgba(8, 8, 25, 0.4), 0 0 10px rgba(100, 80, 200, 0.05);
-		/* Dark clay pressed (empty-state well, count badge, segmented track) */
-		--clay-dark-press:
-			inset 2px 2px 5px rgba(5, 5, 20, 0.5), inset -2px -2px 5px rgba(140, 130, 210, 0.08);
-		/* Accent clay (primary button fill) */
+			inset 0 2px 4px rgba(0, 0, 0, 0.35), inset 0 -1px 2px rgba(140, 130, 210, 0.1),
+			inset 0 0 0 1px rgba(110, 100, 170, 0.2);
+		--clay-hover:
+			inset 0 -2px 4px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(140, 130, 210, 0.25),
+			inset 0 0 0 1.5px rgba(110, 100, 170, 0.35), 0 0 14px rgba(100, 80, 200, 0.16),
+			0 5px 12px rgba(0, 0, 0, 0.35);
 		--clay-accent:
-			inset 1.5px 1.5px 4px rgba(200, 190, 255, 0.3), inset -1.5px -1.5px 4px rgba(40, 30, 80, 0.3),
-			0 4px 10px rgba(8, 8, 25, 0.35), 0 0 10px rgba(120, 100, 200, 0.12);
+			inset 0 -2px 4px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(180, 170, 240, 0.25),
+			inset 0 0 0 1.5px rgba(120, 110, 190, 0.35), 0 0 10px rgba(100, 80, 200, 0.18),
+			0 3px 8px rgba(0, 0, 0, 0.3);
 
-		--r-card: 14px;
-		--r-control: 12px;
+		--r-card: 9px;
+		--r-control: 8px;
+		--r-header: 7px;
+		--r-board: 10px;
 
 		--font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 		--font-mono:
@@ -451,28 +413,28 @@
 		font-synthesis: none;
 		color: var(--ink);
 		background: var(--canvas);
-		padding: clamp(0.9rem, 3vw, 1.4rem);
+		padding: clamp(0.75rem, 2.5vw, 1.1rem);
 	}
 
-	/* ---------- App bar (dark clay slab) ---------- */
+	/* ---------- App bar (dark indigo slab) ---------- */
 
 	.app-bar {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 0.75rem 1rem;
+		gap: 0.5rem 0.75rem;
 		flex-wrap: wrap;
-		padding: 0.9rem clamp(0.9rem, 2vw, 1.15rem);
-		border-radius: var(--r-card);
+		padding: 0.65rem clamp(0.65rem, 1.5vw, 0.85rem);
+		border-radius: var(--r-board);
 		background: var(--bar-bg);
-		box-shadow: var(--clay-dark-raise);
-		margin-bottom: clamp(0.8rem, 2vw, 1.1rem);
+		box-shadow: var(--clay);
+		margin-bottom: clamp(0.6rem, 1.5vw, 0.85rem);
 	}
 
 	.bar-row {
 		display: flex;
 		align-items: center;
-		gap: 0.75rem;
+		gap: 0.5rem;
 		flex-wrap: wrap;
 		min-width: 0;
 	}
@@ -480,12 +442,11 @@
 	.project-chip {
 		display: inline-grid;
 		place-items: center;
-		height: 2rem;
-		padding: 0 0.85rem;
-		border-radius: 999px;
-		font-size: 0.8rem;
+		height: 1.75rem;
+		padding: 0 0.65rem;
+		border-radius: var(--r-control);
+		font-size: 0.76rem;
 		font-weight: 700;
-		letter-spacing: 0.01em;
 		color: var(--ink);
 		background: var(--surface);
 		box-shadow: var(--clay-sm);
@@ -493,17 +454,17 @@
 
 	.title-block h1 {
 		margin: 0;
-		font-size: 1.2rem;
+		font-size: 1.05rem;
 		font-weight: 700;
 		letter-spacing: -0.01em;
 		line-height: 1.2;
-		color: var(--ink-bright);
+		color: var(--ink);
 	}
 
 	.subtitle {
-		margin: 0.15rem 0 0;
-		font-size: 0.78rem;
-		color: var(--ink-bright-soft);
+		margin: 0.1rem 0 0;
+		font-size: 0.72rem;
+		color: var(--ink-soft);
 	}
 
 	.team-avatars {
@@ -514,7 +475,7 @@
 	}
 
 	.team-avatars li {
-		margin-left: -8px;
+		margin-left: -6px;
 	}
 
 	.team-avatars li:first-child {
@@ -522,34 +483,31 @@
 	}
 
 	.avatar {
-		width: 34px;
-		height: 34px;
+		width: 30px;
+		height: 30px;
 		display: grid;
 		place-items: center;
 		border-radius: 50%;
-		font-size: 0.72rem;
+		font-size: 0.66rem;
 		font-weight: 700;
-		color: var(--ink);
-		background: oklch(0.68 0.08 var(--h, 285));
+		color: var(--on-accent);
+		background: oklch(0.48 0.09 var(--h, 285));
 		box-shadow: var(--clay-sm);
 	}
 
 	.avatar.sm {
-		width: 28px;
-		height: 28px;
-		font-size: 0.6rem;
+		width: 24px;
+		height: 24px;
+		font-size: 0.54rem;
 	}
 
-	/* ---------- Header controls (pastel clay on dark bar) ---------- */
+	/* ---------- Header controls (dark indigo pills) ---------- */
 
-	/* Search: a raised pastel clay pill on the dark bar. Focus shows a
-	   contrasting dark-violet inner-ring groove (>=3:1) drawn inside the pastel
-	   surface so it is visible regardless of the surrounding dark bar. */
 	.search {
 		display: flex;
 		align-items: center;
-		gap: 0.45rem;
-		padding: 0 0.8rem;
+		gap: 0.4rem;
+		padding: 0 0.65rem;
 		height: 44px;
 		border-radius: var(--r-control);
 		background: var(--surface);
@@ -558,41 +516,36 @@
 	}
 
 	.search input {
-		width: 9rem;
+		width: 8rem;
 		max-width: 100%;
 		min-width: 0;
 		border: 0;
 		background: transparent;
 		color: var(--ink);
 		font: inherit;
-		font-size: 0.86rem;
+		font-size: 0.82rem;
 	}
 
 	.search input::placeholder {
 		color: var(--ink-soft);
 	}
 
-	/* The search ring uses a negative offset so it draws INSIDE the pastel
-	   surface — an inner highlight groove that reads at >=3:1 against the
-	   pastel face. A positive offset would seat the ring against the dark bar
-	   where a single ring color can't satisfy both surfaces. */
 	.search:focus-within {
-		outline: 3px solid var(--accent-soft);
-		outline-offset: -3px;
+		outline: 3px solid var(--accent);
+		outline-offset: 2px;
 	}
 
 	.search input:focus-visible {
 		outline: none;
 	}
 
-	/* Segmented track: a pressed dark well in the bar. */
 	.segmented {
 		display: inline-flex;
 		padding: 3px;
 		gap: 3px;
 		border-radius: var(--r-control);
-		background: var(--canvas);
-		box-shadow: var(--clay-dark-press);
+		background: var(--bar-bg);
+		box-shadow: var(--clay-pressed);
 	}
 
 	.segmented button,
@@ -600,41 +553,40 @@
 		display: inline-flex;
 		align-items: center;
 		font: inherit;
-		font-size: 0.8rem;
+		font-size: 0.76rem;
 		font-weight: 600;
 		color: var(--ink);
-		border: 0;
+		border: 3px solid transparent;
 		background: var(--surface);
-		padding: 0 0.85rem;
+		background-clip: padding-box;
+		padding: 0 0.7rem;
 		min-width: 44px;
 		min-height: 44px;
 		justify-content: center;
-		border-radius: 9px;
+		border-radius: 6px;
 		cursor: pointer;
 		box-shadow: var(--clay-sm);
 	}
 
-	/* Active option = pressed into pastel clay (inverted inset). */
 	.segmented button[aria-pressed='true'],
 	.chip[aria-pressed='true'] {
-		color: var(--ink);
+		color: var(--on-accent);
 		font-weight: 700;
-		background: oklch(0.78 0.04 285);
+		background: var(--accent-fill);
 		box-shadow: var(--clay-pressed);
 	}
 
-	/* Primary: the violet clay pill — the single saturated fill. */
 	.primary {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.4rem;
+		gap: 0.35rem;
 		font: inherit;
-		font-size: 0.84rem;
+		font-size: 0.8rem;
 		font-weight: 700;
 		color: var(--on-accent);
 		border: 0;
 		min-height: 44px;
-		padding: 0 1.05rem;
+		padding: 0 0.9rem;
 		border-radius: var(--r-control);
 		cursor: pointer;
 		background: var(--accent-fill);
@@ -646,12 +598,12 @@
 	.error-banner {
 		display: flex;
 		align-items: center;
-		gap: 0.7rem;
-		margin-bottom: clamp(0.8rem, 2vw, 1.1rem);
-		padding: 0.75rem 0.9rem;
-		border-radius: var(--r-card);
+		gap: 0.6rem;
+		margin-bottom: clamp(0.6rem, 1.5vw, 0.85rem);
+		padding: 0.6rem 0.75rem;
+		border-radius: var(--r-board);
 		background: var(--danger-soft);
-		box-shadow: var(--clay-dark-raise);
+		box-shadow: var(--clay);
 	}
 
 	.error-banner .error-icon {
@@ -662,8 +614,8 @@
 	.error-banner p {
 		margin: 0;
 		flex: 1;
-		font-size: 0.82rem;
-		color: var(--ink-bright);
+		font-size: 0.78rem;
+		color: var(--ink);
 	}
 
 	.error-banner strong {
@@ -673,19 +625,19 @@
 	.error-actions {
 		display: flex;
 		align-items: center;
-		gap: 0.35rem;
+		gap: 0.3rem;
 	}
 
 	.error-retry {
 		font: inherit;
-		font-size: 0.8rem;
+		font-size: 0.76rem;
 		font-weight: 700;
 		color: var(--ink);
 		background: var(--surface);
 		border: 0;
 		min-height: 44px;
 		min-width: 44px;
-		padding: 0 0.95rem;
+		padding: 0 0.8rem;
 		border-radius: var(--r-control);
 		cursor: pointer;
 		box-shadow: var(--clay-sm);
@@ -698,55 +650,56 @@
 	.board-body {
 		display: flex;
 		flex-direction: column;
-		gap: clamp(0.8rem, 2vw, 1.1rem);
+		gap: clamp(0.6rem, 1.5vw, 0.85rem);
 	}
 
-	/* ---------- Columns (dark clay slabs) ---------- */
+	/* ---------- Columns (transparent/open — no raised shell) ---------- */
 
 	.column {
 		display: flex;
 		flex-direction: column;
-		padding: 0.85rem;
-		border-radius: var(--r-card);
-		background: var(--clay-dark);
-		box-shadow: var(--clay-dark-raise);
+		background: transparent;
 	}
 
 	.column-head {
 		display: flex;
 		align-items: center;
-		gap: 0.55rem;
-		padding: 0.2rem 0.3rem 0.8rem;
+		gap: 0.45rem;
+		padding: 0.4rem 0.6rem;
+		border-radius: var(--r-header);
+		background: var(--surface);
+		box-shadow: var(--clay-sm);
+		margin-bottom: 0.5rem;
 	}
 
 	.column-dot {
-		width: 11px;
-		height: 11px;
+		width: 9px;
+		height: 9px;
 		border-radius: 50%;
 		background: var(--stage);
 		flex: none;
-		box-shadow: 0 0 6px rgba(120, 100, 200, 0.2);
+		box-shadow: 0 0 5px rgba(120, 100, 200, 0.3);
 	}
 
 	.column-head h2 {
 		margin: 0;
-		font-size: 0.95rem;
+		font-size: 0.82rem;
 		font-weight: 700;
-		color: var(--ink-bright);
+		color: var(--ink);
 	}
 
 	.count {
 		position: relative;
-		min-width: 1.5rem;
+		min-width: 1.3rem;
 		text-align: center;
 		font-family: var(--font-mono);
-		font-size: 0.72rem;
+		font-size: 0.66rem;
 		font-weight: 600;
-		color: var(--ink-bright-soft);
-		padding: 0.15rem 0.5rem;
+		color: var(--ink-soft);
+		padding: 0.1rem 0.4rem;
 		border-radius: 999px;
 		background: var(--canvas);
-		box-shadow: var(--clay-dark-press);
+		box-shadow: var(--clay-pressed);
 	}
 
 	.icon-btn {
@@ -755,9 +708,10 @@
 		place-items: center;
 		width: 44px;
 		height: 44px;
-		border: 0;
-		border-radius: 9px;
+		border: 4px solid transparent;
+		border-radius: 6px;
 		background: var(--surface);
+		background-clip: padding-box;
 		color: var(--ink-soft);
 		cursor: pointer;
 		box-shadow: var(--clay-sm);
@@ -775,13 +729,13 @@
 		padding: 0;
 		display: flex;
 		flex-direction: column;
-		gap: 0.6rem;
+		gap: 0.45rem;
 	}
 
-	/* ---------- Cards (bright opaque pastel-clay puffs) ---------- */
+	/* ---------- Cards (medium-dark indigo putty) ---------- */
 
 	.card {
-		padding: 0.8rem 0.85rem;
+		padding: 0.6rem 0.65rem;
 		border-radius: var(--r-card);
 		background: var(--surface);
 		box-shadow: var(--clay);
@@ -790,12 +744,12 @@
 	.card-head {
 		display: flex;
 		align-items: flex-start;
-		gap: 0.4rem;
+		gap: 0.35rem;
 	}
 
 	.grip {
 		flex: none;
-		margin-top: 0.15rem;
+		margin-top: 0.1rem;
 		color: var(--ink-faint);
 		opacity: 0.5;
 		cursor: grab;
@@ -809,40 +763,49 @@
 
 	.card-title {
 		margin: 0;
-		font-size: 0.9rem;
+		font-size: 0.82rem;
 		font-weight: 650;
-		line-height: 1.35;
+		line-height: 1.3;
 		color: var(--ink);
 	}
 
-	/* Labels: pastel chips with slightly more saturated face than the card.
-	   Dark indigo text carries the meaning; tone is a secondary hue cue. */
+	/* Labels: tiny dark pills with a pastel dot indicator. */
 	.labels {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.3rem;
-		margin: 0.55rem 0 0;
+		gap: 0.25rem;
+		margin: 0.4rem 0 0;
 		padding: 0;
 		list-style: none;
 	}
 
 	.label {
-		font-size: 0.68rem;
-		font-weight: 700;
-		letter-spacing: 0.01em;
-		padding: 0.16rem 0.55rem;
-		border-radius: 999px;
-		color: var(--ink);
-		background: var(--lb);
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		font-size: 0.62rem;
+		font-weight: 600;
+		color: var(--ink-soft);
+		background: oklch(0.26 0.04 275);
+		padding: 0.1rem 0.4rem;
+		border-radius: 5px;
 		box-shadow: var(--clay-sm);
+	}
+
+	.label-dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: var(--dot);
+		flex: none;
 	}
 
 	.checklist {
 		display: flex;
 		align-items: center;
-		gap: 0.35rem;
-		margin: 0.55rem 0 0;
-		font-size: 0.74rem;
+		gap: 0.3rem;
+		margin: 0.4rem 0 0;
+		font-size: 0.7rem;
 		color: var(--ink-soft);
 	}
 
@@ -850,36 +813,36 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 0.5rem;
-		margin-top: 0.65rem;
-		padding-top: 0.6rem;
-		border-top: 1px solid rgba(110, 100, 170, 0.15);
+		gap: 0.4rem;
+		margin-top: 0.45rem;
+		padding-top: 0.4rem;
+		border-top: 1px solid rgba(110, 100, 170, 0.18);
 	}
 
 	.foot-meta {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.5rem;
+		gap: 0.4rem;
 		min-width: 0;
 	}
 
 	.priority {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.3rem;
-		font-size: 0.7rem;
+		gap: 0.25rem;
+		font-size: 0.66rem;
 		font-weight: 700;
 		text-transform: capitalize;
 	}
 
 	.priority .dot {
-		width: 7px;
-		height: 7px;
+		width: 6px;
+		height: 6px;
 		border-radius: 50%;
 	}
 
 	.priority.pri-high {
-		color: var(--pri-high-ink);
+		color: var(--pri-high);
 	}
 
 	.priority.pri-high .dot {
@@ -887,7 +850,7 @@
 	}
 
 	.priority.pri-medium {
-		color: var(--pri-medium-ink);
+		color: var(--pri-medium);
 	}
 
 	.priority.pri-medium .dot {
@@ -897,14 +860,14 @@
 	.due {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.3rem;
-		font-size: 0.74rem;
+		gap: 0.25rem;
+		font-size: 0.7rem;
 		font-weight: 600;
 		color: var(--ink-soft);
 	}
 
 	.due.is-done {
-		color: var(--done-ink);
+		color: var(--done);
 	}
 
 	.assignees {
@@ -915,28 +878,27 @@
 	}
 
 	.assignees li {
-		margin-left: -8px;
+		margin-left: -6px;
 	}
 
 	.assignees li:first-child {
 		margin-left: 0;
 	}
 
-	/* Add-card: a raised pastel clay button. */
 	.add-card {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		gap: 0.4rem;
+		gap: 0.35rem;
 		width: 100%;
 		font: inherit;
-		font-size: 0.8rem;
+		font-size: 0.76rem;
 		font-weight: 600;
 		color: var(--ink-soft);
 		border: 0;
 		background: var(--surface);
 		min-height: 44px;
-		padding: 0.6rem;
+		padding: 0.5rem;
 		border-radius: var(--r-card);
 		cursor: pointer;
 		box-shadow: var(--clay-sm);
@@ -952,15 +914,15 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 0.5rem;
-		padding: 1.2rem 0.5rem;
+		gap: 0.4rem;
+		padding: 0.9rem 0.5rem;
 		border-radius: var(--r-card);
-		background: var(--canvas);
-		color: var(--ink-bright-soft);
-		font-size: 0.78rem;
+		background: var(--surface);
+		color: var(--ink-soft);
+		font-size: 0.74rem;
 		font-weight: 600;
 		text-align: center;
-		box-shadow: var(--clay-dark-press);
+		box-shadow: var(--clay-pressed);
 	}
 
 	.empty-col p {
@@ -968,49 +930,49 @@
 	}
 
 	.empty-mark {
-		width: 18px;
-		height: 18px;
-		border-radius: 6px;
-		background: var(--clay-dark);
-		box-shadow: var(--clay-dark-press);
+		width: 16px;
+		height: 16px;
+		border-radius: 5px;
+		background: var(--canvas);
+		box-shadow: var(--clay-pressed);
 		opacity: 0.8;
 	}
 
-	/* ---------- States: loading skeleton (pastel grooves, opacity pulse) ---------- */
+	/* ---------- Loading skeleton ---------- */
 
 	.skeleton-card {
 		display: flex;
 		flex-direction: column;
-		gap: 0.6rem;
-		padding: 0.8rem 0.85rem;
+		gap: 0.45rem;
+		padding: 0.6rem 0.65rem;
 		border-radius: var(--r-card);
 		background: var(--surface);
 		box-shadow: var(--clay-pressed);
 	}
 
 	.skel {
-		border-radius: 5px;
-		background: rgba(110, 100, 170, 0.14);
+		border-radius: 4px;
+		background: rgba(140, 130, 210, 0.12);
 	}
 
 	.skel-title {
-		height: 13px;
+		height: 11px;
 		width: 72%;
 	}
 
 	.skel-row {
 		display: flex;
-		gap: 0.3rem;
+		gap: 0.25rem;
 	}
 
 	.skel-label {
-		height: 13px;
-		width: 46px;
+		height: 11px;
+		width: 40px;
 		border-radius: 999px;
 	}
 
 	.skel-foot {
-		height: 11px;
+		height: 10px;
 		width: 36%;
 	}
 
@@ -1034,7 +996,7 @@
 
 	.mono {
 		font-family: var(--font-mono);
-		font-size: 0.72rem;
+		font-size: 0.68rem;
 		font-weight: 600;
 	}
 
@@ -1054,10 +1016,6 @@
 
 	/* ---------- Focus + motion ---------- */
 
-	/* Focus ring: --accent (bright violet, L 0.62) contrasts >=3:1 against the
-	   dark surfaces (app bar, columns, error banner) where every button sits.
-   The search uses its own inner-ring treatment (see above). The primary
-   inherits this ring; at outline-offset 2px it seats against the dark bar. */
 	.board-root :where(button, input):focus-visible {
 		outline: 3px solid var(--accent);
 		outline-offset: 2px;
@@ -1067,13 +1025,6 @@
 		outline-color: var(--accent);
 	}
 
-	/* Hover: clay puffs up — deeper extrusion shadow, brighter glow. The card face
-	   AND every parent surface stay at their opaque resting background; only the
-	   box-shadow changes. Text contrast on the unchanged opaque face is preserved.
-	   Selected/pressed controls, the primary, and error actions are excluded so
-	   their semantic styles win. Under prefers-reduced-motion the shadow still
-	   changes (a shadow change is not motion) but instantly — the transition and
-	   transform lifts below are gated behind reduced-motion. */
 	@media (hover: hover) {
 		.card:hover,
 		.chip:not([aria-pressed='true']):hover,
@@ -1105,15 +1056,16 @@
 
 		@media (hover: hover) {
 			.card:hover {
-				transform: translateY(-2px);
+				transform: translateY(-1px);
 			}
 
 			.primary:hover {
 				box-shadow:
-					inset 1.5px 1.5px 4px rgba(200, 190, 255, 0.35),
-					inset -1.5px -1.5px 4px rgba(40, 30, 80, 0.35),
-					0 6px 14px rgba(8, 8, 25, 0.4),
-					0 0 14px rgba(120, 100, 200, 0.18);
+					inset 0 -2px 4px rgba(0, 0, 0, 0.3),
+					inset 0 2px 4px rgba(180, 170, 240, 0.3),
+					inset 0 0 0 1.5px rgba(120, 110, 190, 0.4),
+					0 0 14px rgba(100, 80, 200, 0.22),
+					0 5px 12px rgba(0, 0, 0, 0.35);
 				transform: translateY(-1px);
 			}
 		}
@@ -1137,21 +1089,21 @@
 		}
 
 		.column {
-			flex: 0 0 17.5rem;
+			flex: 0 0 16rem;
 		}
 	}
 
 	.board-body {
 		scrollbar-width: thin;
-		scrollbar-color: oklch(0.35 0.04 275) transparent;
+		scrollbar-color: oklch(0.4 0.04 275) transparent;
 	}
 
 	.board-body::-webkit-scrollbar {
-		height: 10px;
+		height: 8px;
 	}
 
 	.board-body::-webkit-scrollbar-thumb {
-		background: oklch(0.35 0.04 275);
+		background: oklch(0.4 0.04 275);
 		border-radius: 999px;
 	}
 </style>

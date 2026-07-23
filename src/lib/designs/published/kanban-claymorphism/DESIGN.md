@@ -1,186 +1,236 @@
 # Kanban Board · Luminous Putty
 
 **Version** 1.0.0 · **Slug** `kanban-claymorphism` · **Page type** data-management
-**Visual intent:** a **dark claymorphism** Kanban board on a deep tinted-indigo canvas with clearly puffy raised **pastel-clay** card faces and controls, paired inset highlight/shadow plus soft cast extrusion depth, and a restrained low-radius glow used only as a secondary material cue. Rounded putty masses, brighter opaque pastel faces, substantial soft extrusion, and tactile pressed selected states — unmistakably clay, not dark-neon/cyberpunk and not cool-gray neumorphism. Dark theme, comfortable density, WCAG 2.2 AA. System sans for UI text; monospace only for compact metrics/counts/dates.
 
-> The board content is copied verbatim from the locked shared Kanban baseline (`kanban-glassmorphism/fixtures.ts`): the same columns, cards, labels, members, due dates, and the empty-column state. Only the visual language changes between styles.
+**Visual intent:** a compact dark claymorphism Kanban board with a deep indigo canvas, a darker app bar, medium-dark indigo cards and controls, light lavender text, transparent column bodies, and restrained violet glow. Small radii and tight spacing keep the layered putty treatment crisp rather than candy-like. Dark theme, WCAG 2.2 AA, system sans for UI text, and monospace only for compact metrics, counts, and dates.
+
+> The board content is copied verbatim from the locked shared Kanban baseline (`kanban-glassmorphism/fixtures.ts`): the same columns, cards, labels, members, due dates, and empty-column state. Only the visual language changes between styles.
 
 ## Canonical page reference
 
-A Kanban board for a small product team: a board header (project identity, team avatars, search, filters, view controls, primary action) over four columns of draggable-feeling cards: Backlog → In Progress → In Review → Done. The **In Review** column is empty, demonstrating the empty state; the other three hold realistic cards with a title, labels, an optional priority indicator, an optional checklist progress line, a due date, and assignee avatars.
+A Kanban board for a small product team: a board header with project identity, team avatars, search, filters, view controls, and a primary action over four columns, Backlog, In Progress, In Review, and Done. In Review is empty to demonstrate the empty state. The other columns contain realistic cards with titles, labels, optional priority and checklist information, due dates, and assignee avatars.
 
 ## Design principles
 
-1. **Bright opaque pastel faces on dark putty masses.** The claymorphic signature: cards and controls are clearly puffy raised shapes with opaque light pastel faces, floating on dark indigo structural surfaces (app bar, columns). Depth comes from paired inset highlight + inset shadow + outer cast extrusion, never from translucency or glass.
-2. **Clay recipe is the depth language.** Every raised surface carries the same four-layer shadow: inset upper-left highlight (tinted near-white on pastel, soft violet on dark), inset lower-right shadow (tinted indigo), outer cast drop shadow, and a restrained low-radius glow. The glow is a secondary material cue, never the sole state signal.
-3. **Selection = pressed in.** Active toggles and filters become inverted-inset wells — the clay squishes down — rather than colored fills. Tactile state is the interaction language.
-4. **Legibility over purity.** Pastel card faces carry dark indigo ink (≥7:1); dark structural surfaces carry light pastel text (≥7:1). No pure black or white. Semantic text roles (priority labels, done dates, error text, primary action text) use **dedicated darker `-ink` variants** (L 0.36) that pass AA on pastel faces; bright decorative tokens (L 0.68–0.74) are reserved for dots and checkmarks. Monospace for metrics/dates/counts adds a tactile terminal accent.
+1. **Dark putty, not pastel slabs.** The canvas is deep indigo, the app bar is darker, and cards, column headers, controls, empty states, and skeletons use one medium-dark indigo surface with light lavender text.
+2. **Open columns.** Column bodies are transparent and have no fill, shell, padding, radius, or elevation. Only each compact header and its cards are raised, so the board stays visually light and dense.
+3. **Clay depth stays restrained.** Raised objects use dark and lavender inset shading, a thin violet inset ring, a low-alpha violet glow, and a short dark cast shadow. Pressed objects invert the vertical inset direction.
+4. **Compact geometry.** Main radii stay between 6px and 10px, card padding is `0.6rem 0.65rem`, and desktop columns are 16rem wide. Full 44px hit boxes do not require visually tall controls.
+5. **Color supports text.** Stage, label, priority, done, and error colors are paired with text, icons, or tactile state. Color is never the only signal.
 
-## Color system (OKLCH)
+## Color system
 
-| Token               | Value                   | Role                                                             |
-| ------------------- | ----------------------- | ---------------------------------------------------------------- |
-| `--canvas`          | `oklch(0.21 0.05 272)`  | Deep tinted-indigo page background                               |
-| `--clay-dark`       | `oklch(0.27 0.05 275)`  | Dark indigo clay: columns                                        |
-| `--bar-bg`          | `oklch(0.24 0.048 274)` | App bar dark clay (slightly deeper than columns)                 |
-| `--surface`         | `oklch(0.84 0.028 285)` | Bright opaque pastel-clay card face (the luminous element)       |
-| `--ink`             | `oklch(0.24 0.035 278)` | Dark indigo ink on pastel surfaces (≈7:1)                        |
-| `--ink-soft`        | `oklch(0.38 0.035 278)` | Meta on pastel: due dates, checklist, labels (≈4.5:1+)           |
-| `--ink-faint`       | `oklch(0.48 0.03 278)`  | Grip handle, decorative icons (non-text only)                    |
-| `--ink-bright`      | `oklch(0.9 0.025 285)`  | Light pastel text on dark surfaces (≈10:1)                       |
-| `--ink-bright-soft` | `oklch(0.7 0.035 285)`  | Meta on dark: column counts, subtitle (≈4.5:1+)                  |
-| `--accent`          | `oklch(0.62 0.12 280)`  | Bright violet: focus ring on dark surfaces (≈4.7:1)              |
-| `--accent-fill`     | `oklch(0.46 0.12 280)`  | Darker violet: primary button fill (>=4.5:1 for near-white text) |
-| `--on-accent`       | `oklch(0.95 0.015 285)` | Near-white ink on accent fill (never `#fff`)                     |
-| `--accent-soft`     | `oklch(0.42 0.07 280)`  | Darker violet for search inner-ring focus on pastel surfaces     |
-| `--danger`          | `oklch(0.74 0.16 25)`   | Coral-red: error text/icon on dark surface (>=4.5:1)             |
-| `--danger-soft`     | `oklch(0.3 0.06 25)`    | Dark coral error banner surface                                  |
-| `--done`            | `oklch(0.72 0.14 152)`  | Bright green: decorative done checkmark/dot                      |
-| `--done-ink`        | `oklch(0.36 0.1 152)`   | Dark green: done date text on pastel (>=4.5:1)                   |
-| `--pri-high`        | `oklch(0.68 0.17 25)`   | Bright coral: decorative priority dot                            |
-| `--pri-high-ink`    | `oklch(0.36 0.12 25)`   | Dark coral: high-priority text on pastel (>=4.5:1)               |
-| `--pri-medium`      | `oklch(0.72 0.14 65)`   | Bright amber: decorative priority dot                            |
-| `--pri-medium-ink`  | `oklch(0.36 0.1 65)`    | Dark amber: medium-priority text on pastel (>=4.5:1)             |
+All named color tokens are OKLCH. Shadow layers use the exact translucent RGB values shown in the elevation section.
 
-- **No pure black or white.** Neutrals are tinted toward indigo (hue 272–285). `--on-accent` is a near-white, not `#fff`. Shadow layers use tinted rgba (`rgba(250,245,255,…)` for highlights, `rgba(70,65,120,…)` for indigo shadows, `rgba(12,12,35,…)` for cast drops, `rgba(120,100,200,…)` for glow) — never pure `#000`/`#fff`.
-- **No gradients, no backdrop blur, no translucency** anywhere. The only depth cues are the four-layer clay shadow.
-- **Label chips** are pastel pills (L 0.74, slightly more saturated than the card face) with dark indigo text. Each tone has a distinct pastel hue, but meaning lives in the text. They carry a small clay shadow for tactile separation from the card face.
-- **Avatars** are pastel-clay circles (`oklch(0.68 0.08 <hue>)`) with dark indigo initials — L 0.68 fill with L 0.24 ink gives ≈5:1. Each person gets a distinct hue via the fixture's `hue` field. A small clay shadow separates overlaps.
-- **Stage dots** (one per column header) are pastel-colored dots on the dark header, paired with the column name: Backlog slate `oklch(0.62 0.03 275)`, In Progress blue `oklch(0.62 0.1 250)`, In Review amber `oklch(0.7 0.12 70)`, Done green `oklch(0.62 0.1 152)`.
+| Token             | Value                   | Role                                                                   |
+| ----------------- | ----------------------- | ---------------------------------------------------------------------- |
+| `--canvas`        | `oklch(0.22 0.055 272)` | Deep indigo page and exposed board background                          |
+| `--bar-bg`        | `oklch(0.17 0.05 273)`  | Darker app bar and segmented tracks                                    |
+| `--surface`       | `oklch(0.3 0.058 275)`  | Cards, controls, column headers, empty state, and skeleton             |
+| `--surface-hover` | `oklch(0.33 0.06 275)`  | Declared surface variant; the current hover rules do not recolor faces |
+| `--ink`           | `oklch(0.88 0.025 285)` | Primary light lavender text on dark surfaces                           |
+| `--ink-soft`      | `oklch(0.7 0.04 285)`   | Secondary text, metadata, labels, placeholders, and inactive controls  |
+| `--ink-faint`     | `oklch(0.5 0.03 285)`   | Decorative grip handle                                                 |
+| `--accent`        | `oklch(0.65 0.09 280)`  | Focus outline                                                          |
+| `--accent-fill`   | `oklch(0.46 0.1 280)`   | Primary and selected-control fill                                      |
+| `--on-accent`     | `oklch(0.92 0.02 285)`  | Text on accent fills and avatar initials                               |
+| `--accent-soft`   | `oklch(0.42 0.07 280)`  | Declared darker accent; the current focus rule uses `--accent`         |
+| `--danger`        | `oklch(0.72 0.16 25)`   | Error icon and emphasized error text                                   |
+| `--danger-soft`   | `oklch(0.25 0.05 25)`   | Error-banner background                                                |
+| `--done`          | `oklch(0.72 0.14 152)`  | Completed due-date treatment                                           |
+| `--pri-high`      | `oklch(0.72 0.16 25)`   | High-priority dot and text                                             |
+| `--pri-medium`    | `oklch(0.75 0.14 65)`   | Medium-priority dot and text                                           |
+
+Additional fixed colors:
+
+- Label faces use `oklch(0.26 0.04 275)`. A 6px dot supplies the label tone: violet `oklch(0.65 0.12 285)`, teal `oklch(0.65 0.12 180)`, blue `oklch(0.65 0.12 250)`, slate `oklch(0.62 0.02 275)`, indigo `oklch(0.65 0.12 270)`, green `oklch(0.65 0.12 152)`, pink `oklch(0.65 0.12 350)`, amber `oklch(0.7 0.12 70)`, rose `oklch(0.65 0.12 15)`, red `oklch(0.65 0.12 25)`, and cyan `oklch(0.65 0.12 200)`.
+- Stage dots are slate `oklch(0.62 0.03 275)`, blue `oklch(0.62 0.1 250)`, amber `oklch(0.7 0.12 70)`, and green `oklch(0.62 0.1 152)`.
+- Avatars use `oklch(0.48 0.09 <fixture hue>)` with `--on-accent` initials.
+- Skeleton bars use `rgba(140, 130, 210, 0.12)`. Card-foot separators use `rgba(110, 100, 170, 0.18)`.
+- There are no gradients, backdrop filters, translucent content faces, pure-black fills, pure-white fills, or gradient text. The shadow recipes do use translucent black for shade and cast layers.
 
 ## Typography
 
-- **UI text:** system sans stack (`-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif`) — no external fonts.
-- **Metrics/counts/dates:** monospace stack (`ui-monospace, 'SF Mono', 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace`) — applied only to column count badges, due dates, checklist progress numbers, and any compact numeric metric.
-- Scale (rem): board title 1.2 / 700 · column heading 0.95 / 700 · card title 0.9 / 650 · meta 0.74–0.82 · labels 0.68 · mono metrics 0.72 / 600. Hierarchy through scale + weight contrast; `font-synthesis: none`.
+- **UI text:** `-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif`.
+- **Metrics, counts, and dates:** `ui-monospace, 'SF Mono', 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace`.
+- Board title: `1.05rem`, weight 700, line-height 1.2.
+- Column heading and card title: `0.82rem`; headings use weight 700 and card titles use 650 with line-height 1.3.
+- Controls: `0.76rem` to `0.82rem`; subtitle `0.72rem`; labels `0.62rem`; priority `0.66rem`; mono metrics `0.68rem`, weight 600.
+- `font-synthesis: none` prevents synthetic weights.
 
-## Spacing, density, elevation, radii
+## Spacing, density, elevation, and radii
 
-- **Density:** comfortable. Card padding 0.8–0.85rem; column padding 0.85rem; app-bar padding 0.9rem + `clamp(0.9rem, 2vw, 1.15rem)` sides; canvas padding `clamp(0.9rem, 3vw, 1.4rem)` (gives the puffy masses room to cast shadows). Gaps vary for rhythm (cards 0.6rem, labels 0.3rem, footer meta 0.5rem).
-- **Radii:** cards, columns, empty-state, error banner, add-card, skeleton = **14px** (generous puffy radius); controls/inputs/chip tracks = **12px**; chips/buttons within tracks = **9px**; pills, count badges, avatars = **999px**.
-- **Elevation = four-layer clay shadow** (the only depth cue besides the pastel/dark face contrast):
-  - `--clay` (pastel raised, cards): `inset 0 0 0 1.5px rgba(110,100,170,.16), inset 2px 2px 5px rgba(250,245,255,.55), inset -2px -2px 5px rgba(70,65,120,.12), 0 6px 14px rgba(12,12,35,.38), 0 0 12px rgba(120,100,200,.06)` — resting cards.
-  - `--clay-hover` (pastel raised, larger puff): deeper cast (`0 10px 22px`), brighter glow (`0 0 16px`), stronger inset highlights — hovered cards.
-  - `--clay-sm` (pastel small): `inset 0 0 0 1px rgba(110,100,170,.12), inset 1px 1px 3px …, inset -1px -1px 3px …, 0 3px 8px rgba(12,12,35,.28), 0 0 8px rgba(120,100,200,.05)` — chips, controls, add-card, skeleton.
-  - `--clay-pressed` (pastel inverted): `inset 0 0 0 1px …, inset 2px 2px 5px rgba(70,65,120,.18), inset -2px -2px 5px rgba(250,245,255,.35)` — selected chips, active toggle, skeleton groove.
-  - `--clay-dark-raise` (dark raised): `inset 1.5px 1.5px 4px rgba(140,130,210,.12), inset -1.5px -1.5px 4px rgba(5,5,20,.4), 0 5px 12px rgba(8,8,25,.4), 0 0 10px rgba(100,80,200,.05)` — app bar, columns, error banner.
-  - `--clay-dark-press` (dark pressed): `inset 2px 2px 5px rgba(5,5,20,.5), inset -2px -2px 5px rgba(140,130,210,.08)` — empty-state well, count badge, segmented track.
-  - `--clay-accent` (violet primary): `inset 1.5px 1.5px 4px rgba(200,190,255,.3), inset -1.5px -1.5px 4px rgba(40,30,80,.3), 0 4px 10px rgba(8,8,25,.35), 0 0 10px rgba(120,100,200,.12)` — the single saturated fill.
-- **Borders:** the card-foot separator is a 1px solid `rgba(110,100,170,.15)` top border — the only hard border; all other boundaries come from the clay shadow layers (inset ring within each recipe).
+**Density is compact.** Canvas padding is `clamp(0.75rem, 2.5vw, 1.1rem)`. The app bar uses `0.65rem clamp(0.65rem, 1.5vw, 0.85rem)`. Cards use `0.6rem 0.65rem`, card-list gaps are `0.45rem`, label gaps are `0.25rem`, and column headers use `0.4rem 0.6rem`.
+
+Radii are exact tokens:
+
+- `--r-card: 9px`
+- `--r-control: 8px`
+- `--r-header: 7px`
+- `--r-board: 10px`
+- Segmented and icon buttons: 6px
+- Labels and the empty mark: 5px
+- Skeleton bars: 4px
+- Count badges, label skeletons, and circular avatars/dots use pill or circular radii.
+
+Elevation uses these exact recipes:
+
+```css
+--clay:
+	inset 0 -2px 4px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(140, 130, 210, 0.2),
+	inset 0 0 0 1.5px rgba(110, 100, 170, 0.3), 0 0 10px rgba(100, 80, 200, 0.12),
+	0 3px 8px rgba(0, 0, 0, 0.3);
+
+--clay-sm:
+	inset 0 -1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 2px rgba(140, 130, 210, 0.15),
+	inset 0 0 0 1px rgba(110, 100, 170, 0.25), 0 0 6px rgba(100, 80, 200, 0.08),
+	0 2px 4px rgba(0, 0, 0, 0.2);
+
+--clay-pressed:
+	inset 0 2px 4px rgba(0, 0, 0, 0.35), inset 0 -1px 2px rgba(140, 130, 210, 0.1),
+	inset 0 0 0 1px rgba(110, 100, 170, 0.2);
+
+--clay-hover:
+	inset 0 -2px 4px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(140, 130, 210, 0.25),
+	inset 0 0 0 1.5px rgba(110, 100, 170, 0.35), 0 0 14px rgba(100, 80, 200, 0.16),
+	0 5px 12px rgba(0, 0, 0, 0.35);
+
+--clay-accent:
+	inset 0 -2px 4px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(180, 170, 240, 0.25),
+	inset 0 0 0 1.5px rgba(120, 110, 190, 0.35), 0 0 10px rgba(100, 80, 200, 0.18),
+	0 3px 8px rgba(0, 0, 0, 0.3);
+```
+
+Use `--clay` for cards, the app bar, and the error banner; `--clay-sm` for compact raised controls, headers, labels, avatars, and the project chip; `--clay-pressed` for tracks, selected controls, counts, empty states, and the skeleton; `--clay-hover` for eligible hover states; and `--clay-accent` for the primary action.
 
 ## Layout and composition
 
-- The board floats on the deep indigo canvas: the canvas has outer padding, and the app bar (dark clay slab), error banner (dark clay slab), and each column (dark clay slab) cast their extrusion shadows into that padding. On ≥768px the columns form a horizontal flex row that scrolls horizontally when they overflow (authentic Kanban); below 768px they stack vertically. The app bar wraps its controls onto further rows on narrow widths.
-- **Bright pastel cards pop off dark columns:** the luminous quality comes from the high lightness contrast between the L 0.84 pastel card faces and the L 0.27 dark indigo column surfaces. Controls on the dark bar (search, filter chips, toggle, primary) are also pastel clay pills — bright tactile objects on the dark structural surface.
-- Depth is layered by extrusion: the app bar and columns use `--clay-dark-raise`; cards use `--clay` (the largest puff); controls use `--clay-sm`. Selected controls press _in_ (`--clay-pressed`). The glow layer in each recipe is subtle (0.05–0.12 alpha) and never the sole state signal.
+- The deep indigo canvas is continuous behind the board.
+- The darker app bar wraps two flex rows as space narrows. It uses a 10px radius and `--clay`.
+- The error banner is another compact 10px raised surface below the bar.
+- Column bodies are transparent and open. Each column consists of a raised 7px-radius header, a 0.45rem-gap card list, and no enclosing slab.
+- Below 48rem, columns stack vertically. At 48rem and above, the board becomes a horizontally scrolling flex row and each column is `flex: 0 0 16rem`.
+- Board-level overflow stays inside `.board-body`; the document does not scroll horizontally at 375px, 768px, or 1280px.
 
 ## Navigation patterns
 
-This specimen is a single board with no route navigation. When extending to a full app, keep the claymorphic chrome: a raised dark indigo app bar (brand chip + search + primary action + avatar menu) over a raised dark indigo sidebar rail for board/account navigation, all floating on the deep indigo canvas with outer padding so shadows can cast. Navigation items are raised pastel clay pills; the active item presses in. Never use a colored side-stripe — use a pressed pill, a stage dot, or a leading icon. Separate stacked surfaces with clay shadows, never with translucency or hard borders.
+This specimen has no route navigation. In a larger product, keep global navigation in a compact `--bar-bg` bar on the indigo canvas. Use medium-dark `--surface` controls, an accent-filled current item or a pressed state, and the same 6px to 10px radius range. Keep content regions open instead of enclosing every page or navigation group in a large raised slab. Never use a colored side stripe.
 
 ## Components and behavior
 
-- **App bar** (dark clay slab, 14px radius, `--clay-dark-raise`): pastel project chip + title + subtitle (light text) + team-avatar group on the left; on the right a raised pastel search pill, a pressed dark segmented filter track holding raised pastel chips (All / Mine / Due this week), a pressed dark segmented Board/List track, and a violet "New task" primary clay pill. Wraps on narrow widths.
-- **Column** (dark clay slab, 14px radius, `--clay-dark-raise`): a header row with a pastel stage dot, the column name (`<h2>`, light text), a pressed dark count badge (monospace), and a "more actions" pastel icon button; a vertical list of cards; a raised pastel "Add a card" button; and a pressed dark empty-state placeholder when the column has no cards.
-- **Card** (bright pastel clay puff, 14px radius, `--clay`): title (`<h3>`, dark indigo), pastel label chips, an optional checklist progress line (monospace numbers), and a footer (top-border separator) with the priority indicator, due date (monospace), and assignee avatars. Hover deepens the extrusion shadow and lifts the card 2px (reduced-motion: static, shadow still changes instantly).
-- **Label chip:** pastel pill (L 0.74, tone-specific hue) + dark indigo text + small clay shadow.
-- **Avatar:** pastel-clay circle with dark indigo initials; exposes the full name via `aria-label`. Two sizes: header 34px, card 28px.
-- **Controls:** search (raised pastel pill, 44px, dark text, inner-ring focus groove), segmented tracks (pressed dark wells holding raised pastel chips that press in when active, `aria-pressed`), primary (violet clay fill with near-white text, 44px), icon buttons (pastel clay, full 44×44px). Every header filter/view control is a full 44px tap.
-- **Empty state:** a pressed dark well with a small inset square mark and "No cards yet" (light text) renders in any column with zero cards.
-- **Loading skeleton:** a pressed-in pastel groove card holding placeholder bars with an opacity pulse (gradient-free).
+- **App bar:** darker indigo, 10px radius, `--clay`; contains a compact project chip, board title and subtitle, 30px overlapping avatars, search, filter and view groups, and the primary action.
+- **Search:** 44px raised `--surface` wrapper with light text. Focus uses `3px solid var(--accent)` at `outline-offset: 2px`; the input's redundant outline is suppressed.
+- **Segmented controls:** a `--bar-bg` track with 3px padding and `--clay-pressed`. Buttons have a 44px border box, a visually compact 38px face created by a 3px transparent border plus `background-clip: padding-box`, and a 6px radius. Active options use `--accent-fill`, `--on-accent`, and `--clay-pressed`.
+- **Primary:** `--accent-fill`, `--on-accent`, 44px minimum height, 8px radius, and `--clay-accent`.
+- **Column header:** `--surface`, 7px radius, `--clay-sm`; contains a 9px stage dot, heading, pressed count badge, and overflow control.
+- **Icon buttons:** 44px square border boxes with a compact 36px visual face created by a 4px transparent border plus `background-clip: padding-box`; radius 6px and `--clay-sm`.
+- **Card:** `--surface`, 9px radius, `0.6rem 0.65rem` padding, and `--clay`; contains title, labels, optional checklist, priority, due state, and 24px assignee avatars.
+- **Label:** a tiny 5px-radius `oklch(0.26 0.04 275)` pill with light text, `--clay-sm`, and a 6px pastel dot.
+- **Add card and Retry:** real 44px-minimum buttons using `--surface` and `--clay-sm`.
+- **Empty state:** a `--surface` pressed well with a 16px inset mark and text.
+- **Loading skeleton:** a `--surface` pressed card with compact lavender placeholder bars.
 
 ## Responsive behavior
 
-- **Desktop (≥768px):** columns in a horizontal flex row; the board scrolls horizontally when columns overflow; the board-body scrollbar is thin (`scrollbar-width: thin` for Firefox, `::-webkit-scrollbar` for WebKit) with an indigo thumb.
-- **Mobile/tablet (<768px):** columns stack vertically; the app-bar control rows wrap; no document-level horizontal overflow at 375/768/1280. Outer padding scales via `clamp`.
-- Touch targets: **every interactive control is ≥44×44px at all viewports** — search field, primary, every filter chip, every Board/List segmented button, add-card, Retry, and every icon button (the column "more actions" button and the error dismiss button). There is no sub-44px target anywhere in the board.
+- **Mobile and tablet below 48rem:** columns stack; app-bar groups wrap; outer padding contracts through `clamp`.
+- **Desktop at 48rem and above:** 16rem columns sit in one horizontal flex row with contained horizontal scrolling.
+- The board uses a thin 8px WebKit scrollbar and `scrollbar-width: thin`; the thumb is `oklch(0.4 0.04 275)`.
+- Search, primary, Retry, Add card, all filter/view controls, and all icon buttons expose at least a 44px target. Transparent borders preserve the approved 38px segmented face and 36px icon face inside those hit boxes.
+- The direct preview has no document-level horizontal overflow at 375px, 768px, or 1280px.
 
 ## Interaction and motion
 
-- Hover: the card lifts 2px and its extrusion shadow deepens (`--clay-hover`); the primary lifts 1px with a brighter glow; icon buttons and add-card darken their label. Active filter/view presses _into_ its track (`--clay-pressed` + slightly darker face). **Hover feedback is shadow + transform only** — no background face is ever recolored. Hovering a card or appropriate raised control (inactive chip, inactive Board/List button, more-actions icon, add-card, error-retry, project chip) swaps to `--clay-hover`, a clearly deeper cast shadow with brighter glow. **Selected/pressed controls and the primary are excluded** from the generic hover-swap so their semantic styles win. The glow change is always accompanied by the shadow change and (on hover) the transform lift — it is never the sole state signal. Text contrast is unaffected because no text-bearing background changes.
-- Normal UI transitions (hover, focus, press, active-state shadow, glow) are **0.18s ease-out**, gated behind `@media (prefers-reduced-motion: no-preference)`. Hover-only effects are additionally gated behind `@media (hover: hover)` so touch devices don't get sticky hover states. Under `prefers-reduced-motion` the shadow still applies (a shadow change is not motion) but **instantly**, with no fade or transform.
-- The loading skeleton's opacity pulse is a separate, slower **1.6s ease-in-out** loop, also gated behind `prefers-reduced-motion: no-preference`. It is the only repeating motion and has no reduced-motion counterpart by design (reduced-motion shows static skeleton grooves).
-- In both cases, reduced-motion users get a fully static board with no loss of function.
-- Never animate CSS layout properties (other than the small `transform` lifts); never use bounce/elastic easing. All motion is 150–250ms ease-out.
+- Hover-capable devices swap eligible card and raised-control shadows to `--clay-hover` without recoloring the face. Cards lift 1px.
+- The primary's hover shadow is the accent recipe with lavender inset alpha `0.3`, violet ring alpha `0.4`, glow `0 0 14px rgba(100, 80, 200, 0.22)`, and cast `0 5px 12px rgba(0, 0, 0, 0.35)`; it also lifts 1px.
+- Cards, chips, segmented buttons, primary, Add card, icon buttons, Retry, project chip, and labels transition shadow, background, color, and transform over `0.18s ease-out` only under `prefers-reduced-motion: no-preference`.
+- Hover rules are additionally gated by `(hover: hover)`.
+- Skeleton bars pulse opacity from 1 to 0.45 and back over `1.6s ease-in-out infinite`, only when reduced motion is not requested.
+- Under reduced motion, transform and transition motion disappear, the skeleton is static, and immediate shadow-state feedback remains.
 
 ## States
 
-The states below are **visual state/affordance demonstrations only**, not functional behavior. The **filter chips and the Board/List segmented toggle are `aria-pressed` toggle controls** — they reflect selection state in the specimen but perform no real filtering or view switch. **Search, the New task primary, the column "More actions" overflow, the "Add a card" drop zone, Retry, and dismiss all render their affordance but perform no real search, creation, menu, sync, or dismissal** — they are inert specimen controls that exist only to demonstrate their visual treatment. The **drag grip is a static affordance** with no drag-and-drop logic. Reuse these visual treatments when wiring real behavior:
+These states demonstrate appearance. Only filter chips and Board/List update `aria-pressed`; they do not filter cards or change the layout. Search, New task, More actions, Add a card, Retry, and Dismiss are inert specimen affordances. The grip is not wired to drag-and-drop.
 
-- **Empty (shown):** a column with no cards renders a pressed dark well ("No cards yet") — see the **In Review** column.
-- **Loading (shown):** a **skeleton card** with pressed-in pastel grooves (in Backlog). The skeleton uses an **opacity pulse** (not a gradient shimmer) so it stays gradient-free. The pulse animates only under `prefers-reduced-motion: no-preference`.
-- **Error (shown):** an inline **raised dark-coral error banner** under the app bar — coral warning icon + bold coral label, a raised pastel Retry button with dark text, and a pastel dismiss control (`role="status" aria-live="polite"`). No side-stripe.
-- **Drag/move affordance (shown, static):** every card has a **grip handle** (faint by default, full on hover, `cursor: grab`) as a visual affordance only — no drag-and-drop logic is implemented.
-- **Done (shown):** completed cards show a check icon and a green due-date treatment.
-- **Priority (shown):** dot + capitalized word in the card footer (coral/High, amber/Medium).
-- **Selection (shown):** the active filter chip and active Board/List option are **pressed in** — the claymorphic "selected = pressed" pattern, with a slightly darker face.
-- **Validation:** when implementing real card-edit forms, reuse the coral error-ink + inline message pattern under each field inside a pressed-in pastel well.
+- **Selection:** accent-filled, light-text control with `--clay-pressed`.
+- **Empty:** In Review shows the pressed `--surface` empty well.
+- **Loading:** Backlog shows a gradient-free pressed skeleton with a reduced-motion-aware opacity pulse.
+- **Error:** the inline `--danger-soft` status banner uses coral icon/emphasis, light body text, Retry, and Dismiss.
+- **Hover:** eligible faces keep their resting background while shadow depth increases; cards lift 1px when motion is allowed.
+- **Priority:** High and Medium use colored text plus matching dots.
+- **Done:** completed due dates use `--done` plus a check icon.
+- **Drag affordance:** each card includes a faint six-dot grip that becomes fully opaque on hover.
+- **Focus:** all semantic inputs and buttons receive the visible violet outline.
 
 ## Accessibility
 
-- Landmarks: `<header>` (banner) + `<main>` + `<section aria-label="Kanban board">` (region); one `<section>` per column with an `<h2>`, cards as `<h3>` inside `<article>`. Heading order h1→h2→h3 is strict.
-- All controls are real `<button>`/`<input>`; filters and view toggle carry `aria-pressed`; count badges expose "N cards" via visually hidden unit text (not `aria-label` on a non-interactive span); icon buttons carry `aria-label`; icons are `aria-hidden`.
-- **Avatars expose the full name** via `aria-label` (initials alone are not enough; `title` is not reliably announced).
-- **Visible focus:** the default focus ring is `outline: 3px solid var(--accent)` (bright violet, L 0.62) with `outline-offset: 2px` — it contrasts ≥3:1 (≈4.7:1) against the dark indigo surfaces (app bar, columns, error banner) where every button sits. The primary inherits this ring; at `outline-offset: 2px` it seats outside the violet fill, against the dark app-bar surface, where the bright-violet ring reads at ≈4.7:1. The search field uses a contrasting **dark-violet inner-ring groove** (`outline: 3px solid var(--accent-soft)` at `outline-offset: -3px`) drawn inside the pastel surface, so the ring is visible regardless of the surrounding dark bar — the inner groove reads at ≈3.4:1 against the pastel face; the `<input>` remains the semantic focus target, with its own redundant outline suppressed.
-- **WCAG 2.2 AA** is met by construction: dark indigo ink (L 0.24) on the pastel surface (L 0.84) gives ≈7:1; light pastel text (L 0.9) on dark clay (L 0.24) gives ≈10:1; meta inks (L 0.38 on pastel, L 0.7 on dark) give ≥4.5:1; avatar initials (L 0.24) on pastel fills (L 0.68) give ≈5:1; primary text (L 0.95 near-white on L 0.46 accent-fill) gives ≈5:1; error text (L 0.74 coral on L 0.3 dark-coral) gives ≈4.7:1; done/priority text uses dedicated darker `-ink` variants (L 0.36 on L 0.84 pastel, ≈5:1) — bright decorative tokens (L 0.68–0.74) appear only on non-text indicators (dots, checkmarks). Meaning is never conveyed by color/shape alone (priority and status are always labelled in text, and state is reinforced by the pressed/raised tactile difference).
+- Structure uses `<header>`, `<main>`, a labelled board section, one section and `<h2>` per column, and `<article>` cards with `<h3>` titles.
+- Controls are native buttons and an input. Toggle states use `aria-pressed`; icon buttons have accessible names; counts include visually hidden units; avatars expose full names; decorative icons are hidden from assistive technology.
+- The error banner uses `role="status"` and `aria-live="polite"`.
+- Focus uses `outline: 3px solid var(--accent)` and `outline-offset: 2px` for buttons and search `:focus-within`. It remains visible against the dark app bar and medium-dark control surfaces. The focused input remains the semantic target.
+- Current E2E coverage audits each text role against its actual opaque parent at a minimum 4.5:1 ratio, including title, metadata, labels, avatars, priority, done, error, search placeholder, selected and inactive controls, and primary text.
+- All tested interactive targets are at least 44px at 375px, 768px, and 1280px. The compact face is preserved inside the larger transparent border box.
+- Stage, priority, done, error, and label colors are paired with text, icons, or tactile state; meaning does not rely on color alone.
 
 ## Extending the design to new pages
 
-Keep the token set + clay shadow scale constant; adapt the layout shell. Any new surface is either a raised dark indigo clay slab (structural) or a raised pastel clay puff (content), floating on the canvas with outer padding so shadows can cast.
+Keep the exact color, radius, type, focus, and shadow tokens. Prefer an open canvas with individually raised controls and content objects instead of large filled panel shells.
 
-- **Settings / account page:** raised dark app bar; a two-column shell (raised dark nav rail + raised dark content slab). Form fields are raised pastel wells (44px height, 12px radius, clay-sm) on the dark content slab; the save bar is a raised dark footer with the violet primary.
-- **Auth / login:** centered single raised pastel card (14px radius, `--clay`) on the dark canvas; inputs as raised pastel wells; a violet "Sign in" primary clay pill. Add a secondary "Create account" text link in light pastel text.
-- **Tables / data views:** a raised dark slab holds the table; rows separated by subtle top borders (1px indigo); sticky raised dark header row; filters reuse the segmented track + pastel chip patterns. Monospace for numeric columns.
-- **Detail pages:** raised dark breadcrumb + title header (light text); metadata as pastel label chips; related items as a horizontal scroll of pastel cards reusing the board-card recipe.
-- **Dashboards:** KPI tiles reuse the pastel card recipe (`--clay`) on a dark dashboard shell — but avoid the SaaS "hero-metric" cliché; lead with a chart in a raised dark panel, not a giant number. Use monospace for metrics.
+- **Settings and account:** use a compact darker app bar, an open two-column layout, medium-dark 8px-radius fields with 44px target boxes, and accent-filled selection and Save states.
+- **Authentication:** center one 9px-radius `--surface` form card using `--clay`; use medium-dark fields, light labels, the existing focus ring, and an accent primary.
+- **Tables and data views:** leave the table region open on the canvas; raise the compact header and filter controls with `--clay-sm`; use the existing 1px indigo separator for rows and monospace only for numeric values.
+- **Detail pages:** use a compact raised title/header row followed by separate 9px-radius content objects. Reuse tiny dark labels with pastel dots for metadata.
+- **Dashboards:** use 9px-radius medium-dark modules sparingly. Keep gaps compact, avoid a hero-metric layout, and do not wrap the full dashboard in a raised slab.
+- New interactive controls must keep a 44px border box, visible violet focus, native semantics, and reduced-motion behavior. A transparent border plus background clipping may preserve a smaller visual face.
 
 ## Do / Don't
 
 **Do**
 
-- Make cards and controls clearly **puffy raised pastel-clay shapes** with opaque bright faces (L 0.84) on dark indigo structural surfaces (L 0.24–0.27). The luminous quality comes from this contrast.
-- Use the **four-layer clay shadow** (inset highlight + inset shadow + cast drop + restrained glow) as the sole depth language. Keep glow subtle (0.05–0.12 alpha) — it is a secondary material cue, never the primary state signal.
-- Express selection as a **pressed-in** state (inverted inset shadows), not a colored fill.
-- Keep shadows tinted (near-white highlight, indigo shade, indigo cast, violet glow), never pure black/white; keep all named colors OKLCH; tint neutrals toward indigo.
-- Give every interactive element the focus ring and ≥44px target; convey state in text/tactile difference, not color/shape alone.
-- Use monospace only for compact metrics/counts/dates; system sans for all UI text.
+- Use the exact deep-indigo canvas, darker bar, medium-dark surface, and light lavender ink tokens.
+- Keep column bodies transparent and raise only headers, cards, controls, states, and the app bar.
+- Use the exact clay shadow recipes and 6px to 10px radii.
+- Use tiny dark labels with a pastel dot and readable text.
+- Keep content dense while preserving 44px targets through transparent border boxes where needed.
+- Use accent fill for primary and selected controls; use pressed shadow as a supporting tactile cue.
+- Preserve native semantics, visible focus, AA text, and reduced-motion handling.
 
 **Don't**
 
-- Don't use gradients, backdrop blur, translucency, glass, neumorphic monochrome surfaces, flat-material elevation, dark-neon glow, or illustration treatments — this is the claymorphic direction.
-- Don't use `#000`/`#fff` or gradient text.
-- Don't use a colored side-stripe (`border-left > 1px`) as an accent — use a pressed chip, a stage dot, or a leading icon.
-- Don't make glow the sole state signal — every glow change must be accompanied by a shadow change, transform lift, or tactile state difference.
-- Don't use a gradient shimmer for loading skeletons; use the opacity pulse on pressed-in grooves.
-- Don't animate layout properties (besides small `transform` lifts) or use bounce/elastic easing; don't ship motion without a reduced-motion fallback.
-- Don't use external fonts or binary assets — system sans + system monospace only.
+- Do not introduce bright L 0.84 pastel card faces, pale controls, or raised filled column slabs.
+- Do not increase cards or structural radii to 14px.
+- Do not put dark ink on card faces; primary card and control text is light lavender.
+- Do not recolor cards on hover; change shadow and, when motion is allowed, translate by 1px.
+- Do not add gradients, backdrop blur, glass, large neon bloom, illustration, colored side stripes, gradient text, external fonts, or binary assets.
+- Do not make the label face pastel; keep the face dark and use the 6px dot for tone.
+- Do not shrink semantic hit boxes below 44px to achieve compactness.
 
 ## When to use / avoid / trade-offs
 
-- **Use** when the product wants a warm, tactile, playful-but-premium feel — distinctive dark claymorphism that stands out from flat/material or glass styles. A good fit for creative tools, consumer apps, and surfaces where a delightful tactile texture is the brand. The dark indigo canvas with bright pastel faces is visually striking and emotionally engaging.
-- **Avoid** when the product needs maximum information density and razor-sharp boundary contrast (use flat/material), a light theme (claymorphism's candy-pastel look depends on the dark canvas for contrast), or strict enterprise neutrality (the puffy aesthetic may read as too playful for compliance-heavy contexts).
-- **Trade-offs:** Claymorphism is the most shadow-layer-intensive direction in the catalog — the four-layer recipe (inset highlight + inset shadow + cast + glow) costs more rendering than flat or neumorphic shadows. The dark theme requires careful text-color discipline: dark indigo ink on pastel faces (not light text on pastel, which would fail AA), and light pastel text on dark surfaces (not dark text on dark). The pastel card faces (L 0.84) are the brightest elements in the system — any color placed on them must be dark enough for AA. The glow is intentionally subtle; making it brighter risks drifting toward dark-neon/cyberpunk, which is a separate catalog direction.
+- **Use** for creative and productivity tools that benefit from a compact, tactile dark interface with more material character than flat UI.
+- **Avoid** for print-like light products, extremely high-density tables where layered shadows become noise, or products that require almost invisible styling.
+- **Trade-offs:** five-layer raised shadows cost more paint work than flat borders; the dark palette requires disciplined AA checks; horizontal desktop columns intentionally scroll inside the board; and 44px hit boxes occupy layout space even when transparent borders keep their visible faces compact. Keeping glow restrained avoids drifting into the catalog's separate dark-neon direction.
 
 ## Dependencies, assets, and licenses
 
-- **No external dependencies, fonts, images, or binary assets.** System sans + system monospace font stacks; icons are inline SVG; avatars are initials (no image assets). Self-contained and framework-agnostic.
-- **Licensing:** this repository declares **no license** (no `LICENSE` file, no `package.json` `license` field), so the source is unlicensed/all-rights-reserved by default under copyright. The specimen adds no third-party assets of its own. Confirm the consuming repository's license before adopting these rules.
+- **No external dependencies, fonts, images, or binary assets.** The implementation uses Svelte, native CSS, system font stacks, inline SVG, and text initials. It adds no package dependency or third-party asset.
+- **Licensing:** this repository declares no license, with no `LICENSE` file and no `package.json` `license` field. The source is unlicensed/all-rights-reserved by default under copyright. Confirm the consuming repository's license before adoption.
 
 ## Content baseline
 
-`fixtures.ts` is copied verbatim from the locked shared Kanban baseline (`kanban-glassmorphism/fixtures.ts`): 5 members, 4 columns (Backlog, In Progress, In Review [empty], Done), 9 cards with labels, priority, checklist, due dates, and assignees. Only the visual language changes.
+`fixtures.ts` is copied verbatim from the locked shared Kanban baseline (`kanban-glassmorphism/fixtures.ts`): 5 members, 4 columns (Backlog, In Progress, In Review empty, and Done), and 9 cards with labels, priority, checklist, due dates, and assignees. Only the visual language changes.
 
-## Acceptance checklist (for AI coding agents implementing this direction)
+## Acceptance checklist for implementation agents
 
-- [ ] Deep tinted-indigo canvas (`oklch(0.21 0.05 272)`) sits behind every dark structural surface; bright opaque pastel-clay card faces (`oklch(0.84 0.028 285)`) are never recolored on hover (hover feedback is shadow + transform only — no background change anywhere).
-- [ ] Depth comes only from the four-layer clay shadow (inset highlight + inset shadow + cast drop + restrained glow, all tinted); no gradients, no `backdrop-filter`, no translucency, no glass/neumorphic/flat-material/dark-neon/illustration treatments.
-- [ ] Glow is subtle (0.05–0.12 alpha) and never the sole state signal — every glow change is accompanied by a shadow change, transform lift, or tactile state difference.
-- [ ] Selection/active state is a **pressed-in** well (`--clay-pressed`, inverted insets), not a colored fill.
-- [ ] All colors are OKLCH; neutrals tinted toward indigo (hue 272–285); no `#000`/`#fff`; no gradient text; no colored side-stripes; shadow layers use tinted rgba (never pure black/white).
-- [ ] Typography uses system sans for UI text and system monospace only for compact metrics/counts/dates; hierarchy via scale + weight.
-- [ ] Every interactive element has the focus ring — the bright-violet outline (L 0.62) on every button control including the primary (whose ring seats against the dark surrounding surface at `outline-offset`), and the dark-violet inner-ring groove on the search (at `outline-offset: -3px` on the pastel face) — is ≥44×44px at all viewports (every filter chip, Board/List segmented button, and every icon button including column "more actions" and error dismiss), and has a real role/label; avatars expose the full name.
-- [ ] All text meets WCAG 2.2 AA (≥4.5:1) against its actual opaque background: dark indigo ink on pastel faces, light pastel text on dark surfaces, primary text (near-white on accent-fill), error text (coral on dark-coral), and priority/done date text using dedicated darker `-ink` variants (L 0.36, not the bright decorative dot tokens); state is conveyed in text/tactile difference, not color/shape alone.
-- [ ] Layout is responsive: columns scroll horizontally on desktop and stack on mobile; no document horizontal overflow at 375/768/1280.
-- [ ] Normal UI transitions are 0.18s ease-out and the skeleton opacity pulse is a 1.6s loop, both gated behind `prefers-reduced-motion: no-preference` (reduced-motion shows a fully static board with shadows applied instantly); hover effects gated behind `(hover: hover)`; no layout-property animation (besides small `transform` lifts); no bounce/elastic.
-- [ ] The board content matches the locked `fixtures.ts` baseline; the empty-column state renders.
-- [ ] Loading (skeleton with opacity pulse on pressed-in pastel grooves, gradient-free), error (raised dark-coral banner), drag affordance (grip), empty, done, priority, and pressed-selection states are all shown; the skeleton pulse respects `prefers-reduced-motion`.
+- [ ] Canvas is `oklch(0.22 0.055 272)`, app bar is `oklch(0.17 0.05 273)`, and cards and controls are `oklch(0.3 0.058 275)` with `oklch(0.88 0.025 285)` primary text.
+- [ ] Column bodies are transparent and open; compact raised headers and cards sit directly on the canvas.
+- [ ] Cards are 9px, controls 8px, column headers 7px, and app bar/error banner 10px; segmented and icon buttons are 6px.
+- [ ] The exact `--clay`, `--clay-sm`, `--clay-pressed`, `--clay-hover`, and `--clay-accent` recipes are used; no gradients, blur, glass, bright pastel faces, or large raised column shells are added.
+- [ ] Labels use `oklch(0.26 0.04 275)`, light text, 5px radius, and a 6px pastel dot.
+- [ ] System sans carries UI text and system monospace is limited to compact metrics, counts, and dates.
+- [ ] Selection uses `--accent-fill`, `--on-accent`, and `--clay-pressed`; inactive controls remain medium-dark.
+- [ ] Hover leaves the face background unchanged, swaps to the documented shadow, and lifts cards and primary by only 1px when reduced motion is not requested.
+- [ ] Focus is a 3px `--accent` outline at 2px offset on buttons and search; text roles meet WCAG 2.2 AA against their actual backgrounds.
+- [ ] Every interactive target is at least 44px. Segmented controls preserve a 38px visual face with a 3px transparent border; icon buttons preserve a 36px visual face with a 4px transparent border; both use `background-clip: padding-box`.
+- [ ] Columns stack below 48rem and become contained horizontal 16rem columns at 48rem and above; there is no document overflow at 375px, 768px, or 1280px.
+- [ ] Empty, loading, error, drag affordance, done, priority, selection, hover, focus, and reduced-motion states are represented.
+- [ ] Board content matches the locked fixture baseline; dependencies, assets, and licensing status remain as declared above.

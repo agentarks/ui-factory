@@ -456,9 +456,9 @@ test('opens the kanban-claymorphism design and its isolated preview states', asy
 	});
 	expect(primaryFocus).toBeGreaterThanOrEqual(3);
 
-	// Hover material behavior: the card face stays opaque pastel (unchanged
-	// background); only the computed box-shadow changes (deeper extrusion), so
-	// text contrast on the unchanged opaque face is preserved at AA.
+	// Hover material behavior: the medium-dark card face stays unchanged;
+	// only the computed box-shadow changes (deeper extrusion), so text contrast
+	// on the unchanged face is preserved at AA.
 	const bgOf = (sel: string) =>
 		previewFrame!.evaluate((s) => {
 			const el = document.querySelector(s);
@@ -506,9 +506,9 @@ test('opens the kanban-claymorphism design and its isolated preview states', asy
 	await page.waitForTimeout(260); // let the ease-out box-shadow transition settle
 	const cardHoverBg = await bgOf('.card');
 	const cardHoverShadow = await shadowOf('.card');
-	expect(cardHoverBg!.color).toBe(cardRestBg!.color); // opaque pastel face unchanged
+	expect(cardHoverBg!.color).toBe(cardRestBg!.color); // medium-dark face unchanged
 	expect(cardHoverShadow!.shadow).not.toBe(cardRestShadow!.shadow); // shadow changed (deeper extrusion)
-	expect(await contrastBetween('.card-title', '.card')).toBeGreaterThanOrEqual(4.5); // AA on opaque face
+	expect(await contrastBetween('.card-title', '.card')).toBeGreaterThanOrEqual(4.5); // AA on card face
 
 	// reduced-motion: skeleton pulse animation is suppressed; the skeleton
 	// remains visible but static (no infinite animation).
@@ -530,6 +530,64 @@ test('opens the kanban-claymorphism design and its isolated preview states', asy
 	// ------------------------------------------------------------------
 	await page.goto('/designs/kanban-claymorphism/preview');
 	await expect(page.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
+
+	// Visual signature: the selected reference (Luminous Putty concept theme-6)
+	// uses dark indigo surfaces throughout — dark canvas, dark bar, medium-dark
+	// card/control faces with light lavender text, transparent/open column
+	// bodies, compact radii, layered inset clay shadow with restrained glow.
+	// No near-white pastel faces, no large raised column shells.
+	await page.setViewportSize({ width: 1280, height: 800 });
+	const sig = await page.evaluate(() => {
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const cs = (sel: string) => {
+			const el = document.querySelector(sel);
+			return el instanceof HTMLElement ? getComputedStyle(el) : null;
+		};
+		const bgLum = (sel: string) => {
+			const c = cs(sel);
+			return c ? lum(c.backgroundColor) : -1;
+		};
+		const colorLum = (sel: string) => {
+			const c = cs(sel);
+			return c ? lum(c.color) : -1;
+		};
+		const cardCs = cs('.card');
+		return {
+			canvasLum: bgLum('.board-root'),
+			barLum: bgLum('.app-bar'),
+			cardBgLum: bgLum('.card'),
+			titleColorLum: colorLum('.card-title'),
+			columnBg: cs('.column')?.backgroundColor ?? '',
+			cardRadius: parseFloat(cardCs?.borderRadius ?? '0'),
+			cardShadow: cardCs?.boxShadow ?? '',
+			chipBgLum: bgLum('.chip:not([aria-pressed="true"])'),
+			searchBgLum: bgLum('.search')
+		};
+	});
+	expect(sig).not.toBeNull();
+	expect(sig!.canvasLum, 'canvas dark').toBeLessThan(0.06);
+	expect(sig!.barLum, 'bar dark').toBeLessThan(0.04);
+	expect(sig!.cardBgLum, 'card face medium-dark (not near-white)').toBeGreaterThanOrEqual(0.02);
+	expect(sig!.cardBgLum, 'card face not near-white').toBeLessThan(0.15);
+	expect(sig!.titleColorLum, 'card text light lavender').toBeGreaterThan(0.5);
+	expect(sig!.columnBg, 'column transparent/open').toMatch(/transparent|rgba\(0,\s*0,\s*0,\s*0\)/);
+	expect(sig!.cardRadius, 'card radius compact (<=10px)').toBeLessThanOrEqual(10);
+	expect(sig!.cardShadow, 'clay shadow with inset layers').toContain('inset');
+	expect(sig!.chipBgLum, 'inactive chip dark').toBeLessThan(0.15);
+	expect(sig!.searchBgLum, 'search face dark').toBeLessThan(0.15);
 
 	// Table-driven WCAG AA contrast audit: every distinct semantic text role
 	// against its actual opaque parent surface, including all repeated color
@@ -574,7 +632,7 @@ test('opens the kanban-claymorphism design and its isolated preview states', asy
 			{ role: 'pri-medium', ratio: ratio('.pri-medium', '.card') },
 			{ role: 'board-title', ratio: ratio('.title-block h1', '.app-bar') },
 			{ role: 'subtitle', ratio: ratio('.subtitle', '.app-bar') },
-			{ role: 'column-heading', ratio: ratio('.column-head h2', '.column') },
+			{ role: 'column-heading', ratio: ratio('.column-head h2', '.column-head') },
 			{ role: 'count-badge', ratio: selfRatio('.count') },
 			{ role: 'empty-state', ratio: ratio('.empty-col p', '.empty-col') },
 			{ role: 'error-body', ratio: ratio('.error-banner p', '.error-banner') },
@@ -599,7 +657,7 @@ test('opens the kanban-claymorphism design and its isolated preview states', asy
 			{ role: 'search-placeholder', ratio: ratio('.search input', '.search', '::placeholder') },
 			{ role: 'search-input', ratio: ratio('.search input', '.search') }
 		];
-		// Every label-tone variant (each has a distinct pastel background)
+		// Every rendered label instance on the shared dark label face.
 		document.querySelectorAll('.label').forEach((el) => {
 			const name = el.textContent?.trim() || '?';
 			results.push({ role: `label:${name}`, ratio: elRatio(el) });
