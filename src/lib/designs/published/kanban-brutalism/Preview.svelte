@@ -889,14 +889,23 @@
 		outline-offset: 1px;
 	}
 
-	/* Hover feedback is an instant state change, not motion: it applies even
-	   under prefers-reduced-motion so those users retain the affordance. Only
-	   the transitions below are motion-gated. */
-	.card:hover {
+	/* Hover feedback is a clearly stronger, instant state change (not motion):
+	   a pale technical-blue surface wash + a complete accent border perimeter,
+	   scoped to non-selected cards so the selected treatment always wins. It
+	   applies even under prefers-reduced-motion (those users retain the wash +
+	   perimeter); only the crisp lift and the transitions are motion-gated.
+	   No shadow, gradient, blur, second hue, or side-stripe; cards stay
+	   non-interactive (no pointer/grab cursor). */
+	.card:not(.is-selected):hover {
 		border-color: var(--accent);
+		background-color: color-mix(in oklch, var(--accent) 16%, var(--surface));
 	}
 
 	@media (prefers-reduced-motion: no-preference) {
+		.card:not(.is-selected):hover {
+			transform: translateY(-2px);
+		}
+
 		.card,
 		.chip,
 		.view-toggle button,
@@ -907,7 +916,8 @@
 				border-color 0.12s ease,
 				background-color 0.12s ease,
 				color 0.12s ease,
-				opacity 0.12s ease;
+				opacity 0.12s ease,
+				transform 0.12s ease;
 		}
 	}
 

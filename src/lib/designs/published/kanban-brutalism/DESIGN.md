@@ -75,7 +75,7 @@ All CSS color tokens are OKLCH. No pure black or white anywhere.
 - **Search** is a bordered paper field with a compact visible `SEARCH` label (the input keeps its accessible name `Search cards` via `aria-label`, satisfying label-in-name); keyboard focus draws a `3px` accent ring on the field container (`:focus-within`), the input's own outline suppressed so the ring is never an invisible double-ring.
 - **Columns** carry a coordinate letter (A–D), an accent UPPERCASE name, an `N=` count, and a more-actions button. The active column additionally shows an accent `ACTIVE` tag, an accent head rule, and exposes its state via `aria-label="…, active column"`.
 - **Cards** show `✛ AU-###` ID, title, monochrome tags, optional `[n/m] SUBTASKS`, a footer with priority (◆ HIGH in accent / ● MED in ink-soft) and due date, and assignee avatars. Done cards strike through the title and recolour the due/check to accent. The selected card uses a full accent border + outline and `aria-label="…, selected"` (it does **not** also set `aria-labelledby`, which would otherwise win and drop "selected" from the accessible name).
-- **States demonstrated:** empty (In Review, `No cards yet`), loading skeleton (solid `--grid` blocks with a reduced-motion-gated opacity blink), inline error (`SYNC PAUSED.` + Retry + dismiss), static drag grip, done, priority, selected, hover (card border → accent, an instant state that still applies under reduced motion; only the transition is motion-gated), keyboard focus, and reduced motion.
+- **States demonstrated:** empty (In Review, `No cards yet`), loading skeleton (solid `--grid` blocks with a reduced-motion-gated opacity blink), inline error (`SYNC PAUSED.` + Retry + dismiss), static drag grip, done, priority, selected, hover (see motion guidance), keyboard focus, and reduced motion.
 
 ## Responsive behavior
 
@@ -85,9 +85,9 @@ All CSS color tokens are OKLCH. No pure black or white anywhere.
 
 ## Interaction and motion guidance
 
-- Motion is minimal and stateful only: a `0.12s` `border-color`/`color`/`opacity` transition on cards and controls, and a `1.4s` opacity blink on skeleton blocks.
-- **Reduced motion:** the skeleton blink and all non-essential **transitions** are suppressed under `prefers-reduced-motion: reduce`; content remains fully visible and static.
-- Hover feedback is an **instant** state change — the card border switches to the accent (no shadow, no transform) — and is deliberately **not** gated behind `prefers-reduced-motion`, so reduced-motion users retain the hover affordance; only the animated transition is motion-gated. Focus always draws a complete, unclipped `3px` accent perimeter.
+- Motion is minimal and stateful only: a `0.12s` `border-color`/`background-color`/`color`/`opacity`/`transform` transition on cards and controls, and a `1.4s` opacity blink on skeleton blocks.
+- **Reduced motion:** the skeleton blink, the hover lift, and all non-essential **transitions** are suppressed under `prefers-reduced-motion: reduce`; content remains fully visible and static.
+- **Hover (non-selected cards only)** is a clearly stronger, multi-channel cue using the single accent hue: a pale technical-blue surface wash (`color-mix(in oklch, var(--accent) 16%, var(--surface))`) **plus** a complete accent border perimeter, with a small crisp `translateY(-2px)` lift added only when motion is allowed. The wash + perimeter are **instant** and deliberately **not** gated behind `prefers-reduced-motion`, so reduced-motion users retain a strong non-motion hover cue; only the lift and the animated transition are motion-gated. It is scoped to `:not(.is-selected)` so the selected card's stronger treatment (accent border + outline) is never downgraded by hover. No shadow, gradient, blur, second hue, or side-stripe is used, and cards stay non-interactive (no pointer/grab cursor). Focus always draws a complete, unclipped `3px` accent perimeter.
 
 ## Accessibility requirements
 
@@ -139,6 +139,6 @@ All CSS color tokens are OKLCH. No pure black or white anywhere.
 - [ ] All semantic text roles ≥4.5:1; focus/UI perimeter ≥3:1.
 - [ ] No colour-only meaning; states carried by text/glyph/structure.
 - [ ] Every interactive target ≥44×44 at 375/768/1280; no horizontal document overflow; focus rings never clipped.
-- [ ] Reduced motion suppresses the skeleton blink and non-essential transitions; content stays visible.
+- [ ] Reduced motion suppresses the skeleton blink, the hover lift, and non-essential transitions; the hover wash + perimeter remain, and content stays visible.
 - [ ] Locked content unchanged (4 columns, 9 cards, 5 members, In Review empty).
 - [ ] No new dependencies, assets, or external fonts; license status stated as "no license".

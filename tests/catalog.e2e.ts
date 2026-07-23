@@ -1893,29 +1893,126 @@ test('opens the kanban-brutalism design and its isolated preview states', async 
 		expect(w, 'desktop column grew past the 15rem basis (no empty gutter)').toBeGreaterThan(272);
 	}
 
-	// --- Reduced-motion users still get hover feedback: the instant hover
-	//     border-colour change is NOT gated behind prefers-reduced-motion
-	//     (only transitions are motion-gated). Hover a non-selected card so
-	//     the resting border is the neutral rule, not the selection accent. ---
-	await page.emulateMedia({ reducedMotion: 'reduce' });
-	await page.locator('.card:not(.is-selected)').first().hover();
-	const hoverBorder = await page.evaluate(() => {
+	// --- Stronger hover feedback for non-selected cards (live review): a
+	//     pale technical-blue surface wash + a complete accent border
+	//     perimeter + a small crisp lift when motion is allowed. Under
+	//     reduced motion the wash + perimeter remain immediate and the
+	//     lift/transition are suppressed. Cards stay non-interactive (no
+	//     pointer/grab cursor). The selected card keeps its stronger
+	//     selected treatment and is not downgraded by hover. No shadow,
+	//     gradient, blur, second hue, or side-stripe. ---
+	const hoverState = () =>
+		page.evaluate(() => {
+			const ctx = document.createElement('canvas').getContext('2d');
+			if (!ctx) return null;
+			const rgbOf = (css: string) => {
+				ctx.clearRect(0, 0, 2, 2);
+				ctx.fillStyle = '#000';
+				ctx.fillStyle = css;
+				ctx.fillRect(0, 0, 2, 2);
+				const d = ctx.getImageData(0, 0, 1, 1).data;
+				return [d[0], d[1], d[2]];
+			};
+			const lum = (css: string) => {
+				const d = rgbOf(css);
+				const ch = (v: number) => {
+					const s = v / 255;
+					return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+				};
+				return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+			};
+			const card = document.querySelector('.card:not(.is-selected)');
+			const title = document.querySelector('.card:not(.is-selected) .card-title');
+			if (!(card instanceof HTMLElement) || !(title instanceof HTMLElement)) return null;
+			const cs = getComputedStyle(card);
+			const bg = cs.backgroundColor;
+			const bgRgb = rgbOf(bg);
+			const borderRgb = rgbOf(cs.borderTopColor);
+			const titleL = lum(getComputedStyle(title).color);
+			const bgL = lum(bg);
+			const transform = cs.transform;
+			let lifted = false;
+			if (transform !== 'none') {
+				const m = transform.match(/matrix\(([^)]*)\)/);
+				if (m) {
+					const p = m[1].split(',');
+					lifted = p.length >= 6 && parseFloat(p[5]) < 0;
+				}
+			}
+			return {
+				bgBlueGap: bgRgb[2] - bgRgb[0],
+				borderBlueGap: borderRgb[2] - borderRgb[0],
+				transform,
+				lifted,
+				cursor: cs.cursor,
+				titleContrast: (Math.max(titleL, bgL) + 0.05) / (Math.min(titleL, bgL) + 0.05)
+			};
+		});
+
+	// Resting baseline (no hover) for a non-selected card: neutral surface.
+	const restNonSelBgGap = await page.evaluate(() => {
 		const el = document.querySelector('.card:not(.is-selected)');
-		if (!(el instanceof HTMLElement)) return null;
+		if (!(el instanceof HTMLElement)) return -99;
 		const ctx = document.createElement('canvas').getContext('2d');
-		if (!ctx) return null;
+		if (!ctx) return -99;
+		ctx.clearRect(0, 0, 2, 2);
 		ctx.fillStyle = '#000';
-		ctx.fillStyle = getComputedStyle(el).borderTopColor;
+		ctx.fillStyle = getComputedStyle(el).backgroundColor;
 		ctx.fillRect(0, 0, 2, 2);
 		const d = ctx.getImageData(0, 0, 1, 1).data;
-		return { r: d[0], g: d[1], b: d[2] };
+		return d[2] - d[0];
 	});
-	expect(hoverBorder).not.toBeNull();
-	expect(
-		hoverBorder!.b - hoverBorder!.r,
-		'reduced-motion hover border is the blue accent (instant, not motion-gated)'
-	).toBeGreaterThan(40);
+	expect(restNonSelBgGap, 'resting card surface is faintly cool, not blue-washed').toBeLessThan(8);
+
+	// Motion-enabled (default): wash + perimeter + lift, no pointer cursor,
+	// and the title stays AA on the washed surface. Wait for the 0.12s
+	// transition to settle before reading computed state (a mid-transition
+	// read would catch the resting values).
 	await page.emulateMedia({ reducedMotion: null });
+	await page.locator('.card:not(.is-selected)').first().hover();
+	await page.waitForTimeout(180);
+	const hov = await hoverState();
+	expect(hov).not.toBeNull();
+	expect(hov!.bgBlueGap, 'hover adds a pale technical-blue wash').toBeGreaterThan(
+		restNonSelBgGap + 4
+	);
+	expect(hov!.borderBlueGap, 'hover perimeter is the blue accent').toBeGreaterThan(40);
+	expect(hov!.lifted, 'hover lifts the card when motion is allowed').toBe(true);
+	expect(hov!.cursor, 'card stays non-interactive (no pointer/grab cursor)').toBe('auto');
+	expect(hov!.titleContrast, 'card title stays AA after hover').toBeGreaterThanOrEqual(4.5);
+
+	// Reduced motion: wash + perimeter remain immediate; lift/transform gone.
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	await page.locator('.card:not(.is-selected)').first().hover();
+	await page.waitForTimeout(60);
+	const hovReduce = await hoverState();
+	expect(hovReduce).not.toBeNull();
+	expect(hovReduce!.bgBlueGap, 'reduced-motion keeps the blue wash').toBeGreaterThan(
+		restNonSelBgGap + 4
+	);
+	expect(hovReduce!.borderBlueGap, 'reduced-motion keeps the blue perimeter').toBeGreaterThan(40);
+	expect(hovReduce!.transform, 'reduced-motion suppresses the lift (no transform)').toBe('none');
+	await page.emulateMedia({ reducedMotion: null });
+
+	// Selected-state precedence: hovering the selected card does not change
+	// its surface or lift it (its stronger selected treatment wins).
+	const selRest = await page.evaluate(() => {
+		const el = document.querySelector('.card.is-selected');
+		if (!(el instanceof HTMLElement)) return null;
+		const cs = getComputedStyle(el);
+		return { bg: cs.backgroundColor, transform: cs.transform };
+	});
+	await page.locator('.card.is-selected').hover();
+	const selHov = await page.evaluate(() => {
+		const el = document.querySelector('.card.is-selected');
+		if (!(el instanceof HTMLElement)) return null;
+		const cs = getComputedStyle(el);
+		return { bg: cs.backgroundColor, transform: cs.transform };
+	});
+	expect(selHov, 'selected card measured on hover').not.toBeNull();
+	expect(selRest, 'selected card measured at rest').not.toBeNull();
+	expect(selHov!.bg, 'selected card surface unchanged by hover').toBe(selRest!.bg);
+	expect(selHov!.transform, 'selected card not lifted by hover').toBe('none');
 
 	// --- Visible search label (root DESIGN.md: inputs retain visible labels).
 	//     The accessible name is still "Search cards" via aria-label. ---
