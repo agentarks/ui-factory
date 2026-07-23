@@ -3,10 +3,10 @@
 
 	const byId = new Map(members.map((m) => [m.id, m]));
 
-	// The diagonal axis marks structure: the active column (In Progress), the
-	// selected card, high priority, and the brand. Identifiers are fixed so the
-	// specimen demonstrates these states deterministically, matching the locked
-	// concept. The shared fixtures carry no "active"/"selected" field.
+	// The diagonal marks exactly two showcased states (matching the approved
+	// THEME 7 artifact): the active column (In Progress) and high-priority
+	// cards. Identifiers are fixed so the specimen demonstrates these states
+	// deterministically. The shared fixtures carry no "active"/"selected" field.
 	const activeColumnId = 'in-progress';
 	const selectedId = 'au-137';
 
@@ -29,15 +29,16 @@
 <div class="board-root">
 	<header class="board-head">
 		<div class="identity">
-			<span class="project-chip">
-				<span class="diamond brand-diamond" aria-hidden="true"></span>
-				Aurora
-			</span>
-			<span class="axis-slash" aria-hidden="true"></span>
+			<span class="project-chip">Aurora</span>
 			<div class="title-block">
 				<h1>Sprint 24 · Board</h1>
 				<p class="subtitle">{columns.length} columns · {cardTotal} cards · updated 2m ago</p>
 			</div>
+			<ul class="team-avatars" aria-label="Team members">
+				{#each members as m (m.id)}
+					<li class="avatar team-avatar" aria-label={m.name} title={m.name}>{m.initials}</li>
+				{/each}
+			</ul>
 		</div>
 
 		<div class="controls">
@@ -149,7 +150,7 @@
 			{#each columns as col (col.id)}
 				<section
 					class="column {col.id === activeColumnId ? 'is-active' : ''}"
-					aria-label={col.name}
+					aria-label={col.id === activeColumnId ? `${col.name}, active column` : col.name}
 				>
 					<header class="column-head">
 						{#if col.id === activeColumnId}
@@ -180,10 +181,8 @@
 										? 'is-selected'
 										: ''}"
 									aria-labelledby="title-{card.id}"
+									aria-label={card.id === selectedId ? `${card.title}, selected` : undefined}
 								>
-									{#if card.id === selectedId}
-										<span class="diamond sel-diamond" aria-hidden="true"></span>
-									{/if}
 									<div class="card-main">
 										<div class="card-head">
 											<span class="grip" aria-hidden="true" title="Drag to move">
@@ -304,7 +303,7 @@
 
 						{#if col.cards.length === 0}
 							<li class="empty-col">
-								<span class="diamond empty-diamond" aria-hidden="true"></span>
+								<span class="emark" aria-hidden="true"></span>
 								<p>No cards yet</p>
 							</li>
 						{/if}
@@ -345,25 +344,23 @@
 	}
 
 	.board-root {
-		/* Diagonal Axis tokens — Swiss / Minimal. All OKLCH, warm-neutral tinted,
-		   no pure black/white. One red accent reserved for the diagonal motif:
-		   the axis slash, and the diamonds that mark brand / active column /
-		   high priority / selection. No gradients, no shadows, no backdrop blur.
-		   Focus (outline) is the only depth cue. */
-		--canvas: oklch(0.97 0.004 90); /* warm near-white canvas */
-		--paper: oklch(0.99 0.003 90); /* brighter warm paper cards */
-		--ink: oklch(0.22 0.008 90); /* near-black warm ink */
-		--ink-soft: oklch(0.42 0.006 90); /* meta: AA on paper */
+		/* Swiss / Minimal tokens — faithful to the approved THEME 7 (Diagonal):
+		   warm-neutral canvas/paper/ink with a single cobalt accent (#1857c6
+		   adapted to OKLCH). The 45deg diagonal is reserved for exactly two
+		   showcased markers (active column + high priority). No pure black/white,
+		   no gradients, no shadows, no backdrop blur. Focus (outline) is the only
+		   depth cue. */
+		--canvas: oklch(0.97 0.004 90); /* warm near-white canvas (#f7f7f5) */
+		--paper: oklch(0.99 0.003 90); /* brighter warm paper (#fffefe) */
+		--ink: oklch(0.22 0.008 90); /* near-black warm ink (#121212) */
+		--ink-soft: oklch(0.44 0.006 90); /* meta: AA on paper (#525252) */
 		--ink-faint: oklch(0.58 0.005 90); /* decorative grip (non-text) */
 		--rule: oklch(0.86 0.005 90); /* hairline border */
 		--rule-soft: oklch(0.92 0.004 90); /* lighter hairline */
-		--rule-strong: oklch(0.5 0.008 90); /* control border */
-		--accent: oklch(0.54 0.2 27); /* Swiss red — diagonal graphical motif */
-		--accent-ink: oklch(0.42 0.16 27); /* darker red — priority text + focus (AA) */
+		--rule-strong: oklch(0.5 0.008 90); /* control border (#8b8b8b-ish) */
+		--accent: oklch(0.5 0.21 264); /* cobalt (#1857c6) — diagonal motif + primary */
+		--accent-ink: oklch(0.45 0.19 264); /* darker cobalt — priority/done text + focus (AA) */
 		--on-ink: oklch(0.99 0.003 90); /* paper text on ink fills (never #fff) */
-		--danger: oklch(0.42 0.16 27); /* error strong (AA on pale red) */
-		--danger-soft: oklch(0.95 0.03 27); /* pale red banner */
-		--focus: oklch(0.42 0.16 27); /* red focus ring (AA UI on paper) */
 
 		--sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 
@@ -376,10 +373,9 @@
 		background: var(--canvas);
 	}
 
-	/* ---------- Diagonal motif primitives ---------- */
-	/* A 45-degree rotated square: the disciplined diagonal that marks structure.
-	   Used on brand, active column, high priority, selection, and the empty
-	   state. Never decoration on top of cards — always tied to meaning. */
+	/* ---------- Diagonal motif primitive ----------
+	   A 45deg rotated square. Used ONLY on the active-column marker and the
+	   high-priority marker (the artifact's two rendered diagonal uses). */
 	.diamond {
 		flex: none;
 		display: inline-block;
@@ -387,18 +383,6 @@
 		height: 9px;
 		background: var(--accent);
 		transform: rotate(45deg);
-	}
-
-	/* The axis slash: a single thin red diagonal line in the header that
-	   establishes the 45-degree axis the diamonds echo. Sits in header
-	   whitespace, never under text. */
-	.axis-slash {
-		flex: none;
-		width: 2px;
-		height: 1.7rem;
-		background: var(--accent);
-		transform: rotate(45deg);
-		transform-origin: center;
 	}
 
 	/* ---------- Board header ---------- */
@@ -417,14 +401,14 @@
 	.identity {
 		display: flex;
 		align-items: center;
-		gap: 0.7rem;
+		gap: 0.8rem;
+		flex-wrap: wrap;
 		min-width: 0;
 	}
 
 	.project-chip {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.4rem;
 		padding: 0.32rem 0.6rem;
 		border: 1px solid var(--ink);
 		background: var(--canvas);
@@ -453,6 +437,24 @@
 		letter-spacing: 0.02em;
 		color: var(--ink-soft);
 		font-variant-numeric: tabular-nums;
+	}
+
+	.team-avatars {
+		display: flex;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	.team-avatars .team-avatar {
+		width: 28px;
+		height: 28px;
+		margin-left: -7px;
+		font-size: 0.58rem;
+		border-color: var(--canvas);
+	}
+	.team-avatars .team-avatar:first-child {
+		margin-left: 0;
 	}
 
 	.controls {
@@ -510,7 +512,7 @@
 		white-space: nowrap;
 	}
 
-	/* Selected = ink fill with paper text (monochrome emphasis). */
+	/* Selected = ink fill with paper text (monochrome emphasis, per artifact). */
 	.chip[aria-pressed='true'] .face,
 	.view-toggle button[aria-pressed='true'] .face {
 		background: var(--ink);
@@ -519,9 +521,10 @@
 		font-weight: 700;
 	}
 
+	/* Primary is the one cobalt-filled action (the accent as emphasis). */
 	.primary .face {
-		background: var(--ink);
-		border-color: var(--ink);
+		background: var(--accent);
+		border-color: var(--accent);
 		color: var(--on-ink);
 		font-weight: 700;
 		font-size: 0.74rem;
@@ -565,7 +568,7 @@
 	.chip:focus-visible > .face,
 	.view-toggle button:focus-visible > .face,
 	.primary:focus-visible > .face {
-		outline: 3px solid var(--focus);
+		outline: 3px solid var(--accent-ink);
 		outline-offset: 2px;
 	}
 
@@ -579,19 +582,21 @@
 		padding: clamp(1.1rem, 2.5vw, 1.6rem) clamp(1.1rem, 3vw, 2rem) clamp(1.4rem, 3vw, 2rem);
 	}
 
+	/* Error banner: flat paper panel, cobalt warning icon, ink text, full
+	   hairline border — monochrome + the one accent, no red, no side-stripe. */
 	.error-banner {
 		display: flex;
 		align-items: center;
 		gap: 0.7rem;
 		margin-bottom: 1.2rem;
 		padding: 0.7rem 0.9rem;
-		border: 1px solid var(--danger);
+		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-square);
-		background: var(--danger-soft);
+		background: var(--paper);
 	}
 
 	.error-banner .error-icon {
-		color: var(--danger);
+		color: var(--accent);
 		flex: none;
 	}
 
@@ -603,7 +608,7 @@
 	}
 
 	.error-banner strong {
-		color: var(--danger);
+		color: var(--ink);
 	}
 
 	.error-actions {
@@ -629,7 +634,7 @@
 	}
 
 	.error-dismiss {
-		color: var(--danger);
+		color: var(--ink-soft);
 	}
 
 	.board-body {
@@ -718,10 +723,9 @@
 		background: var(--paper);
 	}
 
+	/* Selection = a full cobalt border (the accent), never a side-stripe. */
 	.card.is-selected {
 		border: 2px solid var(--accent);
-		/* Selection is conveyed by the accent border + the sel-diamond mark,
-		   never a coloured side-stripe (banned). */
 	}
 
 	.card-head {
@@ -861,38 +865,20 @@
 	}
 
 	.avatar {
-		width: 34px;
-		height: 34px;
 		display: grid;
 		place-items: center;
-		border: 2px solid var(--paper);
 		border-radius: 50%;
 		font-size: 0.7rem;
 		font-weight: 700;
 		color: var(--on-ink);
 		background: var(--ink);
+		border: 2px solid var(--paper);
 	}
 
 	.avatar.sm {
 		width: 27px;
 		height: 27px;
 		font-size: 0.6rem;
-	}
-
-	/* Selection + brand + empty diamonds sit flush in their context. */
-	.sel-diamond {
-		position: absolute;
-		top: 8px;
-		right: 8px;
-	}
-
-	.empty-diamond {
-		background: var(--rule-strong);
-	}
-
-	.brand-diamond {
-		width: 7px;
-		height: 7px;
 	}
 
 	.add-card {
@@ -931,6 +917,12 @@
 		background: transparent;
 		color: var(--ink-soft);
 		text-align: center;
+	}
+
+	.empty-col .emark {
+		width: 12px;
+		height: 12px;
+		border: 1px solid var(--rule-strong);
 	}
 
 	.empty-col p {
@@ -997,7 +989,7 @@
 	/* ---------- Focus + motion ---------- */
 
 	.board-root :where(button, input):focus-visible {
-		outline: 3px solid var(--focus);
+		outline: 3px solid var(--accent-ink);
 		outline-offset: 2px;
 	}
 
@@ -1031,7 +1023,11 @@
 		.board-body {
 			flex-direction: row;
 			overflow-x: auto;
-			padding-bottom: 0.5rem;
+			/* Internal breathing room so keyboard focus perimeters (3px outline +
+			   2px offset) on controls inside the horizontal scroller are never
+			   clipped at the scroll edges. overflow-x:auto computes overflow-y to
+			   auto, so vertical room is needed too. */
+			padding: 0.4rem 0.4rem 0.5rem;
 		}
 
 		.column {

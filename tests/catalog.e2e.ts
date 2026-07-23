@@ -1256,20 +1256,34 @@ test('opens the kanban-swiss design and its isolated preview states', async ({ p
 	await page.emulateMedia({ reducedMotion: null });
 
 	// ------------------------------------------------------------------
-	// Direct preview route: visual-signature + responsive checks at exact
-	// 375/768/1280 widths. The detail page embeds the preview in a narrower
-	// iframe, so these run on the standalone /preview route.
+	// Direct preview route: visual-signature, a11y, and responsive checks.
+	// The detail page embeds the preview in a narrower iframe, so these run
+	// on the standalone /preview route at exact 375/768/1280 widths.
 	// ------------------------------------------------------------------
 	await page.goto('/designs/kanban-swiss/preview');
 	await expect(page.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
 	await page.setViewportSize({ width: 1280, height: 800 });
 
-	// Visual signature: the approved Diagonal concept — a strict orthogonal
-	// grid of hairline rules and flat near-square cards in an austere system
-	// sans, structured by a 45-degree diagonal axis. A red header slash and
-	// red diamonds mark brand / active column / high priority / selection.
-	// No serif anywhere (not Editorial), no monospace (not Brutalism), no
-	// app-bar/elevation (not Flat Material), no gradient/shadow/blur.
+	// --- Locked content: all five team members render as accessible avatars
+	//     in the header (complete fixed content, Swiss-styled). ---
+	const memberNames = ['Maya Rivera', 'Devon Chen', 'Priya Nair', 'Sam Okafor', 'Lena Foss'];
+	expect(await page.locator('.team-avatars [aria-label]').count()).toBe(5);
+	for (const name of memberNames) {
+		await expect(page.locator(`.team-avatars [aria-label="${name}"]`)).toBeVisible();
+	}
+
+	// --- Showcased states exposed programmatically (no interaction added): the
+	//     active column and the selected card announce their state via aria-label. ---
+	await expect(page.locator('.column.is-active')).toHaveAttribute('aria-label', /active/i);
+	await expect(page.locator('.card.is-selected')).toHaveAttribute('aria-label', /selected/i);
+
+	// --- Approved THEME 7 signature: a single cobalt accent, with the 45deg
+	//     diagonal limited to the active-column marker and the high-priority
+	//     markers only (the artifact's only two rendered diagonal uses). The
+	//     earlier red header-slash / brand / selection / empty diamonds were an
+	//     invented expansion and must be gone. No serif (not Editorial), no
+	//     monospace (not Brutalism), no app-bar/elevation (not Flat Material),
+	//     no gradient/shadow/blur. ---
 	const sig = await page.evaluate(() => {
 		const ctx = document.createElement('canvas').getContext('2d');
 		if (!ctx) return null;
@@ -1289,18 +1303,19 @@ test('opens the kanban-swiss design and its isolated preview states', async ({ p
 			const el = document.querySelector(sel);
 			return el instanceof HTMLElement ? getComputedStyle(el) : null;
 		};
-		// red-dominant: red channel clearly greater than green and blue
-		const isRed = (cssColor: string) => {
+		// cobalt-dominant: blue channel clearly greater than red and green
+		const isCobalt = (cssColor: string) => {
 			ctx.clearRect(0, 0, 2, 2);
 			ctx.fillStyle = '#000';
 			ctx.fillStyle = cssColor;
 			ctx.fillRect(0, 0, 2, 2);
 			const d = ctx.getImageData(0, 0, 1, 1).data;
-			return d[0] > d[1] + 40 && d[0] > d[2] + 40;
+			return d[2] > d[0] + 40 && d[2] > d[1] + 30;
 		};
-		const slashCs = cs('.axis-slash');
-		const axisCs = cs('.col-axis');
-		const cardCs = cs('.card');
+		const isRotated = (t: string) => t.startsWith('matrix') && t !== 'matrix(1, 0, 0, 1, 0, 0)';
+		const axis = cs('.col-axis');
+		const pri = cs('.pri-diamond');
+		const card = cs('.card');
 		const fonts = new Set<string>();
 		document.querySelectorAll('.board-root, .board-root *').forEach((el) => {
 			const f = getComputedStyle(el).fontFamily.toLowerCase();
@@ -1309,34 +1324,183 @@ test('opens the kanban-swiss design and its isolated preview states', async ({ p
 		const anySerif = Array.from(fonts).some(
 			(f) => /georgia|times|serif/.test(f) && !/sans/.test(f)
 		);
-		// A 45deg rotation resolves to a non-identity 2D matrix in computed
-		// style (not the literal "rotate" keyword). These elements have no
-		// non-rotation transform, so a matrix other than identity == rotated.
-		const isRotated = (t: string) => t.startsWith('matrix') && t !== 'matrix(1, 0, 0, 1, 0, 0)';
 		return {
-			slashRotated: isRotated(slashCs?.transform ?? ''),
-			slashRed: slashCs ? isRed(slashCs.backgroundColor) : false,
-			axisRotated: isRotated(axisCs?.transform ?? ''),
-			axisRed: axisCs ? isRed(axisCs.backgroundColor) : false,
+			axisRotated: isRotated(axis?.transform ?? ''),
+			axisCobalt: axis ? isCobalt(axis.backgroundColor) : false,
+			priRotated: isRotated(pri?.transform ?? ''),
+			priCobalt: pri ? isCobalt(pri.backgroundColor) : false,
+			// every .diamond must be one of the two approved uses:
+			diamondsOnlyApproved:
+				document.querySelectorAll('.diamond').length ===
+				document.querySelectorAll('.col-axis, .pri-diamond').length,
+			inventedSlash: document.querySelectorAll('.axis-slash').length,
+			inventedBrand: document.querySelectorAll('.brand-diamond').length,
+			inventedSel: document.querySelectorAll('.sel-diamond').length,
+			inventedEmpty: document.querySelectorAll('.empty-diamond').length,
 			canvasLum: lum(cs('.board-root')?.backgroundColor ?? '#fff'),
-			cardBgLum: lum(cardCs?.backgroundColor ?? '#fff'),
-			cardBgImage: cardCs?.backgroundImage ?? '',
-			cardBoxShadow: cardCs?.boxShadow ?? '',
+			cardBgLum: lum(card?.backgroundColor ?? '#fff'),
+			cardBgImage: card?.backgroundImage ?? '',
+			cardBoxShadow: card?.boxShadow ?? '',
 			boardBackdrop: cs('.board-root')?.backdropFilter ?? '',
 			anySerif
 		};
 	});
 	expect(sig).not.toBeNull();
-	expect(sig!.slashRotated, 'header axis slash is diagonal').toBe(true);
-	expect(sig!.slashRed, 'header axis slash is the red accent').toBe(true);
-	expect(sig!.axisRotated, 'active column diamond is diagonal').toBe(true);
-	expect(sig!.axisRed, 'active column diamond is the red accent').toBe(true);
+	expect(sig!.axisRotated, 'active-column marker is a 45deg diamond').toBe(true);
+	expect(sig!.axisCobalt, 'active-column marker is the cobalt accent').toBe(true);
+	expect(sig!.priRotated, 'high-priority marker is a 45deg diamond').toBe(true);
+	expect(sig!.priCobalt, 'high-priority marker is the cobalt accent').toBe(true);
+	expect(sig!.diamondsOnlyApproved, 'diagonals limited to active-column + high-priority only').toBe(
+		true
+	);
+	expect(sig!.inventedSlash, 'no invented header slash').toBe(0);
+	expect(sig!.inventedBrand, 'no invented brand diamond').toBe(0);
+	expect(sig!.inventedSel, 'no invented selection diamond').toBe(0);
+	expect(sig!.inventedEmpty, 'no invented empty-state diamond').toBe(0);
 	expect(sig!.canvasLum, 'canvas warm near-white').toBeGreaterThan(0.9);
 	expect(sig!.cardBgLum, 'card bright paper').toBeGreaterThan(0.9);
 	expect(sig!.cardBgImage, 'no gradient on cards').toBe('none');
 	expect(sig!.cardBoxShadow, 'no decorative elevation on cards').toBe('none');
 	expect(sig!.boardBackdrop, 'no backdrop blur').toBe('none');
 	expect(sig!.anySerif, 'no serif anywhere (all sans — not Editorial)').toBe(false);
+
+	// Cobalt text roles meet AA (>=4.5:1) on their actual parent surface — the
+	// key AA risk for a vivid single accent used for priority, done, and the
+	// cobalt-filled primary button.
+	const cobaltAA = await page.evaluate(() => {
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const isOpaque = (c: string) => {
+			const m = c.match(/rgba?\([^)]*\)/);
+			if (!m) return true;
+			const p = m[0].replace(/[^\d.,]/g, '').split(',');
+			return p.length < 4 || parseFloat(p[3]) > 0;
+		};
+		const bgLumOf = (el: Element | null): number => {
+			let node: Element | null = el;
+			while (node) {
+				const bg = getComputedStyle(node).backgroundColor;
+				if (isOpaque(bg)) return lum(bg);
+				node = node.parentElement;
+			}
+			return lum('rgb(255,255,255)');
+		};
+		const ratio = (textSel: string, bgSel: string) => {
+			const t = document.querySelector(textSel);
+			const b = document.querySelector(bgSel);
+			if (!(t instanceof HTMLElement) || !(b instanceof HTMLElement)) return -1;
+			const tL = lum(getComputedStyle(t).color);
+			const bL = bgLumOf(b);
+			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+		};
+		const selfRatio = (sel: string) => {
+			const el = document.querySelector(sel);
+			if (!(el instanceof HTMLElement)) return -1;
+			const tL = lum(getComputedStyle(el).color);
+			const bL = bgLumOf(el);
+			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+		};
+		return {
+			priHigh: ratio('.pri-high', '.card'),
+			dueDone: ratio('.due.is-done', '.card'),
+			cardTitle: ratio('.card-title', '.card'),
+			primaryText: selfRatio('.primary .face')
+		};
+	});
+	expect(cobaltAA).not.toBeNull();
+	expect(cobaltAA!.priHigh, 'high-priority cobalt text AA on card').toBeGreaterThanOrEqual(4.5);
+	expect(cobaltAA!.dueDone, 'done cobalt text AA on card').toBeGreaterThanOrEqual(4.5);
+	expect(cobaltAA!.cardTitle, 'card title AA on card').toBeGreaterThanOrEqual(4.5);
+	expect(cobaltAA!.primaryText, 'primary text AA on cobalt fill').toBeGreaterThanOrEqual(4.5);
+
+	// --- Focus perimeters are never clipped inside the desktop horizontal board
+	//     scroller. overflow-x:auto computes overflow-y:auto, so without internal
+	//     breathing room the column controls' offset focus rings get cut at the
+	//     scroll edges. Drive real keyboard focus (:focus-visible), then measure
+	//     the rendered outline box against the scroller's clip rect at both
+	//     extremes, at 1280 (fits, no scroll) and 768 (scrolls horizontally). ---
+	const measureFocus = () =>
+		page.evaluate(() => {
+			const el = document.activeElement;
+			const sc = el?.closest('.board-body');
+			if (!(el instanceof HTMLElement) || !(sc instanceof HTMLElement)) return null;
+			const cs = getComputedStyle(el);
+			if (cs.outlineStyle !== 'solid') {
+				return { label: el.getAttribute('aria-label'), clipped: true, reason: 'no-solid-outline' };
+			}
+			const ow = parseFloat(cs.outlineWidth);
+			const oo = parseFloat(cs.outlineOffset);
+			const er = el.getBoundingClientRect();
+			const sr = sc.getBoundingClientRect();
+			const top = er.top - oo - ow;
+			const right = er.right + oo + ow;
+			const bottom = er.bottom + oo + ow;
+			const left = er.left - oo - ow;
+			return {
+				label: el.getAttribute('aria-label'),
+				clipped: !(
+					top >= sr.top - 0.5 &&
+					right <= sr.right + 0.5 &&
+					bottom <= sr.bottom + 0.5 &&
+					left >= sr.left - 0.5
+				)
+			};
+		});
+	const tabTo = async (targetLabel: string) => {
+		await page.getByRole('searchbox').focus();
+		for (let i = 0; i < 50; i++) {
+			await page.keyboard.press('Tab');
+			const lbl = await page.evaluate(
+				() => document.activeElement?.getAttribute('aria-label') ?? ''
+			);
+			if (lbl === targetLabel) return true;
+		}
+		return false;
+	};
+
+	// 1280: first column's more-actions (top/left edge) and last column's
+	// more-actions (right edge).
+	await page.setViewportSize({ width: 1280, height: 800 });
+	expect(await tabTo('More actions for Backlog'), 'reached Backlog more-actions').toBe(true);
+	let m = await measureFocus();
+	expect(m, 'measured Backlog more-actions focus').not.toBeNull();
+	expect(m!.clipped, 'Backlog more-actions focus perimeter not clipped').toBe(false);
+	expect(await tabTo('More actions for Done'), 'reached Done more-actions').toBe(true);
+	m = await measureFocus();
+	expect(m, 'measured Done more-actions focus').not.toBeNull();
+	expect(m!.clipped, 'Done more-actions focus perimeter not clipped').toBe(false);
+
+	// 768: the board scrolls horizontally. Scroll to the right extreme and check
+	// the last column's more-actions; then back to the left extreme for the first.
+	await page.setViewportSize({ width: 768, height: 800 });
+	await page.evaluate(() => {
+		const sc = document.querySelector('.board-body');
+		if (sc instanceof HTMLElement) sc.scrollLeft = sc.scrollWidth;
+	});
+	expect(await tabTo('More actions for Done'), 'reached Done more-actions at 768').toBe(true);
+	m = await measureFocus();
+	expect(m, 'measured Done more-actions focus at 768').not.toBeNull();
+	expect(m!.clipped, 'Done more-actions focus not clipped at right extreme').toBe(false);
+	await page.evaluate(() => {
+		const sc = document.querySelector('.board-body');
+		if (sc instanceof HTMLElement) sc.scrollLeft = 0;
+	});
+	expect(await tabTo('More actions for Backlog'), 'reached Backlog more-actions at 768').toBe(true);
+	m = await measureFocus();
+	expect(m, 'measured Backlog more-actions focus at 768').not.toBeNull();
+	expect(m!.clipped, 'Backlog more-actions focus not clipped at left extreme').toBe(false);
 
 	// Exact-width responsive: every named control is >=44px and there is no
 	// horizontal document overflow at each of 375/768/1280.
