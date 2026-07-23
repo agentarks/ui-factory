@@ -376,7 +376,12 @@ test('opens the kanban-claymorphism design and its isolated preview states', asy
 	await expect(
 		page.getByRole('heading', { name: 'Kanban Board · Luminous Putty', exact: false })
 	).toBeVisible();
-	await expect(page.getByText('dark claymorphism Kanban board', { exact: false })).toBeVisible();
+	await expect(
+		page.getByText(
+			'A compact dark claymorphism Kanban board on a deep indigo canvas with medium-dark indigo cards and controls, light lavender text, open columns, 6–10px radii, and restrained layered inset/cast shadows with a soft violet glow.',
+			{ exact: true }
+		)
+	).toBeVisible();
 
 	const frame = page.frameLocator('iframe[title*="preview"i]');
 	await expect(frame.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
