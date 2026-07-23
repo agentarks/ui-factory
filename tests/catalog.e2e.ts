@@ -1188,3 +1188,180 @@ test('opens the kanban-editorial design and its isolated preview states', async 
 		expect(overflow, `horizontal overflow at ${width}`).toBeLessThanOrEqual(0);
 	}
 });
+
+test('opens the kanban-swiss design and its isolated preview states', async ({ page }) => {
+	// ---- Detail page: identity + approved summary ----
+	await page.goto('/designs/kanban-swiss');
+
+	await expect(
+		page.getByRole('heading', { name: 'Kanban Board · Diagonal Axis', exact: false })
+	).toBeVisible();
+	await expect(page.getByText('Swiss / Minimal Kanban board', { exact: false })).toBeVisible();
+
+	// ---- Isolated preview: locked content + empty/error/loading states ----
+	const frame = page.frameLocator('iframe[title*="preview"i]');
+	await expect(frame.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'New task' })).toBeVisible();
+	await expect(frame.getByText('Backlog', { exact: true })).toBeVisible();
+	await expect(frame.getByRole('heading', { name: 'In Review' })).toBeVisible();
+	await expect(frame.getByText('No cards yet')).toBeVisible();
+	await expect(frame.getByText('Sync paused', { exact: false })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'Retry' })).toBeVisible();
+	await expect(frame.locator('.skeleton-card')).toBeVisible();
+
+	// interaction smoke: toggling a filter updates its pressed state (ink-fill selected)
+	const mineBtn = frame.getByRole('button', { name: 'Mine', exact: true });
+	await mineBtn.click();
+	await expect(mineBtn).toHaveAttribute('aria-pressed', 'true');
+
+	// keyboard focus on the search field shows a ring on the compact visible
+	// face with meaningful contrast (>=3:1) against the warm paper surface.
+	const previewFrame = page.frame({ url: /kanban-swiss\/preview$/ });
+	expect(previewFrame).toBeTruthy();
+	await frame.getByRole('searchbox').focus();
+	const focusContrast = await previewFrame!.evaluate(() => {
+		const el = document.querySelector('.search .face');
+		if (!(el instanceof HTMLElement)) return -1;
+		const cs = getComputedStyle(el);
+		if (cs.outlineStyle !== 'solid' || parseFloat(cs.outlineWidth) < 3) return -1;
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return -1;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const oL = lum(cs.outlineColor);
+		const bL = lum(cs.backgroundColor);
+		return (Math.max(oL, bL) + 0.05) / (Math.min(oL, bL) + 0.05);
+	});
+	expect(focusContrast).toBeGreaterThanOrEqual(3);
+
+	// reduced-motion: skeleton pulse animation is suppressed; the skeleton
+	// remains visible but static (no infinite animation).
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	const skeletonStatic = await previewFrame!.evaluate(() => {
+		const el = document.querySelector('.skel');
+		if (!(el instanceof HTMLElement)) return null;
+		return getComputedStyle(el).animationName === 'none';
+	});
+	expect(skeletonStatic).toBe(true);
+	await page.emulateMedia({ reducedMotion: null });
+
+	// ------------------------------------------------------------------
+	// Direct preview route: visual-signature + responsive checks at exact
+	// 375/768/1280 widths. The detail page embeds the preview in a narrower
+	// iframe, so these run on the standalone /preview route.
+	// ------------------------------------------------------------------
+	await page.goto('/designs/kanban-swiss/preview');
+	await expect(page.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
+	await page.setViewportSize({ width: 1280, height: 800 });
+
+	// Visual signature: the approved Diagonal concept — a strict orthogonal
+	// grid of hairline rules and flat near-square cards in an austere system
+	// sans, structured by a 45-degree diagonal axis. A red header slash and
+	// red diamonds mark brand / active column / high priority / selection.
+	// No serif anywhere (not Editorial), no monospace (not Brutalism), no
+	// app-bar/elevation (not Flat Material), no gradient/shadow/blur.
+	const sig = await page.evaluate(() => {
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const cs = (sel: string) => {
+			const el = document.querySelector(sel);
+			return el instanceof HTMLElement ? getComputedStyle(el) : null;
+		};
+		// red-dominant: red channel clearly greater than green and blue
+		const isRed = (cssColor: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = cssColor;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			return d[0] > d[1] + 40 && d[0] > d[2] + 40;
+		};
+		const slashCs = cs('.axis-slash');
+		const axisCs = cs('.col-axis');
+		const cardCs = cs('.card');
+		const fonts = new Set<string>();
+		document.querySelectorAll('.board-root, .board-root *').forEach((el) => {
+			const f = getComputedStyle(el).fontFamily.toLowerCase();
+			if (f) fonts.add(f);
+		});
+		const anySerif = Array.from(fonts).some(
+			(f) => /georgia|times|serif/.test(f) && !/sans/.test(f)
+		);
+		// A 45deg rotation resolves to a non-identity 2D matrix in computed
+		// style (not the literal "rotate" keyword). These elements have no
+		// non-rotation transform, so a matrix other than identity == rotated.
+		const isRotated = (t: string) => t.startsWith('matrix') && t !== 'matrix(1, 0, 0, 1, 0, 0)';
+		return {
+			slashRotated: isRotated(slashCs?.transform ?? ''),
+			slashRed: slashCs ? isRed(slashCs.backgroundColor) : false,
+			axisRotated: isRotated(axisCs?.transform ?? ''),
+			axisRed: axisCs ? isRed(axisCs.backgroundColor) : false,
+			canvasLum: lum(cs('.board-root')?.backgroundColor ?? '#fff'),
+			cardBgLum: lum(cardCs?.backgroundColor ?? '#fff'),
+			cardBgImage: cardCs?.backgroundImage ?? '',
+			cardBoxShadow: cardCs?.boxShadow ?? '',
+			boardBackdrop: cs('.board-root')?.backdropFilter ?? '',
+			anySerif
+		};
+	});
+	expect(sig).not.toBeNull();
+	expect(sig!.slashRotated, 'header axis slash is diagonal').toBe(true);
+	expect(sig!.slashRed, 'header axis slash is the red accent').toBe(true);
+	expect(sig!.axisRotated, 'active column diamond is diagonal').toBe(true);
+	expect(sig!.axisRed, 'active column diamond is the red accent').toBe(true);
+	expect(sig!.canvasLum, 'canvas warm near-white').toBeGreaterThan(0.9);
+	expect(sig!.cardBgLum, 'card bright paper').toBeGreaterThan(0.9);
+	expect(sig!.cardBgImage, 'no gradient on cards').toBe('none');
+	expect(sig!.cardBoxShadow, 'no decorative elevation on cards').toBe('none');
+	expect(sig!.boardBackdrop, 'no backdrop blur').toBe('none');
+	expect(sig!.anySerif, 'no serif anywhere (all sans — not Editorial)').toBe(false);
+
+	// Exact-width responsive: every named control is >=44px and there is no
+	// horizontal document overflow at each of 375/768/1280.
+	const controls = ['Board', 'List', 'All', 'Mine', 'Due this week'];
+	for (const width of [375, 768, 1280]) {
+		await page.setViewportSize({ width, height: 800 });
+		for (const name of controls) {
+			const box = await page.getByRole('button', { name, exact: true }).boundingBox();
+			expect(box?.height, `${name} height at ${width}`).toBeGreaterThanOrEqual(44);
+		}
+		const moreActions = await page
+			.getByRole('button', { name: 'More actions for Backlog' })
+			.boundingBox();
+		expect(moreActions?.width, `more-actions width at ${width}`).toBeGreaterThanOrEqual(44);
+		expect(moreActions?.height, `more-actions height at ${width}`).toBeGreaterThanOrEqual(44);
+		const dismiss = await page
+			.getByRole('button', { name: 'Dismiss error', exact: true })
+			.boundingBox();
+		expect(dismiss?.width, `dismiss width at ${width}`).toBeGreaterThanOrEqual(44);
+		expect(dismiss?.height, `dismiss height at ${width}`).toBeGreaterThanOrEqual(44);
+		const overflow = await page.evaluate(
+			() =>
+				document.documentElement.scrollWidth - document.documentElement.clientWidth ||
+				window.scrollX
+		);
+		expect(overflow, `horizontal overflow at ${width}`).toBeLessThanOrEqual(0);
+	}
+});
