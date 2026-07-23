@@ -48,6 +48,7 @@
 
 		<div class="header-right">
 			<label class="search">
+				<span class="search-label">SEARCH</span>
 				<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
 					<path
 						d="M2 2h5M2 2v5M14 14h-5M14 14v-5"
@@ -277,7 +278,7 @@
 		--rule: oklch(0.24 0.005 250);
 		--accent: oklch(0.42 0.13 236);
 		--on-ink: oklch(0.97 0.004 250);
-		--grid: #c6c8ce;
+		--grid: oklch(0.82 0.006 250);
 
 		position: relative;
 		min-height: 100vh;
@@ -415,6 +416,15 @@
 		font-size: 0.72rem;
 		letter-spacing: 0.04em;
 		outline: none;
+	}
+
+	.search-label {
+		flex: none;
+		font-size: 0.62rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--ink-soft);
 	}
 
 	.search input::placeholder {
@@ -606,6 +616,7 @@
 		place-items: center;
 		width: 44px;
 		height: 44px;
+		flex: none;
 		font: inherit;
 		border: 0;
 		background: transparent;
@@ -878,6 +889,13 @@
 		outline-offset: 1px;
 	}
 
+	/* Hover feedback is an instant state change, not motion: it applies even
+	   under prefers-reduced-motion so those users retain the affordance. Only
+	   the transitions below are motion-gated. */
+	.card:hover {
+		border-color: var(--accent);
+	}
+
 	@media (prefers-reduced-motion: no-preference) {
 		.card,
 		.chip,
@@ -891,10 +909,6 @@
 				color 0.12s ease,
 				opacity 0.12s ease;
 		}
-
-		.card:hover {
-			border-color: var(--accent);
-		}
 	}
 
 	/* ---------- Responsive ---------- */
@@ -903,11 +917,14 @@
 		.board-body {
 			flex-direction: row;
 			overflow-x: auto;
-			padding: 0;
+			/* Internal padding keeps offset focus rings of column controls from
+			   clipping at the scroll extremes (overflow-x:auto forces the block
+			   axis to auto as well). */
+			padding: 4px;
 		}
 
 		.column {
-			flex: 0 0 15rem;
+			flex: 1 0 15rem;
 			border-bottom: 0;
 			border-right: 2px solid var(--rule);
 		}

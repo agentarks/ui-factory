@@ -1832,6 +1832,7 @@ test('opens the kanban-brutalism design and its isolated preview states', async 
 				ratio: selfRatio('.view-toggle button:not([aria-pressed="true"])')
 			},
 			{ role: 'search-placeholder', ratio: ratio('.search input', '.search', '::placeholder') },
+			{ role: 'search-label', ratio: ratio('.search-label', '.search') },
 			{ role: 'search-input', ratio: ratio('.search input', '.search') }
 		];
 		document.querySelectorAll('.tag').forEach((el) => {
@@ -1849,20 +1850,68 @@ test('opens the kanban-brutalism design and its isolated preview states', async 
 		expect(ratio, `${role} text contrast >= 4.5:1`).toBeGreaterThanOrEqual(4.5);
 	}
 
-	// Exact-width responsive: every named control is >=44px and there is no
-	// horizontal document overflow at each of 375/768/1280.
+	// --- Desktop columns grow to fill the board (the approved BLUEPRINT grows
+	//     its columns rather than leaving a large empty grid gutter). At 1280
+	//     the four columns share the available width, so each is clearly wider
+	//     than the 15rem flex-basis. ---
+	await page.setViewportSize({ width: 1280, height: 800 });
+	const colWidths = await page.evaluate(() =>
+		Array.from(document.querySelectorAll('.column')).map((el) =>
+			Math.round((el as HTMLElement).getBoundingClientRect().width)
+		)
+	);
+	expect(colWidths.length, 'four columns').toBe(4);
+	for (const w of colWidths) {
+		expect(w, 'desktop column grew past the 15rem basis (no empty gutter)').toBeGreaterThan(272);
+	}
+
+	// --- Reduced-motion users still get hover feedback: the instant hover
+	//     border-colour change is NOT gated behind prefers-reduced-motion
+	//     (only transitions are motion-gated). Hover a non-selected card so
+	//     the resting border is the neutral rule, not the selection accent. ---
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	await page.locator('.card:not(.is-selected)').first().hover();
+	const hoverBorder = await page.evaluate(() => {
+		const el = document.querySelector('.card:not(.is-selected)');
+		if (!(el instanceof HTMLElement)) return null;
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		ctx.fillStyle = '#000';
+		ctx.fillStyle = getComputedStyle(el).borderTopColor;
+		ctx.fillRect(0, 0, 2, 2);
+		const d = ctx.getImageData(0, 0, 1, 1).data;
+		return { r: d[0], g: d[1], b: d[2] };
+	});
+	expect(hoverBorder).not.toBeNull();
+	expect(
+		hoverBorder!.b - hoverBorder!.r,
+		'reduced-motion hover border is the blue accent (instant, not motion-gated)'
+	).toBeGreaterThan(40);
+	await page.emulateMedia({ reducedMotion: null });
+
+	// --- Visible search label (root DESIGN.md: inputs retain visible labels).
+	//     The accessible name is still "Search cards" via aria-label. ---
+	await expect(page.locator('.search-label')).toBeVisible();
+	await expect(page.getByRole('searchbox')).toHaveAccessibleName('Search cards');
+
+	// Exact-width responsive: every named control, EVERY column more-actions,
+	// and the dismiss control are non-shrinking >=44x44 targets, and there is
+	// no horizontal document overflow at each of 375/768/1280.
 	const controls = ['Board', 'List', 'All', 'Mine', 'Due this week'];
+	const columnNames = ['Backlog', 'In Progress', 'In Review', 'Done'];
 	for (const width of [375, 768, 1280]) {
 		await page.setViewportSize({ width, height: 800 });
 		for (const name of controls) {
 			const box = await page.getByRole('button', { name, exact: true }).boundingBox();
 			expect(box?.height, `${name} height at ${width}`).toBeGreaterThanOrEqual(44);
 		}
-		const moreActions = await page
-			.getByRole('button', { name: 'More actions for Backlog' })
-			.boundingBox();
-		expect(moreActions?.width, `more-actions width at ${width}`).toBeGreaterThanOrEqual(44);
-		expect(moreActions?.height, `more-actions height at ${width}`).toBeGreaterThanOrEqual(44);
+		for (const col of columnNames) {
+			const ma = await page
+				.getByRole('button', { name: `More actions for ${col}`, exact: true })
+				.boundingBox();
+			expect(ma?.width, `${col} more-actions width at ${width}`).toBeGreaterThanOrEqual(44);
+			expect(ma?.height, `${col} more-actions height at ${width}`).toBeGreaterThanOrEqual(44);
+		}
 		const dismiss = await page
 			.getByRole('button', { name: 'Dismiss error', exact: true })
 			.boundingBox();
@@ -1875,4 +1924,64 @@ test('opens the kanban-brutalism design and its isolated preview states', async 
 		);
 		expect(overflow, `horizontal overflow at ${width}`).toBeLessThanOrEqual(0);
 	}
+
+	// --- Focus perimeters are never clipped inside the horizontal board
+	//     scroller. At 768 the board scrolls horizontally; keyboard-focus the
+	//     first and last column more-actions at both scroll extremes and
+	//     measure the rendered outline box against the scroller's clip rect. ---
+	const measureFocus = () =>
+		page.evaluate(() => {
+			const el = document.activeElement;
+			const sc = el?.closest('.board-body');
+			if (!(el instanceof HTMLElement) || !(sc instanceof HTMLElement)) return null;
+			const cs = getComputedStyle(el);
+			if (cs.outlineStyle !== 'solid') {
+				return { label: el.getAttribute('aria-label'), clipped: true, reason: 'no-solid-outline' };
+			}
+			const ow = parseFloat(cs.outlineWidth);
+			const oo = parseFloat(cs.outlineOffset);
+			const er = el.getBoundingClientRect();
+			const sr = sc.getBoundingClientRect();
+			const top = er.top - oo - ow;
+			const right = er.right + oo + ow;
+			const bottom = er.bottom + oo + ow;
+			const left = er.left - oo - ow;
+			return {
+				label: el.getAttribute('aria-label'),
+				clipped: !(
+					top >= sr.top - 0.5 &&
+					right <= sr.right + 0.5 &&
+					bottom <= sr.bottom + 0.5 &&
+					left >= sr.left - 0.5
+				)
+			};
+		});
+	const tabTo = async (targetLabel: string) => {
+		await page.getByRole('searchbox').focus();
+		for (let i = 0; i < 60; i++) {
+			await page.keyboard.press('Tab');
+			const lbl = await page.evaluate(
+				() => document.activeElement?.getAttribute('aria-label') ?? ''
+			);
+			if (lbl === targetLabel) return true;
+		}
+		return false;
+	};
+
+	await page.setViewportSize({ width: 768, height: 800 });
+	// Left extreme: first column's more-actions.
+	expect(await tabTo('More actions for Backlog'), 'reached Backlog more-actions at 768').toBe(true);
+	let mf = await measureFocus();
+	expect(mf, 'measured Backlog more-actions focus at 768').not.toBeNull();
+	expect(mf!.clipped, 'Backlog more-actions focus not clipped at left extreme').toBe(false);
+	// Right extreme: scroll to the end, then keyboard-focus the last column's
+	// more-actions (Tabbing scrolls it into view).
+	await page.evaluate(() => {
+		const sc = document.querySelector('.board-body');
+		if (sc instanceof HTMLElement) sc.scrollLeft = sc.scrollWidth;
+	});
+	expect(await tabTo('More actions for Done'), 'reached Done more-actions at 768').toBe(true);
+	mf = await measureFocus();
+	expect(mf, 'measured Done more-actions focus at 768').not.toBeNull();
+	expect(mf!.clipped, 'Done more-actions focus not clipped at right extreme').toBe(false);
 });

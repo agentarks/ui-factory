@@ -12,27 +12,27 @@ A Kanban board for a small product team: a board header (project identity, team 
 ## Design principles
 
 1. **Structure is the subject.** The graph-paper grid, harsh rules, and monospace type are foregrounded, not hidden. Depth comes from exposed borders and the grid, never from soft shadow or blur.
-2. **One ink, one accent.** Near-black ink carries all structure and most text; a single deep technical-blue accent is reserved for meaningful marks (active column, selection, priority HIGH, done, focus, primary fill, drafting notation). Never multi-hue labels or colored side-stripes.
+2. **One ink, one accent.** Near-black ink carries all structure and most text, **including the primary `New task` and project-chip fills**; a single deep technical-blue accent is reserved for meaningful marks (active column, selection, priority HIGH, done, focus, drafting notation). Never multi-hue labels or colored side-stripes.
 3. **Drafting notation, used purposefully.** ✛ crosshair ticks prefix every card ID; `N=` prefixes every column count; coordinate axis letters (A–D) label columns; registration crosshairs mark the board corners. Notation communicates, it is not decoration.
 4. **Honest and high-contrast.** Brutalism's rawness is paired with a WCAG 2.2 AA baseline: deep ink on off-white paper, state conveyed by text as well as color, and full 44×44 targets. Compact density comes from type, spacing, and rhythm — never from shrinking touch targets.
 
 ## Color system (OKLCH)
 
-All tokens are OKLCH. No pure black or white anywhere.
+All CSS color tokens are OKLCH. No pure black or white anywhere.
 
-| Token        | Value                    | Role                                                                     |
-| ------------ | ------------------------ | ------------------------------------------------------------------------ |
-| `--paper`    | `oklch(0.94 0.005 250)`  | Canvas / drafting paper (the graph-paper field); search field background |
-| `--surface`  | `oklch(0.975 0.003 250)` | Raised surfaces: header, column heads, cards, error banner               |
-| `--ink`      | `oklch(0.24 0.005 250)`  | Primary text, structural rules, dark fills (primary/chip/avatars)        |
-| `--ink-soft` | `oklch(0.4 0.006 250)`   | Secondary text: card IDs, due dates, counts axis, checklist, empty state |
-| `--rule`     | `oklch(0.24 0.005 250)`  | Harsh exposed structural borders (same near-black as ink)                |
-| `--accent`   | `oklch(0.42 0.13 236)`   | The one deep technical-blue accent (see roles below)                     |
-| `--on-ink`   | `oklch(0.97 0.004 250)`  | Light text on ink/accent fills (near-white, never `#fff`)                |
-| `--grid`     | `#c6c8ce`                | Graph-paper grid stroke (and skeleton block fill)                        |
+| Token        | Value                    | Role                                                                                                                                                                                              |
+| ------------ | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--paper`    | `oklch(0.94 0.005 250)`  | Canvas / drafting paper (the graph-paper field); search field background                                                                                                                          |
+| `--surface`  | `oklch(0.975 0.003 250)` | Raised surfaces: header, column heads, cards, error banner                                                                                                                                        |
+| `--ink`      | `oklch(0.24 0.005 250)`  | Primary text, structural rules, dark fills (primary/chip/avatars)                                                                                                                                 |
+| `--ink-soft` | `oklch(0.4 0.006 250)`   | Secondary text: card IDs, due dates, counts axis, checklist, empty state                                                                                                                          |
+| `--rule`     | `oklch(0.24 0.005 250)`  | Harsh exposed structural borders (same near-black as ink)                                                                                                                                         |
+| `--accent`   | `oklch(0.42 0.13 236)`   | The one deep technical-blue accent (see roles below)                                                                                                                                              |
+| `--on-ink`   | `oklch(0.97 0.004 250)`  | Light text on ink/accent fills (near-white, never `#fff`)                                                                                                                                         |
+| `--grid`     | `oklch(0.82 0.006 250)`  | Graph-paper grid stroke (and skeleton block fill). The inline data-URI SVG serializes this token to the equivalent sRGB `#c6c8ce`, because a data-URI SVG cannot reference a CSS custom property. |
 
 - **Neutrals** are tinted toward hue 250 (a faint cool blue-gray), never pure grey/black/white.
-- **Accent roles** (the only places the deep blue appears): active-column name + head rule + `ACTIVE` tag; `✛` card-ID ticks; `N=` counts; HIGH priority text + marker; done check + due; selection outline + border; all focus rings; the primary `New task` fill; the `Retry` fill; the error `!` mark and `SYNC PAUSED.` word; board-corner registration crosshairs.
+- **Accent roles** (the only places the deep blue appears): active-column name + head rule + `ACTIVE` tag; `✛` card-ID ticks; `N=` counts; HIGH priority text + marker; done check + due; selection outline + border; all focus rings; the `Retry` fill; the error `!` mark and `SYNC PAUSED.` word; board-corner registration crosshairs. The primary `New task` and project-chip are **ink**-filled (not accent).
 - **Tags/labels are monochrome** — every tag is ink text on a paper fill with a 1px ink border. Categorical tone is dropped on purpose: brutalism is monochrome + one accent, so meaning never relies on hue.
 - **Avatars are monochrome** ink-filled squares with `--on-ink` initials (per-member hues in the fixture are intentionally unused). Overlap separation is a 1.5px `--surface` border + negative margin — never a box-shadow.
 
@@ -53,12 +53,12 @@ All tokens are OKLCH. No pure black or white anywhere.
   - Cards: `1.5px solid var(--rule)`; the selected card is `2px solid var(--accent)` **plus** a `3px solid var(--accent)` outline at `1px` offset (full perimeter, not a side-stripe).
   - Tags: `1px solid var(--rule)`; add-card / empty: `1.5px dashed var(--rule)`.
 - **Elevation:** **none.** There are zero `box-shadow` and zero `backdrop-filter` values anywhere. Depth is communicated entirely by the exposed grid and harsh rules. (See do-not.)
-- **Graph-paper grid:** the canvas carries an inline, dependency-free SVG data-URI tiling a 16×16 grid stroked in `--grid`, so the drafting field is literally foregrounded. Cards/headers are opaque `--surface` sheets sitting on the grid; the grid shows through in the board padding, column gutters, and between cards.
+- **Graph-paper grid:** the canvas carries an inline, dependency-free SVG data-URI tiling a 16×16 grid stroked in `--grid` (serialized to sRGB `#c6c8ce` in the SVG — see the color table), so the drafting field is literally foregrounded. Cards/headers are opaque `--surface` sheets sitting on the grid; the grid shows through in the board padding, column gutters, and between cards.
 
 ## Layout and composition rules
 
 - Mobile-first: columns stack vertically; the header is a wrapping flex row. No element forces document width.
-- At `≥48rem` the board body becomes a horizontal row of fixed `15rem` columns inside an `overflow-x: auto` scroller (the board scrolls internally; the document never scrolls horizontally).
+- At `≥48rem` the board body becomes a horizontal row of `flex: 1 0 15rem` columns (they share a 15rem basis but **grow to fill** the available width on wide screens, leaving no empty gutter) inside an `overflow-x: auto` scroller with internal padding so focus rings never clip; on narrower tablet widths the columns keep their basis and the board scrolls internally. The document never scrolls horizontally.
 - Header leads with the project chip + title block + team avatars (left) and search / filters / Board-List toggle / New task (right); it wraps on narrow viewports.
 - The error banner is a full-width, full-border panel directly under the header (never a colored side-stripe).
 - Registration crosshairs (✛) sit just inside the top-left and bottom-right board corners.
@@ -71,11 +71,11 @@ All tokens are OKLCH. No pure black or white anywhere.
 
 ## Component appearance and behavior
 
-- **Header controls** are square, harsh-bordered, UPPERCASE monospace, each a full `44×44` (or wider) target. Active (pressed) filter/view = solid ink fill + `--on-ink` text; inactive = transparent on the paper track + ink text. The primary `New task` is an ink-filled button.
-- **Search** is a bordered paper field; keyboard focus draws a `3px` accent ring on the field container (`:focus-within`), the input's own outline suppressed so the ring is never an invisible double-ring.
+- **Header controls** are square, harsh-bordered, UPPERCASE monospace, each a full `44×44` (or wider) **non-shrinking** target (`flex: none` on icon buttons, so a tight column head never squeezes the more-actions/dismiss targets below 44px). Active (pressed) filter/view = solid ink fill + `--on-ink` text; inactive = transparent on the paper track + ink text. The primary `New task` is an ink-filled button.
+- **Search** is a bordered paper field with a compact visible `SEARCH` label (the input keeps its accessible name `Search cards` via `aria-label`, satisfying label-in-name); keyboard focus draws a `3px` accent ring on the field container (`:focus-within`), the input's own outline suppressed so the ring is never an invisible double-ring.
 - **Columns** carry a coordinate letter (A–D), an accent UPPERCASE name, an `N=` count, and a more-actions button. The active column additionally shows an accent `ACTIVE` tag, an accent head rule, and exposes its state via `aria-label="…, active column"`.
 - **Cards** show `✛ AU-###` ID, title, monochrome tags, optional `[n/m] SUBTASKS`, a footer with priority (◆ HIGH in accent / ● MED in ink-soft) and due date, and assignee avatars. Done cards strike through the title and recolour the due/check to accent. The selected card uses a full accent border + outline and `aria-label="…, selected"` (it does **not** also set `aria-labelledby`, which would otherwise win and drop "selected" from the accessible name).
-- **States demonstrated:** empty (In Review, `// NO CARDS`), loading skeleton (solid `--grid` blocks with a reduced-motion-gated opacity blink), inline error (`SYNC PAUSED.` + Retry + dismiss), static drag grip, done, priority, selected, hover (card border → accent), keyboard focus, and reduced motion.
+- **States demonstrated:** empty (In Review, `No cards yet`), loading skeleton (solid `--grid` blocks with a reduced-motion-gated opacity blink), inline error (`SYNC PAUSED.` + Retry + dismiss), static drag grip, done, priority, selected, hover (card border → accent, an instant state that still applies under reduced motion; only the transition is motion-gated), keyboard focus, and reduced motion.
 
 ## Responsive behavior
 
@@ -86,16 +86,17 @@ All tokens are OKLCH. No pure black or white anywhere.
 ## Interaction and motion guidance
 
 - Motion is minimal and stateful only: a `0.12s` `border-color`/`color`/`opacity` transition on cards and controls, and a `1.4s` opacity blink on skeleton blocks.
-- **Reduced motion:** the skeleton blink and all non-essential transitions are suppressed under `prefers-reduced-motion: reduce`; content remains fully visible and static.
-- Hover feedback changes the card border to the accent (no shadow, no transform that could hide content). Focus always draws a complete, unclipped `3px` accent perimeter.
+- **Reduced motion:** the skeleton blink and all non-essential **transitions** are suppressed under `prefers-reduced-motion: reduce`; content remains fully visible and static.
+- Hover feedback is an **instant** state change — the card border switches to the accent (no shadow, no transform) — and is deliberately **not** gated behind `prefers-reduced-motion`, so reduced-motion users retain the hover affordance; only the animated transition is motion-gated. Focus always draws a complete, unclipped `3px` accent perimeter.
 
 ## Accessibility requirements
 
 - **WCAG 2.2 AA.** Every semantic text role meets ≥4.5:1 against its actual opaque parent surface (audited across titles, IDs, ticks, tags, counts, due/priority, active/inactive controls, placeholder, and avatar initials). The accent meets ≥3:1 as a focus/UI-component perimeter.
 - **No color-only meaning:** priority, done, active, selected, and error are each conveyed by text/glyph/structure as well as the accent. Tags are monochrome.
-- **Targets:** every interactive control is ≥44×44 at 375/768/1280.
+- **Targets:** every interactive control is ≥44×44 at 375/768/1280, and icon targets are non-shrinking so a dense column head cannot squeeze them below 44px.
+- **Visible labels:** inputs retain a visible label (the search field shows a compact `SEARCH` label) in addition to their accessible name; placeholder text never replaces a label.
 - **Semantics:** landmarks, headings, `role="status"`/`aria-live` for the error, `aria-pressed` on filters/view, `aria-label` on icon buttons, the active column, and the selected card. Meaningful images/glyphs are `aria-hidden` with text equivalents.
-- **No horizontal document overflow** at any breakpoint; internal board scrolling does not clip focus rings.
+- **No horizontal document overflow** at any breakpoint; internal board scrolling does not clip focus rings (the scroller carries internal padding).
 
 ## Rules for extending the design to new pages
 
