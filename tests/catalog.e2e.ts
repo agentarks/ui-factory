@@ -1750,6 +1750,34 @@ test('opens the kanban-brutalism design and its isolated preview states', async 
 	expect(sig!.notationCrosshair, 'drafting crosshair (✛) notation present').toBe(true);
 	expect(sig!.notationCount, 'dimension count (N=) notation present').toBe(true);
 
+	// The --grid token (used by skeleton blocks) and the inline SVG grid stroke
+	// share one drafting-grid identity, so they must render the EXACT same
+	// colour. The SVG cannot reference the CSS variable, so its stroke is a
+	// serialized sRGB hex that must equal the token's rendered pixels.
+	const gridMatch = await page.evaluate(() => {
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const rgbOf = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			return [d[0], d[1], d[2]];
+		};
+		const skelRgb = rgbOf(getComputedStyle(document.querySelector('.skel')!).backgroundColor);
+		const bgImage = getComputedStyle(document.querySelector('.board-root')!).backgroundImage;
+		const m = bgImage.match(/stroke=['"](?:%23|#)([0-9a-fA-F]{6})['"]/);
+		const svgHex = m ? `#${m[1].toLowerCase()}` : null;
+		const svgRgb = svgHex ? rgbOf(svgHex) : null;
+		return { skelRgb, svgHex, svgRgb };
+	});
+	expect(gridMatch).not.toBeNull();
+	expect(gridMatch!.svgHex, 'SVG grid stroke hex present in the data-URI').not.toBeNull();
+	expect(gridMatch!.skelRgb, 'skeleton --grid RGB == serialized SVG grid stroke RGB').toEqual(
+		gridMatch!.svgRgb
+	);
+
 	// --- Table-driven WCAG AA contrast audit: every distinct semantic text
 	//     role against its actual opaque parent surface (climbing through
 	//     transparency), including all repeated variants (tags, avatars,

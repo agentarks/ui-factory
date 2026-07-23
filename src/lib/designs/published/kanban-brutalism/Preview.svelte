@@ -287,7 +287,7 @@
 		font-synthesis: none;
 		color: var(--ink);
 		background-color: var(--paper);
-		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath d='M16 0H0V16' fill='none' stroke='%23c6c8ce' stroke-width='1'/%3E%3C/svg%3E");
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath d='M16 0H0V16' fill='none' stroke='%23c1c4c8' stroke-width='1'/%3E%3C/svg%3E");
 		border: 2px solid var(--rule);
 		font-size: 12px;
 		line-height: 1.4;
