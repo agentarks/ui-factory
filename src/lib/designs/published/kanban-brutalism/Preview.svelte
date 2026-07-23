@@ -889,23 +889,29 @@
 		outline-offset: 1px;
 	}
 
-	/* Hover feedback is a clearly stronger, instant state change (not motion):
-	   a pale technical-blue surface wash + a complete accent border perimeter,
-	   scoped to non-selected cards so the selected treatment always wins. It
-	   applies even under prefers-reduced-motion (those users retain the wash +
-	   perimeter); only the crisp lift and the transitions are motion-gated.
+	/* Hover feedback is gated behind (hover: hover) so a tap on a touch
+	   device (hover: none) cannot leave a sticky :hover wash/perimeter/lift
+	   that resembles selection. It is a clearly stronger, multi-channel cue
+	   in the single accent hue: a pale technical-blue surface wash + a
+	   complete accent border perimeter + a small crisp lift. The wash +
+	   perimeter are instant and apply under reduced motion too (on
+	   hover-capable devices); only the lift + transitions are motion-gated.
 	   No shadow, gradient, blur, second hue, or side-stripe; cards stay
 	   non-interactive (no pointer/grab cursor). */
-	.card:not(.is-selected):hover {
-		border-color: var(--accent);
-		background-color: color-mix(in oklch, var(--accent) 16%, var(--surface));
+	@media (hover: hover) {
+		.card:not(.is-selected):hover {
+			border-color: var(--accent);
+			background-color: color-mix(in oklch, var(--accent) 16%, var(--surface));
+		}
+
+		@media (prefers-reduced-motion: no-preference) {
+			.card:not(.is-selected):hover {
+				transform: translateY(-2px);
+			}
+		}
 	}
 
 	@media (prefers-reduced-motion: no-preference) {
-		.card:not(.is-selected):hover {
-			transform: translateY(-2px);
-		}
-
 		.card,
 		.chip,
 		.view-toggle button,

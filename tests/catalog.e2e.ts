@@ -1965,12 +1965,17 @@ test('opens the kanban-brutalism design and its isolated preview states', async 
 	expect(restNonSelBgGap, 'resting card surface is faintly cool, not blue-washed').toBeLessThan(8);
 
 	// Motion-enabled (default): wash + perimeter + lift, no pointer cursor,
-	// and the title stays AA on the washed surface. Wait for the 0.12s
-	// transition to settle before reading computed state (a mid-transition
-	// read would catch the resting values).
+	// and the title stays AA on the washed surface. Poll the computed state
+	// until the 0.12s transition settles — no arbitrary sleep (and reduced
+	// motion resolves on the first poll since there is no transition).
 	await page.emulateMedia({ reducedMotion: null });
 	await page.locator('.card:not(.is-selected)').first().hover();
-	await page.waitForTimeout(180);
+	await expect
+		.poll(async () => {
+			const s = await hoverState();
+			return !!s && s.bgBlueGap > restNonSelBgGap + 4 && s.lifted;
+		}, 'hover settles: blue wash present and card lifted')
+		.toBe(true);
 	const hov = await hoverState();
 	expect(hov).not.toBeNull();
 	expect(hov!.bgBlueGap, 'hover adds a pale technical-blue wash').toBeGreaterThan(
@@ -1982,9 +1987,15 @@ test('opens the kanban-brutalism design and its isolated preview states', async 
 	expect(hov!.titleContrast, 'card title stays AA after hover').toBeGreaterThanOrEqual(4.5);
 
 	// Reduced motion: wash + perimeter remain immediate; lift/transform gone.
+	// No delay is needed (no transition runs under reduced motion).
 	await page.emulateMedia({ reducedMotion: 'reduce' });
 	await page.locator('.card:not(.is-selected)').first().hover();
-	await page.waitForTimeout(60);
+	await expect
+		.poll(async () => {
+			const s = await hoverState();
+			return !!s && s.bgBlueGap > restNonSelBgGap + 4 && s.transform === 'none';
+		}, 'reduced-motion hover settles: wash present, no transform')
+		.toBe(true);
 	const hovReduce = await hoverState();
 	expect(hovReduce).not.toBeNull();
 	expect(hovReduce!.bgBlueGap, 'reduced-motion keeps the blue wash').toBeGreaterThan(
@@ -2109,4 +2120,66 @@ test('opens the kanban-brutalism design and its isolated preview states', async 
 	mf = await measureFocus();
 	expect(mf, 'measured Done more-actions focus at 768').not.toBeNull();
 	expect(mf!.clipped, 'Done more-actions focus not clipped at right extreme').toBe(false);
+});
+
+test('kanban-brutalism hover does not stick on a touch pointer (hover: hover gate)', async ({
+	browser
+}) => {
+	// Hover feedback must be gated behind (hover: hover). On a touch device a
+	// tap would otherwise leave a sticky :hover wash/perimeter/lift that
+	// resembles selection. A hasTouch context reports (hover: none).
+	const context = await browser.newContext({
+		hasTouch: true,
+		viewport: { width: 1280, height: 900 }
+	});
+	const page = await context.newPage();
+	await page.goto('/designs/kanban-brutalism/preview');
+	await page.waitForSelector('.board-root');
+
+	const hoverCapable = await page.evaluate(() => matchMedia('(hover: hover)').matches);
+	expect(hoverCapable, 'touch context reports (hover: none)').toBe(false);
+
+	const readCard = () =>
+		page.evaluate(() => {
+			const el = document.querySelector('.card:not(.is-selected)');
+			if (!(el instanceof HTMLElement)) return null;
+			const ctx = document.createElement('canvas').getContext('2d');
+			if (!ctx) return null;
+			const gap = (css: string) => {
+				ctx.clearRect(0, 0, 2, 2);
+				ctx.fillStyle = '#000';
+				ctx.fillStyle = css;
+				ctx.fillRect(0, 0, 2, 2);
+				const d = ctx.getImageData(0, 0, 1, 1).data;
+				return d[2] - d[0];
+			};
+			const cs = getComputedStyle(el);
+			return {
+				bgGap: gap(cs.backgroundColor),
+				borderGap: gap(cs.borderTopColor),
+				transform: cs.transform
+			};
+		});
+
+	// Resting baseline before any interaction (must be at rest).
+	const before = await readCard();
+	expect(before, 'resting card readable').not.toBeNull();
+	expect(before!.transform, 'precondition: card at rest (no transform)').toBe('none');
+
+	// Tap the (non-interactive) card; its rest background/border/transform
+	// must remain unchanged — no sticky hover wash/perimeter/lift.
+	await page.locator('.card:not(.is-selected)').first().tap();
+	const after = await readCard();
+	expect(after, 'tapped card readable').not.toBeNull();
+	expect(after!.transform, 'no sticky lift after tap').toBe('none');
+	expect(
+		Math.abs(after!.borderGap - before!.borderGap),
+		'no sticky accent perimeter after tap'
+	).toBeLessThanOrEqual(2);
+	expect(
+		Math.abs(after!.bgGap - before!.bgGap),
+		'no sticky blue wash after tap'
+	).toBeLessThanOrEqual(2);
+
+	await context.close();
 });

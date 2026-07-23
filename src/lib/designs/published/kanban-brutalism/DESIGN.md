@@ -87,7 +87,7 @@ All CSS color tokens are OKLCH. No pure black or white anywhere.
 
 - Motion is minimal and stateful only: a `0.12s` `border-color`/`background-color`/`color`/`opacity`/`transform` transition on cards and controls, and a `1.4s` opacity blink on skeleton blocks.
 - **Reduced motion:** the skeleton blink, the hover lift, and all non-essential **transitions** are suppressed under `prefers-reduced-motion: reduce`; content remains fully visible and static.
-- **Hover (non-selected cards only)** is a clearly stronger, multi-channel cue using the single accent hue: a pale technical-blue surface wash (`color-mix(in oklch, var(--accent) 16%, var(--surface))`) **plus** a complete accent border perimeter, with a small crisp `translateY(-2px)` lift added only when motion is allowed. The wash + perimeter are **instant** and deliberately **not** gated behind `prefers-reduced-motion`, so reduced-motion users retain a strong non-motion hover cue; only the lift and the animated transition are motion-gated. It is scoped to `:not(.is-selected)` so the selected card's stronger treatment (accent border + outline) is never downgraded by hover. No shadow, gradient, blur, second hue, or side-stripe is used, and cards stay non-interactive (no pointer/grab cursor). Focus always draws a complete, unclipped `3px` accent perimeter.
+- **Hover (non-selected cards only)** is a clearly stronger, multi-channel cue using the single accent hue: a pale technical-blue surface wash (`color-mix(in oklch, var(--accent) 16%, var(--surface))`) **plus** a complete accent border perimeter, with a small crisp `translateY(-2px)` lift added only when motion is allowed. The whole treatment is gated by `(hover: hover)`, so tapping a non-interactive card on a touch device cannot leave a sticky state that resembles selection. On hover-capable devices, the wash + perimeter are **instant** and remain under `prefers-reduced-motion`; only the lift and animated transition are motion-gated. It is scoped to `:not(.is-selected)` so the selected card's stronger treatment (accent border + outline) is never downgraded by hover. No shadow, gradient, blur, second hue, or side-stripe is used, and cards stay non-interactive (no pointer/grab cursor). Focus always draws a complete, unclipped `3px` accent perimeter.
 
 ## Accessibility requirements
 
@@ -139,6 +139,6 @@ All CSS color tokens are OKLCH. No pure black or white anywhere.
 - [ ] All semantic text roles ≥4.5:1; focus/UI perimeter ≥3:1.
 - [ ] No colour-only meaning; states carried by text/glyph/structure.
 - [ ] Every interactive target ≥44×44 at 375/768/1280; no horizontal document overflow; focus rings never clipped.
-- [ ] Reduced motion suppresses the skeleton blink, the hover lift, and non-essential transitions; the hover wash + perimeter remain, and content stays visible.
+- [ ] Reduced motion suppresses the skeleton blink, the hover lift, and non-essential transitions; on hover-capable devices the hover wash + perimeter remain, while touch taps never create a sticky hover state.
 - [ ] Locked content unchanged (4 columns, 9 cards, 5 members, In Review empty).
 - [ ] No new dependencies, assets, or external fonts; license status stated as "no license".
