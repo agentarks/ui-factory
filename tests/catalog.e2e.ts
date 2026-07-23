@@ -708,3 +708,483 @@ test('opens the kanban-claymorphism design and its isolated preview states', asy
 		expect(overflow, `horizontal overflow at ${width}`).toBeLessThanOrEqual(0);
 	}
 });
+
+test('opens the kanban-editorial design and its isolated preview states', async ({ page }) => {
+	// ---- Detail page: exact approved public summary + identity ----
+	await page.goto('/designs/kanban-editorial');
+
+	await expect(
+		page.getByRole('heading', { name: 'Kanban Board · Annual Report', exact: false })
+	).toBeVisible();
+	await expect(
+		page.getByText(
+			'A sober Editorial / Typographic Kanban board on near-white cool paper with dark navy ink, restrained teal accents, serif masthead and headings over system-sans data, teal column rules, and small-radius bordered cards in a formal two-colour print palette.',
+			{ exact: true }
+		)
+	).toBeVisible();
+
+	// ---- Isolated preview: locked content + empty/error/loading states ----
+	const frame = page.frameLocator('iframe[title*="preview"i]');
+	await expect(frame.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'New task' })).toBeVisible();
+	await expect(frame.getByText('Backlog', { exact: true })).toBeVisible();
+	await expect(frame.getByRole('heading', { name: 'In Review' })).toBeVisible();
+	await expect(frame.getByText('No cards yet')).toBeVisible();
+	await expect(frame.getByText('Sync paused', { exact: false })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'Retry' })).toBeVisible();
+	await expect(frame.locator('.skeleton-card')).toBeVisible();
+
+	// interaction smoke: toggling a filter updates its pressed state (navy-fill selected)
+	const mineBtn = frame.getByRole('button', { name: 'Mine', exact: true });
+	await mineBtn.click();
+	await expect(mineBtn).toHaveAttribute('aria-pressed', 'true');
+
+	// keyboard focus on the search field shows a ring on the compact visible
+	// face with meaningful contrast (>=3:1) against the near-white paper.
+	const previewFrame = page.frame({ url: /kanban-editorial\/preview$/ });
+	expect(previewFrame).toBeTruthy();
+	await frame.getByRole('searchbox').focus();
+	const focusContrast = await previewFrame!.evaluate(() => {
+		const el = document.querySelector('.search .face');
+		if (!(el instanceof HTMLElement)) return -1;
+		const cs = getComputedStyle(el);
+		if (cs.outlineStyle !== 'solid' || parseFloat(cs.outlineWidth) < 3) return -1;
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return -1;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const oL = lum(cs.outlineColor);
+		const bL = lum(cs.backgroundColor);
+		return (Math.max(oL, bL) + 0.05) / (Math.min(oL, bL) + 0.05);
+	});
+	expect(focusContrast).toBeGreaterThanOrEqual(3);
+
+	// The New task primary's compact face is navy-filled on the paper masthead;
+	// its focus outline (seated outside the fill via outline-offset) renders
+	// against the paper surface, so the ring must still read at >=3:1 there.
+	// Reach it by Tabbing from the preceding control so :focus-visible applies.
+	await frame.getByRole('button', { name: 'List', exact: true }).press('Tab');
+	const primaryFocus = await previewFrame!.evaluate(() => {
+		const el = document.querySelector('.primary .face');
+		const surround = el?.closest('.board-head');
+		if (!(el instanceof HTMLElement) || !(surround instanceof HTMLElement)) return -1;
+		const cs = getComputedStyle(el);
+		if (cs.outlineStyle !== 'solid' || parseFloat(cs.outlineWidth) < 3) return -1;
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return -1;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const oL = lum(cs.outlineColor);
+		const bL = lum(getComputedStyle(surround).backgroundColor);
+		return (Math.max(oL, bL) + 0.05) / (Math.min(oL, bL) + 0.05);
+	});
+	expect(primaryFocus).toBeGreaterThanOrEqual(3);
+
+	// reduced-motion: skeleton pulse animation is suppressed; the skeleton
+	// remains visible but static (no infinite animation).
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	const skeletonAnimating = await previewFrame!.evaluate(() => {
+		const el = document.querySelector('.skel');
+		if (!(el instanceof HTMLElement)) return null;
+		const cs = getComputedStyle(el);
+		return cs.animationName === 'none';
+	});
+	expect(skeletonAnimating).toBe(true);
+	await page.emulateMedia({ reducedMotion: null });
+
+	// ------------------------------------------------------------------
+	// Direct preview route: exact-width responsive + visual-signature +
+	// table-driven contrast audit. The detail page embeds the preview in a
+	// narrower iframe, so these checks run on the standalone /preview route
+	// at exact 375/768/1280 viewport widths.
+	// ------------------------------------------------------------------
+	await page.goto('/designs/kanban-editorial/preview');
+	await expect(page.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
+	await page.setViewportSize({ width: 1280, height: 800 });
+
+	// Visual signature: the selected Annual Report reference — near-white cool
+	// paper canvas, brighter paper card surfaces, dark navy ink, restrained
+	// teal accent. Serif masthead + headings; system-sans data. Teal 2px rules
+	// under column headings. Bordered near-square cards. No shadows, no
+	// gradients, no backdrop blur.
+	const sig = await page.evaluate(() => {
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const cs = (sel: string) => {
+			const el = document.querySelector(sel);
+			return el instanceof HTMLElement ? getComputedStyle(el) : null;
+		};
+		const bgLum = (sel: string) => {
+			const c = cs(sel);
+			return c ? lum(c.backgroundColor) : -1;
+		};
+		const colorLum = (sel: string) => {
+			const c = cs(sel);
+			return c ? lum(c.color) : -1;
+		};
+		const tealness = (cssColor: string) => {
+			// Teal/cyan reads as green channel >= red channel by a clear margin.
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = cssColor;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			return d[1] - d[0]; // green minus red
+		};
+		const cardCs = cs('.card');
+		const colHeadCs = cs('.column-head');
+		const ruleCs = cs('.card');
+		return {
+			canvasLum: bgLum('.board-root'),
+			cardBgLum: bgLum('.card'),
+			cardBgImage: cardCs?.backgroundImage ?? '',
+			cardBoxShadow: cardCs?.boxShadow ?? '',
+			cardBorderStyle: cardCs?.borderStyle ?? '',
+			cardBorderWidth: parseFloat(cardCs?.borderWidth ?? '0'),
+			cardRadius: parseFloat(cardCs?.borderRadius ?? '0'),
+			boardBgImage: cs('.board-root')?.backgroundImage ?? '',
+			mastheadFont: cs('.masthead')?.fontFamily ?? '',
+			titleFont: cs('.card-title')?.fontFamily ?? '',
+			labelFont: cs('.label')?.fontFamily ?? '',
+			dueFont: cs('.due')?.fontFamily ?? '',
+			colHeadRuleWidth: parseFloat(colHeadCs?.borderBottomWidth ?? '0'),
+			colHeadRuleTealness: colHeadCs ? tealness(colHeadCs.borderBottomColor) : -99,
+			cardRuleTealness: ruleCs ? tealness(ruleCs.borderColor) : -99,
+			backdropOnRoot: cs('.board-root')?.backdropFilter ?? '',
+			backdropOnCard: cardCs?.backdropFilter ?? '',
+			titleColorLum: colorLum('.card-title')
+		};
+	});
+	expect(sig).not.toBeNull();
+	expect(sig!.canvasLum, 'canvas near-white cool paper').toBeGreaterThan(0.9);
+	expect(sig!.cardBgLum, 'card brighter paper surface').toBeGreaterThan(0.9);
+	expect(sig!.cardBgLum, 'card brighter than or equal to canvas').toBeGreaterThanOrEqual(
+		sig!.canvasLum
+	);
+	expect(sig!.cardBgImage, 'no gradient on cards').toBe('none');
+	expect(sig!.boardBgImage, 'no gradient on canvas').toBe('none');
+	expect(sig!.cardBoxShadow, 'no decorative elevation on cards').toBe('none');
+	expect(sig!.cardBorderStyle, 'cards bordered').toBe('solid');
+	expect(sig!.cardBorderWidth, 'card hairline border >= 1px').toBeGreaterThanOrEqual(1);
+	expect(sig!.cardRadius, 'card near-square (<=4px radius)').toBeLessThanOrEqual(4);
+	expect(sig!.mastheadFont.toLowerCase(), 'masthead serif').toMatch(/serif|georgia/);
+	expect(sig!.titleFont.toLowerCase(), 'card title serif').toMatch(/serif|georgia/);
+	expect(sig!.labelFont.toLowerCase(), 'label sans data').toMatch(/sans|system/);
+	expect(sig!.dueFont.toLowerCase(), 'due sans data').toMatch(/sans|system/);
+	// Sans confirmation: the label must not resolve to the serif stack. (A bare
+	// /serif/ check would false-positive on "sans-serif".)
+	expect(sig!.labelFont.toLowerCase(), 'label not the serif stack').not.toMatch(/georgia|times/);
+	expect(sig!.colHeadRuleWidth, 'teal column rule 2px').toBeGreaterThanOrEqual(2);
+	expect(sig!.colHeadRuleTealness, 'column rule is teal (green>red)').toBeGreaterThan(15);
+	expect(sig!.cardRuleTealness, 'card border not teal (cool-gray hairline)').toBeLessThan(15);
+	expect(sig!.backdropOnRoot, 'no backdrop blur on canvas').toBe('none');
+	expect(sig!.backdropOnCard, 'no backdrop blur on cards').toBe('none');
+	expect(sig!.titleColorLum, 'card title dark navy ink').toBeLessThan(0.3);
+
+	// Table-driven WCAG AA contrast audit: every distinct semantic text role
+	// against its actual opaque parent surface, including all repeated color
+	// variants (avatars, labels, active/inactive controls, placeholder).
+	const contrastResults = await page.evaluate(() => {
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		// Resolve the effective background luminance by climbing to the nearest
+		// opaque ancestor. Editorial controls are intentionally transparent
+		// (flat paper design), so their "actual parent surface" is the paper
+		// canvas — a real contrast audit climbs through transparency rather
+		// than measuring text against rgba(0,0,0,0).
+		const isOpaque = (cssColor: string) => {
+			const m = cssColor.match(/rgba?\([^)]*\)/);
+			if (!m) return true; // named/hex/oklch are opaque
+			const parts = m[0].replace(/[^\d.,]/g, '').split(',');
+			return parts.length < 4 || parseFloat(parts[3]) > 0;
+		};
+		const bgLumOf = (el: Element | null): number => {
+			let node: Element | null = el;
+			while (node) {
+				const bg = getComputedStyle(node).backgroundColor;
+				if (isOpaque(bg)) return lum(bg);
+				node = node.parentElement;
+			}
+			return lum('rgb(255,255,255)'); // document fallback
+		};
+		const ratio = (textSel: string, bgSel: string, pseudo?: string) => {
+			const textEl = document.querySelector(textSel);
+			const bgEl = document.querySelector(bgSel);
+			if (!(textEl instanceof HTMLElement) || !(bgEl instanceof HTMLElement)) return -1;
+			const cs = pseudo ? getComputedStyle(textEl, pseudo) : getComputedStyle(textEl);
+			const tL = lum(cs.color);
+			const bL = bgLumOf(bgEl);
+			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+		};
+		const selfRatio = (sel: string) => ratio(sel, sel);
+		const elRatio = (el: Element) => {
+			if (!(el instanceof HTMLElement)) return -1;
+			const tL = lum(getComputedStyle(el).color);
+			const bL = bgLumOf(el);
+			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+		};
+		const results: { role: string; ratio: number }[] = [
+			{ role: 'card-title', ratio: ratio('.card-title', '.card') },
+			{ role: 'checklist', ratio: ratio('.checklist', '.card') },
+			{ role: 'due-regular', ratio: ratio('.due:not(.is-done)', '.card') },
+			{ role: 'due-done', ratio: ratio('.due.is-done', '.card') },
+			{ role: 'pri-high', ratio: ratio('.pri-high', '.card') },
+			{ role: 'pri-medium', ratio: ratio('.pri-medium', '.card') },
+			{ role: 'board-title', ratio: ratio('.title-block h1', '.board-head') },
+			{ role: 'subtitle', ratio: ratio('.subtitle', '.board-head') },
+			{ role: 'masthead', ratio: ratio('.masthead', '.board-head') },
+			{ role: 'column-heading', ratio: ratio('.column-head h2', '.column-head') },
+			{ role: 'count-badge', ratio: selfRatio('.count') },
+			{ role: 'empty-state', ratio: ratio('.empty-col p', '.empty-col') },
+			{ role: 'error-body', ratio: ratio('.error-banner p', '.error-banner') },
+			{ role: 'error-strong', ratio: ratio('.error-banner strong', '.error-banner') },
+			{ role: 'primary-text', ratio: selfRatio('.primary .face') },
+			{ role: 'add-card-text', ratio: selfRatio('.add-card') },
+			{ role: 'retry-text', ratio: selfRatio('.error-retry') },
+			{ role: 'chip-active', ratio: selfRatio('.chip[aria-pressed="true"] .face') },
+			{
+				role: 'chip-inactive',
+				ratio: selfRatio('.chip:not([aria-pressed="true"]) .face')
+			},
+			{
+				role: 'view-active',
+				ratio: selfRatio('.view-toggle button[aria-pressed="true"] .face')
+			},
+			{
+				role: 'view-inactive',
+				ratio: selfRatio('.view-toggle button:not([aria-pressed="true"]) .face')
+			},
+			{
+				role: 'search-placeholder',
+				ratio: ratio('.search input', '.search .face', '::placeholder')
+			},
+			{ role: 'search-input', ratio: ratio('.search input', '.search .face') }
+		];
+		document.querySelectorAll('.label').forEach((el) => {
+			const name = el.textContent?.trim() || '?';
+			results.push({ role: `label:${name}`, ratio: elRatio(el) });
+		});
+		document.querySelectorAll('.avatar').forEach((el) => {
+			const initials = el.textContent?.trim() || '?';
+			results.push({ role: `avatar:${initials}`, ratio: elRatio(el) });
+		});
+		return results;
+	});
+	expect(contrastResults).not.toBeNull();
+	for (const { role, ratio } of contrastResults!) {
+		expect(ratio, `${role} text contrast >= 4.5:1`).toBeGreaterThanOrEqual(4.5);
+	}
+
+	// Finding 3: no rendered element anywhere in the preview has a box-shadow.
+	// The prior avatar overlap rings used box-shadow; they must move to crisp
+	// borders. This generalises the card-only shadow check to every element.
+	const shadowOffenders = await page.evaluate(() => {
+		const offenders: { tag: string; shadow: string }[] = [];
+		document.querySelectorAll('.board-root, .board-root *').forEach((el) => {
+			const cs = getComputedStyle(el);
+			if (cs.boxShadow !== 'none') {
+				offenders.push({
+					tag: (el as HTMLElement).className || el.tagName.toLowerCase(),
+					shadow: cs.boxShadow
+				});
+			}
+		});
+		return offenders;
+	});
+	expect(shadowOffenders, 'no rendered element has a box-shadow').toEqual([]);
+
+	// Finding 1: every segmented control gets a complete, unclipped, >=3:1
+	// focus perimeter. Root-cause lock first — no .segmented ancestor may clip
+	// (the original overflow:hidden cut off the offset focus outline).
+	const overflowLock = await page.evaluate(() =>
+		Array.from(document.querySelectorAll('.segmented')).map((el) => {
+			const cs = getComputedStyle(el);
+			return { ox: cs.overflowX, oy: cs.overflowY };
+		})
+	);
+	expect(overflowLock.length, 'segmented groups present').toBeGreaterThan(0);
+	for (const o of overflowLock) {
+		expect(o.ox, 'segmented overflow-x visible (no clip)').toBe('visible');
+		expect(o.oy, 'segmented overflow-y visible (no clip)').toBe('visible');
+	}
+
+	// Then Tab through every segmented control and confirm a complete >=3:1
+	// focus perimeter renders on its compact face.
+	await page.getByRole('searchbox').focus();
+	const segmentedNames = ['All', 'Mine', 'Due this week', 'Board', 'List'];
+	for (const expected of segmentedNames) {
+		await page.keyboard.press('Tab');
+		const info = await page.evaluate(() => {
+			const el = document.activeElement;
+			if (!(el instanceof HTMLElement)) return null;
+			const face = el.querySelector('.face');
+			const target = face instanceof HTMLElement ? face : el;
+			const cs = getComputedStyle(target);
+			const ctx = document.createElement('canvas').getContext('2d');
+			if (!ctx) return null;
+			const lum = (css: string) => {
+				ctx.clearRect(0, 0, 2, 2);
+				ctx.fillStyle = '#000';
+				ctx.fillStyle = css;
+				ctx.fillRect(0, 0, 2, 2);
+				const d = ctx.getImageData(0, 0, 1, 1).data;
+				const ch = (v: number) => {
+					const s = v / 255;
+					return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+				};
+				return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+			};
+			// The outline seats outside the face; its surround is the control's
+			// nearest opaque ancestor (paper). Climb from the control element.
+			const isOpaque = (c: string) => {
+				const m = c.match(/rgba?\([^)]*\)/);
+				if (!m) return true;
+				const p = m[0].replace(/[^\d.,]/g, '').split(',');
+				return p.length < 4 || parseFloat(p[3]) > 0;
+			};
+			let node: Element | null = el;
+			let bgLum = lum('rgb(255,255,255)');
+			while (node) {
+				const bg = getComputedStyle(node).backgroundColor;
+				if (isOpaque(bg)) {
+					bgLum = lum(bg);
+					break;
+				}
+				node = node.parentElement;
+			}
+			const oL = lum(cs.outlineColor);
+			const contrast = (Math.max(oL, bgLum) + 0.05) / (Math.min(oL, bgLum) + 0.05);
+			return {
+				text: el.textContent?.trim(),
+				outlineStyle: cs.outlineStyle,
+				outlineWidth: parseFloat(cs.outlineWidth),
+				contrast,
+				hasFace: !!face
+			};
+		});
+		expect(info, `${expected} focused`).not.toBeNull();
+		expect(info!.text, `${expected} is the focused control`).toBe(expected);
+		expect(info!.hasFace, `${expected} has a compact face`).toBe(true);
+		expect(info!.outlineStyle, `${expected} focus outline solid`).toBe('solid');
+		expect(info!.outlineWidth, `${expected} focus outline >=3px`).toBeGreaterThanOrEqual(3);
+		expect(info!.contrast, `${expected} focus perimeter >=3:1`).toBeGreaterThanOrEqual(3);
+	}
+
+	// Exact-width responsive: at each of 375/768/1280, every named faced
+	// control's outer target is >=44px (width and height) while its intended
+	// compact face stays ~21-26px; the full-44px-chrome controls (more-actions,
+	// dismiss) keep their square targets; and there is no document overflow.
+	const widths = [375, 768, 1280];
+	for (const width of widths) {
+		await page.setViewportSize({ width, height: 800 });
+
+		// Named face-and-target measure for search, All, Mine, Due this week,
+		// Board, List, and New task. Due this week is measured separately from
+		// the other inactive chip (Mine).
+		const faceRows = await page.evaluate(() => {
+			const measure = (target: Element | null, face: Element | null) => {
+				const empty = { targetH: -1, targetW: -1, faceH: -1, faceInsideTarget: false };
+				if (!(target instanceof HTMLElement) || !(face instanceof HTMLElement)) return empty;
+				const tr = target.getBoundingClientRect();
+				const fr = face.getBoundingClientRect();
+				return {
+					targetH: Math.round(tr.height * 10) / 10,
+					targetW: Math.round(tr.width * 10) / 10,
+					faceH: Math.round(fr.height * 10) / 10,
+					faceInsideTarget: fr.top >= tr.top - 0.5 && fr.bottom <= tr.bottom + 0.5
+				};
+			};
+			const findByText = (selector: string, text: string): Element | null =>
+				Array.from(document.querySelectorAll(selector)).find(
+					(el) => (el.textContent?.trim() ?? '') === text
+				) ?? null;
+			const chip = (text: string) => findByText('.chip', text);
+			const view = (text: string) => findByText('.view-toggle button', text);
+			const faceOf = (el: Element | null): Element | null => el?.querySelector('.face') ?? null;
+			const searchEl = document.querySelector('label.search');
+			const primaryEl = document.querySelector('.primary');
+			return [
+				{ name: 'search', ...measure(searchEl, faceOf(searchEl)) },
+				{ name: 'All', ...measure(chip('All'), faceOf(chip('All'))) },
+				{ name: 'Mine', ...measure(chip('Mine'), faceOf(chip('Mine'))) },
+				{
+					name: 'Due this week',
+					...measure(chip('Due this week'), faceOf(chip('Due this week')))
+				},
+				{ name: 'Board', ...measure(view('Board'), faceOf(view('Board'))) },
+				{ name: 'List', ...measure(view('List'), faceOf(view('List'))) },
+				{ name: 'New task', ...measure(primaryEl, faceOf(primaryEl)) }
+			];
+		});
+		for (const row of faceRows) {
+			expect(row.targetH, `${row.name} target height >=44 at ${width}`).toBeGreaterThanOrEqual(44);
+			expect(row.targetW, `${row.name} target width >=44 at ${width}`).toBeGreaterThanOrEqual(44);
+			expect(row.faceH, `${row.name} compact face ~21-26px at ${width}`).toBeGreaterThanOrEqual(21);
+			expect(row.faceH, `${row.name} compact face <=26px at ${width}`).toBeLessThanOrEqual(26);
+			expect(row.faceInsideTarget, `${row.name} face contained in target at ${width}`).toBe(true);
+		}
+
+		// Full-44px-chrome controls (not faced): more-actions + dismiss keep
+		// square >=44x44 targets at every width.
+		const moreActions = await page
+			.getByRole('button', { name: 'More actions for Backlog' })
+			.boundingBox();
+		expect(moreActions?.width, `more-actions width at ${width}`).toBeGreaterThanOrEqual(44);
+		expect(moreActions?.height, `more-actions height at ${width}`).toBeGreaterThanOrEqual(44);
+		const dismiss = await page
+			.getByRole('button', { name: 'Dismiss error', exact: true })
+			.boundingBox();
+		expect(dismiss?.width, `dismiss width at ${width}`).toBeGreaterThanOrEqual(44);
+		expect(dismiss?.height, `dismiss height at ${width}`).toBeGreaterThanOrEqual(44);
+		const overflow = await page.evaluate(
+			() =>
+				document.documentElement.scrollWidth - document.documentElement.clientWidth ||
+				window.scrollX
+		);
+		expect(overflow, `horizontal overflow at ${width}`).toBeLessThanOrEqual(0);
+	}
+});
