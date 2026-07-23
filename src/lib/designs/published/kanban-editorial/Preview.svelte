@@ -31,22 +31,24 @@
 
 		<div class="controls">
 			<label class="search">
-				<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
-					<circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" stroke-width="1.7" />
-					<path
-						d="M11 11l3.2 3.2"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.7"
-						stroke-linecap="round"
+				<span class="face">
+					<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+						<circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" stroke-width="1.7" />
+						<path
+							d="M11 11l3.2 3.2"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.7"
+							stroke-linecap="round"
+						/>
+					</svg>
+					<input
+						type="search"
+						placeholder="Search cards…"
+						aria-label="Search cards"
+						bind:value={query}
 					/>
-				</svg>
-				<input
-					type="search"
-					placeholder="Search cards…"
-					aria-label="Search cards"
-					bind:value={query}
-				/>
+				</span>
 			</label>
 
 			<div class="segmented filters" role="group" aria-label="Filter cards">
@@ -55,7 +57,7 @@
 						type="button"
 						class="chip"
 						aria-pressed={activeFilter === f.id}
-						onclick={() => (activeFilter = f.id)}>{f.label}</button
+						onclick={() => (activeFilter = f.id)}><span class="face">{f.label}</span></button
 					>
 				{/each}
 			</div>
@@ -66,28 +68,30 @@
 					aria-pressed={activeView === 'board'}
 					onclick={() => (activeView = 'board')}
 				>
-					Board
+					<span class="face">Board</span>
 				</button>
 				<button
 					type="button"
 					aria-pressed={activeView === 'list'}
 					onclick={() => (activeView = 'list')}
 				>
-					List
+					<span class="face">List</span>
 				</button>
 			</div>
 
 			<button type="button" class="primary">
-				<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-					<path
-						d="M8 2v12M2 8h12"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.9"
-						stroke-linecap="round"
-					/>
-				</svg>
-				New task
+				<span class="face">
+					<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
+						<path
+							d="M8 2v12M2 8h12"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.9"
+							stroke-linecap="round"
+						/>
+					</svg>
+					New task
+				</span>
 			</button>
 		</div>
 	</header>
@@ -397,18 +401,74 @@
 		min-width: 0;
 	}
 
-	/* ---------- Outlined report controls ---------- */
+	/* ---------- Outlined report controls (compact face + >=44px target) ----------
+	   The visible chrome is a compact ~22px "face" element; the interactive
+	   element (button/label) is a transparent >=44px semantic hit target that
+	   centres the face. This keeps the dense print reference while meeting the
+	   WCAG 2.2 44px target minimum. Keyboard focus renders on the face so the
+	   ring hugs the visible chrome and is never clipped by an ancestor. */
+
+	.search,
+	.chip,
+	.view-toggle button,
+	.primary {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 44px;
+		min-height: 44px;
+		padding: 0;
+		margin: 0;
+		border: 0;
+		background: transparent;
+		color: var(--ink);
+		font-family: var(--sans);
+		cursor: pointer;
+	}
 
 	.search {
-		display: flex;
+		/* label wraps the input; clicking anywhere in the 44px target focuses it */
+		cursor: text;
+	}
+
+	.face {
+		display: inline-flex;
 		align-items: center;
-		gap: 0.45rem;
-		height: 44px;
+		justify-content: center;
+		gap: 0.4rem;
+		height: 1.4rem; /* ~22px compact visible face */
 		padding: 0 0.7rem;
 		border: 1px solid var(--rule);
 		border-radius: var(--r-square);
 		background: var(--paper-bright);
-		color: var(--ink-soft);
+		color: var(--ink);
+		font-size: 0.72rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		white-space: nowrap;
+	}
+
+	/* Selected state = dark navy fill on the face (paper text). */
+	.chip[aria-pressed='true'] .face,
+	.view-toggle button[aria-pressed='true'] .face {
+		background: var(--ink);
+		border-color: var(--ink);
+		color: var(--on-navy);
+		font-weight: 700;
+	}
+
+	.primary .face {
+		background: var(--ink);
+		border-color: var(--ink);
+		color: var(--on-navy);
+		font-weight: 700;
+		font-size: 0.74rem;
+	}
+
+	.search .face {
+		gap: 0.45rem;
 	}
 
 	.search input {
@@ -420,86 +480,35 @@
 		color: var(--ink);
 		font: inherit;
 		font-size: 0.82rem;
+		text-transform: none;
+		letter-spacing: 0;
 	}
 
 	.search input::placeholder {
 		color: var(--ink-soft);
 	}
 
-	/* Composite search field: the container shows a contrasting teal focus ring
-	   (:focus-within) so keyboard focus is unmistakable on the near-white paper
-	   field. The <input> stays the semantic focus target; its own outline is
-	   suppressed to avoid an invisible near-paper double ring. */
-	.search:focus-within {
+	/* Segmented groups are plain flex wrappers of separate faced chips — no
+	   container border and NO overflow clipping, so offset focus outlines on
+	   the inner faces render with a complete perimeter. */
+	.segmented {
+		display: inline-flex;
+		gap: 0.4rem;
+	}
+
+	/* Focus renders on the compact face (complete, unclipped, >=3:1 on paper).
+	   The search field uses :focus-within on its label; the <input> stays the
+	   semantic focus target with its own outline suppressed. */
+	.search:focus-within .face,
+	.chip:focus-visible > .face,
+	.view-toggle button:focus-visible > .face,
+	.primary:focus-visible > .face {
 		outline: 3px solid var(--focus);
 		outline-offset: 2px;
 	}
 
 	.search input:focus-visible {
 		outline: none;
-	}
-
-	.segmented {
-		display: inline-flex;
-		gap: 0;
-		border: 1px solid var(--rule);
-		border-radius: var(--r-square);
-		background: var(--paper-bright);
-		overflow: hidden;
-	}
-
-	.segmented button,
-	.chip {
-		display: inline-flex;
-		align-items: center;
-		font-family: var(--sans);
-		font-size: 0.72rem;
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-		color: var(--ink);
-		border: 0;
-		background: transparent;
-		padding: 0 0.85rem;
-		min-width: 44px;
-		min-height: 44px;
-		justify-content: center;
-		cursor: pointer;
-	}
-
-	/* Inner hairline between adjacent segmented buttons */
-	.view-toggle button + button {
-		border-left: 1px solid var(--rule);
-	}
-
-	.filters .chip + .chip {
-		border-left: 1px solid var(--rule);
-	}
-
-	/* Selected state = dark navy fill (paper text). */
-	.segmented button[aria-pressed='true'],
-	.chip[aria-pressed='true'] {
-		color: var(--on-navy);
-		background: var(--ink);
-		font-weight: 700;
-	}
-
-	.primary {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.4rem;
-		font-family: var(--sans);
-		font-size: 0.74rem;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-		color: var(--on-navy);
-		border: 1px solid var(--ink);
-		background: var(--ink);
-		min-height: 44px;
-		padding: 0 1.05rem;
-		border-radius: var(--r-square);
-		cursor: pointer;
 	}
 
 	/* ---------- Board shell + dark board rule ---------- */
@@ -790,20 +799,20 @@
 		height: 34px;
 		display: grid;
 		place-items: center;
+		border: 2px solid var(--paper);
 		border-radius: 50%;
 		font-family: var(--sans);
 		font-size: 0.7rem;
 		font-weight: 700;
 		color: var(--on-navy);
 		background: oklch(0.4 0.06 258);
-		box-shadow: 0 0 0 2px var(--paper);
 	}
 
 	.avatar.sm {
 		width: 27px;
 		height: 27px;
 		font-size: 0.6rem;
-		box-shadow: 0 0 0 2px var(--paper-bright);
+		border-color: var(--paper-bright);
 	}
 
 	.add-card {
@@ -913,11 +922,20 @@
 		outline-offset: 2px;
 	}
 
+	/* Faced controls show the focus perimeter on their compact face, not the
+	   44px target, so the ring hugs the visible chrome and is never clipped.
+	   The search input's own outline is suppressed (its label's :focus-within
+	   lights the face instead). */
+	.chip:focus-visible,
+	.view-toggle button:focus-visible,
+	.primary:focus-visible,
+	.search input:focus-visible {
+		outline: none;
+	}
+
 	@media (prefers-reduced-motion: no-preference) {
 		.card,
-		.chip,
-		.segmented button,
-		.primary,
+		.face,
 		.add-card,
 		.icon-btn,
 		.error-retry {

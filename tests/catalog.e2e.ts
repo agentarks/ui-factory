@@ -739,13 +739,13 @@ test('opens the kanban-editorial design and its isolated preview states', async 
 	await mineBtn.click();
 	await expect(mineBtn).toHaveAttribute('aria-pressed', 'true');
 
-	// keyboard focus on the search field shows a container ring with meaningful
-	// contrast (>=3:1) against the near-white paper field.
+	// keyboard focus on the search field shows a ring on the compact visible
+	// face with meaningful contrast (>=3:1) against the near-white paper.
 	const previewFrame = page.frame({ url: /kanban-editorial\/preview$/ });
 	expect(previewFrame).toBeTruthy();
 	await frame.getByRole('searchbox').focus();
 	const focusContrast = await previewFrame!.evaluate(() => {
-		const el = document.querySelector('.search');
+		const el = document.querySelector('.search .face');
 		if (!(el instanceof HTMLElement)) return -1;
 		const cs = getComputedStyle(el);
 		if (cs.outlineStyle !== 'solid' || parseFloat(cs.outlineWidth) < 3) return -1;
@@ -769,13 +769,13 @@ test('opens the kanban-editorial design and its isolated preview states', async 
 	});
 	expect(focusContrast).toBeGreaterThanOrEqual(3);
 
-	// The New task primary is a navy-filled button on the paper masthead; its
-	// focus outline (seated outside the fill via outline-offset) renders against
-	// the paper surface, so the ring must still read at >=3:1 there. Reach it by
-	// Tabbing from the preceding control so :focus-visible legitimately applies.
+	// The New task primary's compact face is navy-filled on the paper masthead;
+	// its focus outline (seated outside the fill via outline-offset) renders
+	// against the paper surface, so the ring must still read at >=3:1 there.
+	// Reach it by Tabbing from the preceding control so :focus-visible applies.
 	await frame.getByRole('button', { name: 'List', exact: true }).press('Tab');
 	const primaryFocus = await previewFrame!.evaluate(() => {
-		const el = document.querySelector('.primary');
+		const el = document.querySelector('.primary .face');
 		const surround = el?.closest('.board-head');
 		if (!(el instanceof HTMLElement) || !(surround instanceof HTMLElement)) return -1;
 		const cs = getComputedStyle(el);
@@ -982,24 +982,27 @@ test('opens the kanban-editorial design and its isolated preview states', async 
 			{ role: 'empty-state', ratio: ratio('.empty-col p', '.empty-col') },
 			{ role: 'error-body', ratio: ratio('.error-banner p', '.error-banner') },
 			{ role: 'error-strong', ratio: ratio('.error-banner strong', '.error-banner') },
-			{ role: 'primary-text', ratio: selfRatio('.primary') },
+			{ role: 'primary-text', ratio: selfRatio('.primary .face') },
 			{ role: 'add-card-text', ratio: selfRatio('.add-card') },
 			{ role: 'retry-text', ratio: selfRatio('.error-retry') },
-			{ role: 'chip-active', ratio: selfRatio('.chip[aria-pressed="true"]') },
+			{ role: 'chip-active', ratio: selfRatio('.chip[aria-pressed="true"] .face') },
 			{
 				role: 'chip-inactive',
-				ratio: selfRatio('.chip:not([aria-pressed="true"])')
+				ratio: selfRatio('.chip:not([aria-pressed="true"]) .face')
 			},
 			{
 				role: 'view-active',
-				ratio: selfRatio('.view-toggle button[aria-pressed="true"]')
+				ratio: selfRatio('.view-toggle button[aria-pressed="true"] .face')
 			},
 			{
 				role: 'view-inactive',
-				ratio: selfRatio('.view-toggle button:not([aria-pressed="true"])')
+				ratio: selfRatio('.view-toggle button:not([aria-pressed="true"]) .face')
 			},
-			{ role: 'search-placeholder', ratio: ratio('.search input', '.search', '::placeholder') },
-			{ role: 'search-input', ratio: ratio('.search input', '.search') }
+			{
+				role: 'search-placeholder',
+				ratio: ratio('.search input', '.search .face', '::placeholder')
+			},
+			{ role: 'search-input', ratio: ratio('.search input', '.search .face') }
 		];
 		document.querySelectorAll('.label').forEach((el) => {
 			const name = el.textContent?.trim() || '?';
@@ -1014,6 +1017,152 @@ test('opens the kanban-editorial design and its isolated preview states', async 
 	expect(contrastResults).not.toBeNull();
 	for (const { role, ratio } of contrastResults!) {
 		expect(ratio, `${role} text contrast >= 4.5:1`).toBeGreaterThanOrEqual(4.5);
+	}
+
+	// Finding 3: no rendered element anywhere in the preview has a box-shadow.
+	// The prior avatar overlap rings used box-shadow; they must move to crisp
+	// borders. This generalises the card-only shadow check to every element.
+	const shadowOffenders = await page.evaluate(() => {
+		const offenders: { tag: string; shadow: string }[] = [];
+		document.querySelectorAll('.board-root, .board-root *').forEach((el) => {
+			const cs = getComputedStyle(el);
+			if (cs.boxShadow !== 'none') {
+				offenders.push({
+					tag: (el as HTMLElement).className || el.tagName.toLowerCase(),
+					shadow: cs.boxShadow
+				});
+			}
+		});
+		return offenders;
+	});
+	expect(shadowOffenders, 'no rendered element has a box-shadow').toEqual([]);
+
+	// Finding 2: visible control faces stay compact (<=26px, matching the
+	// ~21-24px Annual Report reference) while their semantic hit targets remain
+	// >=44px. The face is a separate element so the visible chrome does not
+	// bloat to the full target height.
+	const faceRows = await page.evaluate(() => {
+		const measure = (targetSel: string, faceSel: string) => {
+			const t = document.querySelector(targetSel);
+			const f = document.querySelector(faceSel);
+			const empty = { targetH: -1, faceH: -1, faceInsideTarget: false };
+			if (!(t instanceof HTMLElement) || !(f instanceof HTMLElement)) return empty;
+			const tr = t.getBoundingClientRect();
+			const fr = f.getBoundingClientRect();
+			return {
+				targetH: Math.round(tr.height * 10) / 10,
+				faceH: Math.round(fr.height * 10) / 10,
+				faceInsideTarget: fr.top >= tr.top - 0.5 && fr.bottom <= tr.bottom + 0.5
+			};
+		};
+		return [
+			{ name: 'search', ...measure('label.search', 'label.search .face') },
+			{
+				name: 'all',
+				...measure('.chip[aria-pressed="true"]', '.chip[aria-pressed="true"] .face')
+			},
+			{
+				name: 'mine',
+				...measure('.chip:not([aria-pressed="true"])', '.chip:not([aria-pressed="true"]) .face')
+			},
+			{
+				name: 'board',
+				...measure(
+					'.view-toggle button[aria-pressed="true"]',
+					'.view-toggle button[aria-pressed="true"] .face'
+				)
+			},
+			{
+				name: 'list',
+				...measure(
+					'.view-toggle button:not([aria-pressed="true"])',
+					'.view-toggle button:not([aria-pressed="true"]) .face'
+				)
+			},
+			{ name: 'primary', ...measure('.primary', '.primary .face') }
+		];
+	});
+	for (const row of faceRows) {
+		expect(row.targetH, `${row.name} target >=44`).toBeGreaterThanOrEqual(44);
+		expect(row.faceH, `${row.name} visible face compact (<=26px)`).toBeLessThanOrEqual(26);
+		expect(row.faceInsideTarget, `${row.name} face contained in target`).toBe(true);
+	}
+
+	// Finding 1: every segmented control gets a complete, unclipped, >=3:1
+	// focus perimeter. Root-cause lock first — no .segmented ancestor may clip
+	// (the original overflow:hidden cut off the offset focus outline).
+	const overflowLock = await page.evaluate(() =>
+		Array.from(document.querySelectorAll('.segmented')).map((el) => {
+			const cs = getComputedStyle(el);
+			return { ox: cs.overflowX, oy: cs.overflowY };
+		})
+	);
+	expect(overflowLock.length, 'segmented groups present').toBeGreaterThan(0);
+	for (const o of overflowLock) {
+		expect(o.ox, 'segmented overflow-x visible (no clip)').toBe('visible');
+		expect(o.oy, 'segmented overflow-y visible (no clip)').toBe('visible');
+	}
+
+	// Then Tab through every segmented control and confirm a complete >=3:1
+	// focus perimeter renders on its compact face.
+	await page.getByRole('searchbox').focus();
+	const segmentedNames = ['All', 'Mine', 'Due this week', 'Board', 'List'];
+	for (const expected of segmentedNames) {
+		await page.keyboard.press('Tab');
+		const info = await page.evaluate(() => {
+			const el = document.activeElement;
+			if (!(el instanceof HTMLElement)) return null;
+			const face = el.querySelector('.face');
+			const target = face instanceof HTMLElement ? face : el;
+			const cs = getComputedStyle(target);
+			const ctx = document.createElement('canvas').getContext('2d');
+			if (!ctx) return null;
+			const lum = (css: string) => {
+				ctx.clearRect(0, 0, 2, 2);
+				ctx.fillStyle = '#000';
+				ctx.fillStyle = css;
+				ctx.fillRect(0, 0, 2, 2);
+				const d = ctx.getImageData(0, 0, 1, 1).data;
+				const ch = (v: number) => {
+					const s = v / 255;
+					return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+				};
+				return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+			};
+			// The outline seats outside the face; its surround is the control's
+			// nearest opaque ancestor (paper). Climb from the control element.
+			const isOpaque = (c: string) => {
+				const m = c.match(/rgba?\([^)]*\)/);
+				if (!m) return true;
+				const p = m[0].replace(/[^\d.,]/g, '').split(',');
+				return p.length < 4 || parseFloat(p[3]) > 0;
+			};
+			let node: Element | null = el;
+			let bgLum = lum('rgb(255,255,255)');
+			while (node) {
+				const bg = getComputedStyle(node).backgroundColor;
+				if (isOpaque(bg)) {
+					bgLum = lum(bg);
+					break;
+				}
+				node = node.parentElement;
+			}
+			const oL = lum(cs.outlineColor);
+			const contrast = (Math.max(oL, bgLum) + 0.05) / (Math.min(oL, bgLum) + 0.05);
+			return {
+				text: el.textContent?.trim(),
+				outlineStyle: cs.outlineStyle,
+				outlineWidth: parseFloat(cs.outlineWidth),
+				contrast,
+				hasFace: !!face
+			};
+		});
+		expect(info, `${expected} focused`).not.toBeNull();
+		expect(info!.text, `${expected} is the focused control`).toBe(expected);
+		expect(info!.hasFace, `${expected} has a compact face`).toBe(true);
+		expect(info!.outlineStyle, `${expected} focus outline solid`).toBe('solid');
+		expect(info!.outlineWidth, `${expected} focus outline >=3px`).toBeGreaterThanOrEqual(3);
+		expect(info!.contrast, `${expected} focus perimeter >=3:1`).toBeGreaterThanOrEqual(3);
 	}
 
 	// Exact-width responsive: target sizes + no horizontal document overflow on

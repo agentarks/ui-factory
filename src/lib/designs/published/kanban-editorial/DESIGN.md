@@ -37,7 +37,7 @@ A Kanban board for a small product team: a sober report masthead ("Aurora") over
 | `--pri-medium`   | `oklch(0.42 0.09 65)`    | Medium-priority word + dot (AA on paper)                   |
 
 - **Neutrals are tinted** toward hue 250–258 (cool), never pure grey/black/white. `--on-navy` is paper-coloured, not `#fff`.
-- **No gradients, no backdrop blur, no translucency, no box shadows** anywhere (the only `box-shadow` tokens are the 2px paper-coloured rings that separate overlapping avatars against their surface — these are boundary rings, not elevation). Focus is rendered with `outline`, not shadow.
+- **No gradients, no backdrop blur, no translucency, and no box shadows anywhere** — overlapping avatars are separated by a crisp 2px paper-coloured `border`, not a shadow ring. Focus is rendered with `outline`, not shadow.
 - **Teal is restricted** to the 2px column rule, the done check/due treatment, and the focus ring. It is never a fill, a side-stripe, or a label colour.
 - **Label dots are uniform navy** (`--ink-soft`) separators — meaning is carried by the label text, never by dot colour. **Avatars are uniform navy circles** (`oklch(0.4 0.06 258)`) with paper initials; a 2px paper-coloured ring separates overlaps.
 - **The error banner is a full pale-red panel with a full hairline border** (`1px solid --danger`), icon + bold label + Retry + dismiss — **never a side-stripe** (the concept's side-stripe is overridden by the project's absolute side-stripe ban).
@@ -57,7 +57,7 @@ A Kanban board for a small product team: a sober report masthead ("Aurora") over
   - A **thin dark navy 1px board rule** (`border-top: 1px solid --ink`) spans the full width under the masthead, separating report identity from the data.
   - A **2px teal rule** (`border-bottom: 2px solid --accent`) sits under each column heading.
   - A **1px cool-gray hairline** (`--rule`) borders every card, control, and icon button; a lighter `--rule-soft` divides the card footer.
-- **Elevation:** none. Surfaces are separated by hairline borders and rules, never by shadow. The avatar overlap ring is a boundary separator, not depth.
+- **Elevation:** none. Surfaces are separated by hairline borders and rules, never by shadow. Overlapping avatars are separated by a crisp 2px paper-coloured `border` (the later avatar's leading border sits atop the previous one), not by a shadow ring.
 - **Borders:** 1px `--rule` (solid) on cards/controls; 1px dashed `--rule` on the add-card and empty-state affordances; 1px `--danger` on the full error banner.
 
 ## Layout and composition
@@ -68,11 +68,11 @@ A Kanban board for a small product team: a sober report masthead ("Aurora") over
 ## Components and behavior
 
 - **Masthead** (flat paper): serif "Aurora" nameplate (a styled `<p>`, the brand identity) over an uppercase sans sprint line (`<h1>` "Sprint 24 · Board") and an uppercase subtitle of column/card counts. On the right, a row of understated outlined controls that wraps.
-- **Controls:** a near-white outlined **search** field (44px, `--rule` border, sans), **filter chips** (All / Mine / Due this week) and a **Board/List segmented toggle** — all outlined report controls with `aria-pressed`; inactive = ink text on paper, **active = dark navy fill with paper text**. A **navy-filled primary "New task" button** (the one emphatic action). A navy **"Retry"** and a teal-dismiss appear in the error banner. Every control shows the teal focus ring.
+- **Controls (compact face + ≥44px target):** the visible chrome is a compact ~22px outlined "face" element; the interactive element (button/label) is a transparent ≥44px semantic hit target that centres the face. This keeps the dense ~21–24px print reference while meeting the WCAG 2.2 44px target minimum. A near-white outlined **search** field, **filter chips** (All / Mine / Due this week), and a **Board/List segmented toggle** are all `aria-pressed` report controls (separate faced chips, not a clipped group); inactive = ink text on paper, **active = dark navy face fill with paper text**. A **navy-faced primary "New task" button** is the one emphatic action. A navy **"Retry"** and a dismiss control appear in the error banner. Every control shows the teal focus ring on its face.
 - **Column:** a header row with the serif column name (`<h2>`), a sans uppercase count, and an outlined "more actions" icon button (44px); below the 2px teal rule, a vertical list of cards; a dashed "Add a card" button; and a dashed empty-state placeholder when the column has no cards. No stage dot — the teal rule is the column's only accent.
 - **Card** (bordered near-square, 3px radius, no elevation): serif title (`<h3>`, struck through when done), tiny uppercase data-key labels with navy dot separators, an optional checklist progress line, and a footer with the priority indicator, due date (teal with a check when done), and navy assignee avatars. Hover deepens the card border to `--ink-soft` (reduced-motion: still applies, it is a colour change, not motion).
 - **Label:** tiny uppercase sans word with a leading uniform navy dot — one per concept; meaning carried by text, never by dot colour.
-- **Avatar:** paper initials on a uniform navy circle (`oklch(0.4 0.06 258)`) with a 2px paper-coloured ring; exposes the full name via `aria-label`. Two sizes: header-width team avatars are not shown (the masthead keeps to identity + data), card avatars are 27px.
+- **Avatar:** paper initials on a uniform navy circle (`oklch(0.4 0.06 258)`) with a crisp 2px paper-coloured `border` that separates overlaps (the later avatar's leading border sits atop the previous one — no shadow ring); exposes the full name via `aria-label`. Two sizes: header-width team avatars are not shown (the masthead keeps to identity + data), card avatars are 27px.
 - **Empty state:** a dashed hairline placeholder ("No cards yet", italic uppercase) renders in any column with zero cards — see the **In Review** column.
 
 ## Navigation patterns
@@ -83,7 +83,7 @@ This specimen is a single board with no route navigation. When extending to a fu
 
 - **Desktop (≥768px):** columns in a horizontal flex row; the board scrolls horizontally when columns overflow; the board-body scrollbar is thin (`scrollbar-width: thin`, `::-webkit-scrollbar`) in `--rule`.
 - **Mobile/tablet (<768px):** columns stack vertically; the masthead control row wraps; no document-level horizontal overflow at 375/768/1280. Outer padding scales via `clamp`.
-- Touch targets: every interactive control is ≥44px at all viewports (search field, primary, every filter chip, every Board/List segmented button, icon buttons, add-card, Retry, dismiss) — met through 44px min-height plus horizontal padding, so the compact print controls stay visually understated without bloating.
+- Touch targets: every interactive control is a ≥44px semantic target at all viewports (search field, primary, every filter chip, every Board/List segmented button, icon buttons, add-card, Retry, dismiss). The visible chrome stays compact (~21–24px face) because the face is a separate element centred inside the transparent 44px target — the hit area does not bloat the print controls.
 
 ## Interaction and motion
 
@@ -110,7 +110,7 @@ The states below are **visual state/affordance demonstrations only**, not functi
 - Landmarks: `<header>` (banner) + `<main>` + `<section aria-label="Kanban board">` (region); one `<section>` per column with an `<h2>`, cards as `<h3>` inside `<article>`. Heading order h1→h2→h3 is strict.
 - All controls are real `<button>`/`<input>`; filters and view toggle carry `aria-pressed`; counts and icon buttons carry `aria-label`; icons are `aria-hidden`.
 - **Avatars expose the full name** via `aria-label` (initials alone are not enough; `title` is not reliably announced).
-- **Visible focus:** `outline: 3px solid --focus` (teal) with `outline-offset: 2px` on every interactive element — teal reads ≥3:1 (the WCAG 2.2 UI-component minimum) against every paper surface, so keyboard focus is unmistakable. The composite search field shows focus on its container via a contrasting **teal `:focus-within` ring** (the near-paper field would otherwise hide an input outline); the `<input>` remains the semantic focus target, with its own redundant outline suppressed so keyboard users see one clear indicator, not an invisible near-paper double ring.
+- **Visible focus:** `outline: 3px solid --focus` (teal) with `outline-offset: 2px`, ≥3:1 (the WCAG 2.2 UI-component minimum) against every paper surface, so keyboard focus is unmistakable. For the faced controls (search, filters, Board/List, primary) the ring renders on the **compact face**, not the 44px target, so it hugs the visible chrome; segmented groups have **no `overflow` clipping**, so every segmented button gets a **complete, unclipped focus perimeter**. The composite search field lights its face via `:focus-within`; the `<input>` remains the semantic focus target, with its own redundant outline suppressed so keyboard users see one clear indicator, not an invisible near-paper double ring.
 - **WCAG 2.2 AA** is met by construction: dark navy ink (L 0.26) on near-white paper (L ≈ 0.985–0.995), and paper text (L 0.985) on navy fills (L ≈ 0.26–0.4), both give large contrast margins. Meta text uses `--ink-soft` (L 0.4) which stays ≥4.5:1 on paper; label dots, priority, done, and error colours are all dark enough on paper for AA. Meaning is never conveyed by colour/shape alone (priority and status are always labelled in text; label dots are uniform).
 
 ## Extending the design to new pages
@@ -135,7 +135,7 @@ Keep the token set, serif/sans split, hairline-rule structure, and 3px radii con
 
 **Don't**
 
-- Don't use box shadows (except avatar overlap boundary rings), gradients, backdrop blur, translucency, glass, clay, or neumorphic relief — this is the flat print direction.
+- Don't use box shadows, gradients, backdrop blur, translucency, glass, clay, or neumorphic relief — this is the flat print direction. (Avatar overlap separation is a crisp border, never a shadow.)
 - Don't use `#000`/`#fff`, gradient text, or a coloured side-stripe as an accent.
 - Don't render the error as a side-stripe — use the full pale-red banner with a full hairline border.
 - Don't use a gradient shimmer for loading skeletons; use the opacity pulse.
@@ -159,12 +159,13 @@ Keep the token set, serif/sans split, hairline-rule structure, and 3px radii con
 ## Acceptance checklist (for AI coding agents implementing this direction)
 
 - [ ] Near-white cool paper canvas (`oklch(0.985 0.003 250)`) sits behind every surface; brighter paper card/control surfaces (`oklch(0.995 0.002 250)`) hold cards and controls.
-- [ ] All surfaces are flat fills; structure comes only from hairline borders and rules (dark navy 1px board rule, 2px teal column rules, `--rule` card/control borders). **No box shadows** (except avatar overlap boundary rings), **no gradients, no `backdrop-filter`, no translucency**, no glass/clay/neumorphic relief.
+- [ ] All surfaces are flat fills; structure comes only from hairline borders and rules (dark navy 1px board rule, 2px teal column rules, `--rule` card/control borders). **No box shadows anywhere** (avatar overlaps use a crisp border), **no gradients, no `backdrop-filter`, no translucency**, no glass/clay/neumorphic relief.
 - [ ] Cards are bordered near-squares (`--rule` border, **3px radius**, no elevation); the masthead and column/card headings are serif; every control, label, date, count, and checklist is sans.
 - [ ] All colours are OKLCH and tinted cool; no `#000`/`#fff`; no gradient text; no coloured side-stripes; teal restricted to the column rule, the done check, and the focus ring; label dots and avatars uniform navy.
 - [ ] The selected/primary state is a single dark navy fill with paper text; all other controls are understated outlined report controls.
 - [ ] Typography uses the system serif/sans split and the documented scale; hierarchy through serif-vs-sans + scale + weight.
-- [ ] Every interactive element has the teal focus ring (`outline: 3px solid` + offset, ≥3:1 on paper), ≥44px target at all viewports (including every filter chip and Board/List segmented button), and a real role/label; avatars expose the full name; the search field shows a contrasting teal `:focus-within` ring with the input kept as the semantic focus target.
+- [ ] Every interactive control is a ≥44px semantic target whose visible chrome is a compact ~21–24px face centred inside it (search, primary, every filter chip, every Board/List segmented button, icon buttons, add-card, Retry, dismiss); each has a real role/label and avatars expose the full name.
+- [ ] Focus renders as a complete, unclipped teal perimeter (`outline: 3px solid` + offset, ≥3:1 on paper) on every control — on the compact face for faced controls; segmented groups never clip with `overflow`; the search field lights its face via `:focus-within` with the input kept as the semantic focus target.
 - [ ] All text meets WCAG 2.2 AA (≥4.5:1) against its paper background; state is conveyed in text, not colour/shape alone.
 - [ ] Layout is responsive: columns scroll horizontally on desktop and stack on mobile; no document horizontal overflow at 375/768/1280.
 - [ ] Normal UI transitions are ≤0.16s ease colour changes and the skeleton opacity pulse is a 1.6s loop, both gated behind `prefers-reduced-motion: no-preference` (reduced-motion shows a fully static board); no layout-property animation; no bounce/elastic.
