@@ -1037,57 +1037,6 @@ test('opens the kanban-editorial design and its isolated preview states', async 
 	});
 	expect(shadowOffenders, 'no rendered element has a box-shadow').toEqual([]);
 
-	// Finding 2: visible control faces stay compact (<=26px, matching the
-	// ~21-24px Annual Report reference) while their semantic hit targets remain
-	// >=44px. The face is a separate element so the visible chrome does not
-	// bloat to the full target height.
-	const faceRows = await page.evaluate(() => {
-		const measure = (targetSel: string, faceSel: string) => {
-			const t = document.querySelector(targetSel);
-			const f = document.querySelector(faceSel);
-			const empty = { targetH: -1, faceH: -1, faceInsideTarget: false };
-			if (!(t instanceof HTMLElement) || !(f instanceof HTMLElement)) return empty;
-			const tr = t.getBoundingClientRect();
-			const fr = f.getBoundingClientRect();
-			return {
-				targetH: Math.round(tr.height * 10) / 10,
-				faceH: Math.round(fr.height * 10) / 10,
-				faceInsideTarget: fr.top >= tr.top - 0.5 && fr.bottom <= tr.bottom + 0.5
-			};
-		};
-		return [
-			{ name: 'search', ...measure('label.search', 'label.search .face') },
-			{
-				name: 'all',
-				...measure('.chip[aria-pressed="true"]', '.chip[aria-pressed="true"] .face')
-			},
-			{
-				name: 'mine',
-				...measure('.chip:not([aria-pressed="true"])', '.chip:not([aria-pressed="true"]) .face')
-			},
-			{
-				name: 'board',
-				...measure(
-					'.view-toggle button[aria-pressed="true"]',
-					'.view-toggle button[aria-pressed="true"] .face'
-				)
-			},
-			{
-				name: 'list',
-				...measure(
-					'.view-toggle button:not([aria-pressed="true"])',
-					'.view-toggle button:not([aria-pressed="true"]) .face'
-				)
-			},
-			{ name: 'primary', ...measure('.primary', '.primary .face') }
-		];
-	});
-	for (const row of faceRows) {
-		expect(row.targetH, `${row.name} target >=44`).toBeGreaterThanOrEqual(44);
-		expect(row.faceH, `${row.name} visible face compact (<=26px)`).toBeLessThanOrEqual(26);
-		expect(row.faceInsideTarget, `${row.name} face contained in target`).toBe(true);
-	}
-
 	// Finding 1: every segmented control gets a complete, unclipped, >=3:1
 	// focus perimeter. Root-cause lock first — no .segmented ancestor may clip
 	// (the original overflow:hidden cut off the offset focus outline).
@@ -1165,27 +1114,72 @@ test('opens the kanban-editorial design and its isolated preview states', async 
 		expect(info!.contrast, `${expected} focus perimeter >=3:1`).toBeGreaterThanOrEqual(3);
 	}
 
-	// Exact-width responsive: target sizes + no horizontal document overflow on
-	// the direct preview route at exact 375/768/1280.
-	const controls = ['Board', 'List', 'All', 'Mine', 'Due this week'];
-	for (const width of [375, 768, 1280]) {
+	// Exact-width responsive: at each of 375/768/1280, every named faced
+	// control's outer target is >=44px (width and height) while its intended
+	// compact face stays ~21-26px; the full-44px-chrome controls (more-actions,
+	// dismiss) keep their square targets; and there is no document overflow.
+	const widths = [375, 768, 1280];
+	for (const width of widths) {
 		await page.setViewportSize({ width, height: 800 });
-		for (const name of controls) {
-			const box = await page.getByRole('button', { name, exact: true }).boundingBox();
-			expect(box?.height, `${name} height at ${width}`).toBeGreaterThanOrEqual(44);
+
+		// Named face-and-target measure for search, All, Mine, Due this week,
+		// Board, List, and New task. Due this week is measured separately from
+		// the other inactive chip (Mine).
+		const faceRows = await page.evaluate(() => {
+			const measure = (target: Element | null, face: Element | null) => {
+				const empty = { targetH: -1, targetW: -1, faceH: -1, faceInsideTarget: false };
+				if (!(target instanceof HTMLElement) || !(face instanceof HTMLElement)) return empty;
+				const tr = target.getBoundingClientRect();
+				const fr = face.getBoundingClientRect();
+				return {
+					targetH: Math.round(tr.height * 10) / 10,
+					targetW: Math.round(tr.width * 10) / 10,
+					faceH: Math.round(fr.height * 10) / 10,
+					faceInsideTarget: fr.top >= tr.top - 0.5 && fr.bottom <= tr.bottom + 0.5
+				};
+			};
+			const findByText = (selector: string, text: string): Element | null =>
+				Array.from(document.querySelectorAll(selector)).find(
+					(el) => (el.textContent?.trim() ?? '') === text
+				) ?? null;
+			const chip = (text: string) => findByText('.chip', text);
+			const view = (text: string) => findByText('.view-toggle button', text);
+			const faceOf = (el: Element | null): Element | null => el?.querySelector('.face') ?? null;
+			const searchEl = document.querySelector('label.search');
+			const primaryEl = document.querySelector('.primary');
+			return [
+				{ name: 'search', ...measure(searchEl, faceOf(searchEl)) },
+				{ name: 'All', ...measure(chip('All'), faceOf(chip('All'))) },
+				{ name: 'Mine', ...measure(chip('Mine'), faceOf(chip('Mine'))) },
+				{
+					name: 'Due this week',
+					...measure(chip('Due this week'), faceOf(chip('Due this week')))
+				},
+				{ name: 'Board', ...measure(view('Board'), faceOf(view('Board'))) },
+				{ name: 'List', ...measure(view('List'), faceOf(view('List'))) },
+				{ name: 'New task', ...measure(primaryEl, faceOf(primaryEl)) }
+			];
+		});
+		for (const row of faceRows) {
+			expect(row.targetH, `${row.name} target height >=44 at ${width}`).toBeGreaterThanOrEqual(44);
+			expect(row.targetW, `${row.name} target width >=44 at ${width}`).toBeGreaterThanOrEqual(44);
+			expect(row.faceH, `${row.name} compact face ~21-26px at ${width}`).toBeGreaterThanOrEqual(21);
+			expect(row.faceH, `${row.name} compact face <=26px at ${width}`).toBeLessThanOrEqual(26);
+			expect(row.faceInsideTarget, `${row.name} face contained in target at ${width}`).toBe(true);
 		}
+
+		// Full-44px-chrome controls (not faced): more-actions + dismiss keep
+		// square >=44x44 targets at every width.
 		const moreActions = await page
 			.getByRole('button', { name: 'More actions for Backlog' })
 			.boundingBox();
-		expect(moreActions?.width).toBeGreaterThanOrEqual(44);
-		expect(moreActions?.height).toBeGreaterThanOrEqual(44);
+		expect(moreActions?.width, `more-actions width at ${width}`).toBeGreaterThanOrEqual(44);
+		expect(moreActions?.height, `more-actions height at ${width}`).toBeGreaterThanOrEqual(44);
 		const dismiss = await page
 			.getByRole('button', { name: 'Dismiss error', exact: true })
 			.boundingBox();
-		expect(dismiss?.width).toBeGreaterThanOrEqual(44);
-		expect(dismiss?.height).toBeGreaterThanOrEqual(44);
-		const newTask = await page.getByRole('button', { name: 'New task' }).boundingBox();
-		expect(newTask?.height).toBeGreaterThanOrEqual(44);
+		expect(dismiss?.width, `dismiss width at ${width}`).toBeGreaterThanOrEqual(44);
+		expect(dismiss?.height, `dismiss height at ${width}`).toBeGreaterThanOrEqual(44);
 		const overflow = await page.evaluate(
 			() =>
 				document.documentElement.scrollWidth - document.documentElement.clientWidth ||
