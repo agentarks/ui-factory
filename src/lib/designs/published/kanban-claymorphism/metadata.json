@@ -1,0 +1,24 @@
+{
+	"schemaVersion": 1,
+	"slug": "kanban-claymorphism",
+	"version": "1.0.0",
+	"title": "Kanban Board · Luminous Putty",
+	"summary": "A compact dark claymorphism Kanban board on a deep indigo canvas with medium-dark indigo cards and controls, light lavender text, open columns, 6–10px radii, and restrained layered inset/cast shadows with a soft violet glow.",
+	"pageType": "data-management",
+	"applicationTypes": ["project-management", "productivity", "team-collaboration"],
+	"visualStyles": ["claymorphism", "soft-3d"],
+	"theme": "dark",
+	"density": "compact",
+	"platforms": ["web", "desktop", "tablet", "mobile"],
+	"status": "production-ready",
+	"tags": [
+		"kanban",
+		"board",
+		"claymorphism",
+		"dark-theme",
+		"compact",
+		"indigo",
+		"soft-3d",
+		"tactile"
+	]
+}

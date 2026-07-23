@@ -369,3 +369,342 @@ test('opens the kanban-neumorphism design and its isolated preview states', asyn
 	expect(chipHoverShadow!.shadow).not.toBe(chipRestShadow!.shadow); // shadow changed
 	expect(chipHoverShadow!.maxCobaltGap).toBeGreaterThanOrEqual(80); // cobalt shadow present
 });
+
+test('opens the kanban-claymorphism design and its isolated preview states', async ({ page }) => {
+	await page.goto('/designs/kanban-claymorphism');
+
+	await expect(
+		page.getByRole('heading', { name: 'Kanban Board · Luminous Putty', exact: false })
+	).toBeVisible();
+	await expect(
+		page.getByText(
+			'A compact dark claymorphism Kanban board on a deep indigo canvas with medium-dark indigo cards and controls, light lavender text, open columns, 6–10px radii, and restrained layered inset/cast shadows with a soft violet glow.',
+			{ exact: true }
+		)
+	).toBeVisible();
+
+	const frame = page.frameLocator('iframe[title*="preview"i]');
+	await expect(frame.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'New task' })).toBeVisible();
+	await expect(frame.getByText('Backlog', { exact: true })).toBeVisible();
+	await expect(frame.getByRole('heading', { name: 'In Review' })).toBeVisible();
+	await expect(frame.getByText('No cards yet')).toBeVisible();
+	await expect(frame.getByText('Sync paused', { exact: false })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'Retry' })).toBeVisible();
+	await expect(frame.locator('.skeleton-card')).toBeVisible();
+
+	// interaction smoke: toggling a filter updates its pressed state (claymorphic
+	// "selected = pressed in")
+	const mineBtn = frame.getByRole('button', { name: 'Mine', exact: true });
+	await mineBtn.click();
+	await expect(mineBtn).toHaveAttribute('aria-pressed', 'true');
+
+	// keyboard focus on the search field shows a container ring with meaningful
+	// contrast (>=3:1, the WCAG UI-component minimum) against the field surface,
+	// proving the ring is visible on the dark claymorphic field.
+	const previewFrame = page.frame({ url: /kanban-claymorphism\/preview$/ });
+	expect(previewFrame).toBeTruthy();
+	await frame.getByRole('searchbox').focus();
+	const focusContrast = await previewFrame!.evaluate(() => {
+		const el = document.querySelector('.search');
+		if (!(el instanceof HTMLElement)) return -1;
+		const cs = getComputedStyle(el);
+		if (cs.outlineStyle !== 'solid' || parseFloat(cs.outlineWidth) < 3) return -1;
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return -1;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const oL = lum(cs.outlineColor);
+		const bL = lum(cs.backgroundColor);
+		return (Math.max(oL, bL) + 0.05) / (Math.min(oL, bL) + 0.05);
+	});
+	expect(focusContrast).toBeGreaterThanOrEqual(3);
+
+	// The New task primary is a violet-filled button; its focus outline renders
+	// against the surrounding app-bar surface (outline-offset seats it outside
+	// the fill), so the focus ring must still read at >=3:1 there. Reach it by
+	// Tabbing from the preceding control so :focus-visible legitimately applies.
+	await frame.getByRole('button', { name: 'List', exact: true }).press('Tab');
+	const primaryFocus = await previewFrame!.evaluate(() => {
+		const el = document.querySelector('.primary');
+		const surround = el?.closest('.app-bar');
+		if (!(el instanceof HTMLElement) || !(surround instanceof HTMLElement)) return -1;
+		const cs = getComputedStyle(el);
+		if (cs.outlineStyle !== 'solid' || parseFloat(cs.outlineWidth) < 3) return -1;
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return -1;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const oL = lum(cs.outlineColor);
+		const bL = lum(getComputedStyle(surround).backgroundColor);
+		return (Math.max(oL, bL) + 0.05) / (Math.min(oL, bL) + 0.05);
+	});
+	expect(primaryFocus).toBeGreaterThanOrEqual(3);
+
+	// Hover material behavior: the medium-dark card face stays unchanged;
+	// only the computed box-shadow changes (deeper extrusion), so text contrast
+	// on the unchanged face is preserved at AA.
+	const bgOf = (sel: string) =>
+		previewFrame!.evaluate((s) => {
+			const el = document.querySelector(s);
+			if (!(el instanceof HTMLElement)) return null;
+			return { color: getComputedStyle(el).backgroundColor };
+		}, sel);
+	const shadowOf = (sel: string) =>
+		previewFrame!.evaluate((s) => {
+			const el = document.querySelector(s);
+			if (!(el instanceof HTMLElement)) return null;
+			return { shadow: getComputedStyle(el).boxShadow };
+		}, sel);
+	const contrastBetween = (textSel: string, bgSel: string) =>
+		previewFrame!.evaluate(
+			([t, b]: [string, string]) => {
+				const text = document.querySelector(t);
+				const bg = document.querySelector(b);
+				if (!(text instanceof HTMLElement) || !(bg instanceof HTMLElement)) return -1;
+				const ctx = document.createElement('canvas').getContext('2d');
+				if (!ctx) return -1;
+				const lum = (css: string) => {
+					ctx.clearRect(0, 0, 2, 2);
+					ctx.fillStyle = '#000';
+					ctx.fillStyle = css;
+					ctx.fillRect(0, 0, 2, 2);
+					const d = ctx.getImageData(0, 0, 1, 1).data;
+					const ch = (v: number) => {
+						const x = v / 255;
+						return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+					};
+					return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+				};
+				const tL = lum(getComputedStyle(text).color);
+				const bL = lum(getComputedStyle(bg).backgroundColor);
+				return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+			},
+			[textSel, bgSel] as [string, string]
+		);
+
+	// representative card: face background unchanged on hover; shadow changed
+	const cardRestBg = await bgOf('.card');
+	const cardRestShadow = await shadowOf('.card');
+	expect(cardRestShadow).not.toBeNull();
+	await frame.locator('.card').first().hover();
+	await page.waitForTimeout(260); // let the ease-out box-shadow transition settle
+	const cardHoverBg = await bgOf('.card');
+	const cardHoverShadow = await shadowOf('.card');
+	expect(cardHoverBg!.color).toBe(cardRestBg!.color); // medium-dark face unchanged
+	expect(cardHoverShadow!.shadow).not.toBe(cardRestShadow!.shadow); // shadow changed (deeper extrusion)
+	expect(await contrastBetween('.card-title', '.card')).toBeGreaterThanOrEqual(4.5); // AA on card face
+
+	// reduced-motion: skeleton pulse animation is suppressed; the skeleton
+	// remains visible but static (no infinite animation).
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	const skeletonAnimating = await previewFrame!.evaluate(() => {
+		const el = document.querySelector('.skel');
+		if (!(el instanceof HTMLElement)) return null;
+		const cs = getComputedStyle(el);
+		// Under reduced-motion the animation-name should be 'none' (no pulse).
+		return cs.animationName === 'none';
+	});
+	expect(skeletonAnimating).toBe(true);
+
+	// ------------------------------------------------------------------
+	// Direct preview route: exact-width responsive assertions + table-driven
+	// actual-parent contrast audit. The detail page embeds the preview in a
+	// narrower iframe, so target-size and overflow checks must run on the
+	// standalone /preview route at exact 375/768/1280 viewport widths.
+	// ------------------------------------------------------------------
+	await page.goto('/designs/kanban-claymorphism/preview');
+	await expect(page.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
+
+	// Visual signature: the selected reference (Luminous Putty concept theme-6)
+	// uses dark indigo surfaces throughout — dark canvas, dark bar, medium-dark
+	// card/control faces with light lavender text, transparent/open column
+	// bodies, compact radii, layered inset clay shadow with restrained glow.
+	// No near-white pastel faces, no large raised column shells.
+	await page.setViewportSize({ width: 1280, height: 800 });
+	const sig = await page.evaluate(() => {
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const cs = (sel: string) => {
+			const el = document.querySelector(sel);
+			return el instanceof HTMLElement ? getComputedStyle(el) : null;
+		};
+		const bgLum = (sel: string) => {
+			const c = cs(sel);
+			return c ? lum(c.backgroundColor) : -1;
+		};
+		const colorLum = (sel: string) => {
+			const c = cs(sel);
+			return c ? lum(c.color) : -1;
+		};
+		const cardCs = cs('.card');
+		return {
+			canvasLum: bgLum('.board-root'),
+			barLum: bgLum('.app-bar'),
+			cardBgLum: bgLum('.card'),
+			titleColorLum: colorLum('.card-title'),
+			columnBg: cs('.column')?.backgroundColor ?? '',
+			cardRadius: parseFloat(cardCs?.borderRadius ?? '0'),
+			cardShadow: cardCs?.boxShadow ?? '',
+			chipBgLum: bgLum('.chip:not([aria-pressed="true"])'),
+			searchBgLum: bgLum('.search')
+		};
+	});
+	expect(sig).not.toBeNull();
+	expect(sig!.canvasLum, 'canvas dark').toBeLessThan(0.06);
+	expect(sig!.barLum, 'bar dark').toBeLessThan(0.04);
+	expect(sig!.cardBgLum, 'card face medium-dark (not near-white)').toBeGreaterThanOrEqual(0.02);
+	expect(sig!.cardBgLum, 'card face not near-white').toBeLessThan(0.15);
+	expect(sig!.titleColorLum, 'card text light lavender').toBeGreaterThan(0.5);
+	expect(sig!.columnBg, 'column transparent/open').toMatch(/transparent|rgba\(0,\s*0,\s*0,\s*0\)/);
+	expect(sig!.cardRadius, 'card radius compact (<=10px)').toBeLessThanOrEqual(10);
+	expect(sig!.cardShadow, 'clay shadow with inset layers').toContain('inset');
+	expect(sig!.chipBgLum, 'inactive chip dark').toBeLessThan(0.15);
+	expect(sig!.searchBgLum, 'search face dark').toBeLessThan(0.15);
+
+	// Table-driven WCAG AA contrast audit: every distinct semantic text role
+	// against its actual opaque parent surface, including all repeated color
+	// variants (avatars, labels, active/inactive controls, placeholder).
+	const contrastResults = await page.evaluate(() => {
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const ratio = (textSel: string, bgSel: string, pseudo?: string) => {
+			const textEl = document.querySelector(textSel);
+			const bgEl = document.querySelector(bgSel);
+			if (!(textEl instanceof HTMLElement) || !(bgEl instanceof HTMLElement)) return -1;
+			const cs = pseudo ? getComputedStyle(textEl, pseudo) : getComputedStyle(textEl);
+			const tL = lum(cs.color);
+			const bL = lum(getComputedStyle(bgEl).backgroundColor);
+			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+		};
+		const selfRatio = (sel: string) => ratio(sel, sel);
+		const elRatio = (el: Element) => {
+			if (!(el instanceof HTMLElement)) return -1;
+			const tL = lum(getComputedStyle(el).color);
+			const bL = lum(getComputedStyle(el).backgroundColor);
+			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+		};
+		const results: { role: string; ratio: number }[] = [
+			{ role: 'card-title', ratio: ratio('.card-title', '.card') },
+			{ role: 'checklist', ratio: ratio('.checklist', '.card') },
+			{ role: 'due-regular', ratio: ratio('.due:not(.is-done)', '.card') },
+			{ role: 'due-done', ratio: ratio('.due.is-done', '.card') },
+			{ role: 'pri-high', ratio: ratio('.pri-high', '.card') },
+			{ role: 'pri-medium', ratio: ratio('.pri-medium', '.card') },
+			{ role: 'board-title', ratio: ratio('.title-block h1', '.app-bar') },
+			{ role: 'subtitle', ratio: ratio('.subtitle', '.app-bar') },
+			{ role: 'column-heading', ratio: ratio('.column-head h2', '.column-head') },
+			{ role: 'count-badge', ratio: selfRatio('.count') },
+			{ role: 'empty-state', ratio: ratio('.empty-col p', '.empty-col') },
+			{ role: 'error-body', ratio: ratio('.error-banner p', '.error-banner') },
+			{ role: 'error-strong', ratio: ratio('.error-banner strong', '.error-banner') },
+			{ role: 'primary-text', ratio: selfRatio('.primary') },
+			{ role: 'add-card-text', ratio: selfRatio('.add-card') },
+			{ role: 'retry-text', ratio: selfRatio('.error-retry') },
+			{ role: 'project-chip', ratio: selfRatio('.project-chip') },
+			{ role: 'chip-active', ratio: selfRatio('.chip[aria-pressed="true"]') },
+			{
+				role: 'chip-inactive',
+				ratio: selfRatio('.chip:not([aria-pressed="true"])')
+			},
+			{
+				role: 'view-active',
+				ratio: selfRatio('.view-toggle button[aria-pressed="true"]')
+			},
+			{
+				role: 'view-inactive',
+				ratio: selfRatio('.view-toggle button:not([aria-pressed="true"])')
+			},
+			{ role: 'search-placeholder', ratio: ratio('.search input', '.search', '::placeholder') },
+			{ role: 'search-input', ratio: ratio('.search input', '.search') }
+		];
+		// Every rendered label instance on the shared dark label face.
+		document.querySelectorAll('.label').forEach((el) => {
+			const name = el.textContent?.trim() || '?';
+			results.push({ role: `label:${name}`, ratio: elRatio(el) });
+		});
+		// Every avatar variant (each member has a distinct hue fill)
+		document.querySelectorAll('.avatar').forEach((el) => {
+			const initials = el.textContent?.trim() || '?';
+			results.push({ role: `avatar:${initials}`, ratio: elRatio(el) });
+		});
+		return results;
+	});
+	expect(contrastResults).not.toBeNull();
+	for (const { role, ratio } of contrastResults!) {
+		expect(ratio, `${role} text contrast >= 4.5:1`).toBeGreaterThanOrEqual(4.5);
+	}
+
+	// Exact-width responsive: target sizes + no horizontal document overflow on
+	// the direct preview route at exact 375/768/1280. The overflow check uses
+	// documentElement.scrollWidth/clientWidth and scrollX to catch real document
+	// overflow (e.g. from uncontained absolutely-positioned nodes).
+	const controls = ['Board', 'List', 'All', 'Mine', 'Due this week'];
+	for (const width of [375, 768, 1280]) {
+		await page.setViewportSize({ width, height: 800 });
+		for (const name of controls) {
+			const box = await page.getByRole('button', { name, exact: true }).boundingBox();
+			expect(box?.height, `${name} height at ${width}`).toBeGreaterThanOrEqual(44);
+		}
+		const moreActions = await page
+			.getByRole('button', { name: 'More actions for Backlog' })
+			.boundingBox();
+		expect(moreActions?.width).toBeGreaterThanOrEqual(44);
+		expect(moreActions?.height).toBeGreaterThanOrEqual(44);
+		const dismiss = await page
+			.getByRole('button', { name: 'Dismiss error', exact: true })
+			.boundingBox();
+		expect(dismiss?.width).toBeGreaterThanOrEqual(44);
+		expect(dismiss?.height).toBeGreaterThanOrEqual(44);
+		const overflow = await page.evaluate(
+			() =>
+				document.documentElement.scrollWidth - document.documentElement.clientWidth ||
+				window.scrollX
+		);
+		expect(overflow, `horizontal overflow at ${width}`).toBeLessThanOrEqual(0);
+	}
+});

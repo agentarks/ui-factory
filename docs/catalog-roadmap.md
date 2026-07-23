@@ -14,18 +14,18 @@ A **Kanban board** for a small product team: 3–4 columns (Backlog → In Progr
 
 Each is one single-page specimen with a meaningfully distinct visual direction. Every style is adapted to keep a WCAG 2.2 AA baseline — styles with inherent contrast challenges (neumorphism, claymorphism, brutalism) raise text/background contrast and never rely on shape alone.
 
-| #   | Slug                   | Style                   | Visual signature                                                                                     | Theme | Density     |
-| --- | ---------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------- | ----- | ----------- |
-| 1   | `kanban-flat-material` | Flat / Material         | Solid color blocks, crisp elevation shadows, bold accents, app-like chrome                           | light | comfortable |
-| 2   | `kanban-glassmorphism` | Glassmorphism           | Frosted translucent panels over a soft low-chroma mist wash, cool-gray hairlines, calm accent        | light | comfortable |
-| 3   | `kanban-neumorphism`   | Neumorphism             | Soft extruded/inset monochrome surfaces, dual light+dark shadows, tactile, low-contrast lifted to AA | light | comfortable |
-| 4   | `kanban-claymorphism`  | Claymorphism            | Puffy pastel 3D shapes, rounded marshmallow cards, soft drop shadows, candy palette                  | light | comfortable |
-| 5   | `kanban-illustration`  | Illustration / Playful  | Chunky illustrated accents, stickers, rounded friendly shapes, doodles, bright palette               | light | spacious    |
-| 6   | `kanban-editorial`     | Editorial / Typographic | Serif display type, generous whitespace, content-first, restrained print palette, big headings       | light | spacious    |
-| 7   | `kanban-swiss`         | Swiss / Minimal         | Strict grid, austere sans, monochrome with one accent, precise alignment, high craft                 | light | comfortable |
-| 8   | `kanban-brutalism`     | Brutalism               | Raw monospace, harsh borders, black/white + one accent, exposed grid, high contrast                  | light | compact     |
-| 9   | `kanban-dark-neon`     | Dark / Neon             | Near-black canvas, glowing neon accents, monospace metrics, terminal/cyberpunk vibe                  | dark  | compact     |
-| 10  | `kanban-skeuomorphic`  | Skeuomorphic            | Realistic textures and depth, bevels, physical affordances, layered shadows, material metaphors      | light | comfortable |
+| #   | Slug                   | Style                   | Visual signature                                                                                                        | Theme | Density     |
+| --- | ---------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------- | ----- | ----------- |
+| 1   | `kanban-flat-material` | Flat / Material         | Solid color blocks, crisp elevation shadows, bold accents, app-like chrome                                              | light | comfortable |
+| 2   | `kanban-glassmorphism` | Glassmorphism           | Frosted translucent panels over a soft low-chroma mist wash, cool-gray hairlines, calm accent                           | light | comfortable |
+| 3   | `kanban-neumorphism`   | Neumorphism             | Soft extruded/inset monochrome surfaces, dual light+dark shadows, tactile, low-contrast lifted to AA                    | light | comfortable |
+| 4   | `kanban-claymorphism`  | Claymorphism            | Deep indigo canvas, medium-dark indigo cards/controls, light lavender text, open columns, 6–10px radii, restrained glow | dark  | compact     |
+| 5   | `kanban-illustration`  | Illustration / Playful  | Chunky illustrated accents, stickers, rounded friendly shapes, doodles, bright palette                                  | light | spacious    |
+| 6   | `kanban-editorial`     | Editorial / Typographic | Serif display type, generous whitespace, content-first, restrained print palette, big headings                          | light | spacious    |
+| 7   | `kanban-swiss`         | Swiss / Minimal         | Strict grid, austere sans, monochrome with one accent, precise alignment, high craft                                    | light | comfortable |
+| 8   | `kanban-brutalism`     | Brutalism               | Raw monospace, harsh borders, black/white + one accent, exposed grid, high contrast                                     | light | compact     |
+| 9   | `kanban-dark-neon`     | Dark / Neon             | Near-black canvas, glowing neon accents, monospace metrics, terminal/cyberpunk vibe                                     | dark  | compact     |
+| 10  | `kanban-skeuomorphic`  | Skeuomorphic            | Realistic textures and depth, bevels, physical affordances, layered shadows, material metaphors                         | light | comfortable |
 
 ## Build order and why
 
@@ -34,7 +34,7 @@ Each is one single-page specimen with a meaningfully distinct visual direction. 
 1. **`kanban-flat-material`** — cleanest, most accessible reference style; re-skins the locked baseline and confirms the structural baseline every other style shares.
 2. **`kanban-glassmorphism`** — _(published first; locked the content baseline)_ first visually demanding direction; proves blur/gradient/translucency handling.
 3. **`kanban-neumorphism`** — proves the AA-contrast adaptation pattern for low-contrast styles early.
-4. **`kanban-claymorphism`** — puffy 3D; proves custom shadows and candy palette.
+4. **`kanban-claymorphism`** — compact dark putty; proves layered inset/cast shadows, open-column composition, and restrained glow while preserving AA.
 5. **`kanban-illustration`** — first decorative/asset direction; proves illustration + playful chrome.
 6. **`kanban-editorial`** — serif/whitespace; proves typographic, content-first restraint.
 7. **`kanban-swiss`** — grid/craft; proves strict minimal composition.
