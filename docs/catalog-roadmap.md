@@ -3,7 +3,7 @@
 The catalog compares **distinct visual directions on a fixed page subject**. It is built in chapters per page type: fix the page, vary the visual language, and keep every direction at a WCAG 2.2 AA baseline.
 
 - **Kanban chapter — COMPLETE** (10 styles; see below).
-- **Dashboard chapter — next** (4 dashboard page types × 5 directions; see the [Dashboard chapter](#dashboard-chapter) section).
+- **Dashboard chapter — next** (4 dashboard page types; each gets an open concept brainstorm of distinct directions — no pre-locked library; see the [Dashboard chapter](#dashboard-chapter) section).
 
 ## Kanban chapter — COMPLETE
 
@@ -59,23 +59,10 @@ Order is advisory; re-prioritize if a particular style is needed sooner.
 
 ## Dashboard chapter
 
-Four dashboard page types, each rendered in the **same five visual directions**, so a user can compare directions within a type and compare the same direction across types. Each type locks its own baseline content (copy-and-re-skin, same model as Kanban); only the visual language changes.
+Four dashboard page types. **Each type gets an open concept brainstorm of distinct visual directions** — the user picks freely from the brainstorm, and winning directions may be reused across the other types. There is no pre-locked direction library. Each type locks its own baseline content (copy-and-re-skin, same model as Kanban); only the visual language changes.
 
-- 4 types × 5 directions = **20 designs**.
 - `pageType`: `dashboard`.
-- One **shared visual-direction library** is reused across all four types.
-
-### Shared direction library (5)
-
-| #   | Direction               | Signature                                                                                     | Theme | Density     |
-| --- | ----------------------- | --------------------------------------------------------------------------------------------- | ----- | ----------- |
-| 1   | Flat / Material         | Clean surfaces, crisp elevation, one bold accent — the Stripe/Linear SaaS reference           | light | comfortable |
-| 2   | Editorial / Typographic | Serif display, generous whitespace, restrained 2-colour print palette, content-first          | light | spacious    |
-| 3   | Dark / Operational      | Near-black canvas, luminous metrics, monospace numerals, high-contrast status — observability | dark  | compact     |
-| 4   | Data-Dense / Analytical | Tight tabular grids, tabular numerics, maximum information density, restrained colour         | light | compact     |
-| 5   | Soft / Consumer         | Rounded, soft tints, friendly type, calm, low density                                         | light | spacious    |
-
-Every direction is adapted to keep a WCAG 2.2 AA baseline; data-dense and dark directions raise text/background contrast and never rely on colour alone for status.
+- The concept gate is **ten distinct directions on that type's locked baseline** (like Kanban); the user picks from the open brainstorm rather than from a pre-set list.
 
 ### The four dashboard types
 
@@ -89,7 +76,7 @@ Every direction is adapted to keep a WCAG 2.2 AA baseline; data-dense and dark d
 ### Build order
 
 1. **SaaS** first — validates the dashboard adaptation of the loop (charts/KPIs/tables are heavier than Kanban cards) and locks the SaaS baseline.
-2. **Operational**, then **Marketing**, then **Finance** — phased, one type at a time. Each type locks its own baseline before its five styles are built.
+2. **Operational**, then **Marketing**, then **Finance** — phased, one type at a time. Each type locks its own baseline before its styles are built.
 
 Order is advisory; re-prioritize if a type is needed sooner.
 
@@ -103,7 +90,3 @@ A product-analytics dashboard for **"Aurora"** (same product universe as the Kan
 - Breakdown: revenue by plan (Pro / Team / Enterprise / Free).
 - Table: Top accounts (5 rows) — account · plan · MRR · status (healthy/at-risk/new) · owner.
 - Demonstrated states per style: loading skeleton (KPIs + chart), error (chart failed → Retry), empty (a filtered segment with no data), and a goal/status indicator.
-
-### Concept-gate adaptation
-
-Because the direction library is pre-locked, each type's concept phase explores **treatments of the five directions on that subject** — two variants per direction (ten concepts), and the user picks one treatment per direction — rather than ten open concepts per style.
