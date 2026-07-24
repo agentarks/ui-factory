@@ -2894,12 +2894,12 @@ test('opens the kanban-terminal design and its isolated preview states', async (
 	await page.goto('/designs/kanban-terminal');
 
 	await expect(
-		page.getByRole('heading', { name: 'Kanban Board · ncurses Terminal', exact: false })
+		page.getByRole('heading', { name: 'Kanban Board · ncurses Terminal', exact: true })
 	).toBeVisible();
 	await expect(
 		page.getByText(
-			'A classic ncurses/TUI Kanban board on a tinted near-black canvas with full monospace',
-			{ exact: false }
+			'A classic ncurses/TUI Kanban board on a tinted near-black canvas with full monospace, reverse-video header and column title bars, bordered dialog-window columns, bracketed field and state notation, restrained ANSI-like semantic colors, a status line consistent with the visible sync error, and an inactive key-map reference labelled display-only (no active shortcuts) — no glow, gradients, graph paper, or backdrop blur.',
+			{ exact: true }
 		)
 	).toBeVisible();
 
@@ -2969,21 +2969,16 @@ test('opens the kanban-terminal design and its isolated preview states', async (
 		};
 		let gradientFound = false;
 		let backdropFound = false;
-		let blurShadowFound = false;
+		let anyShadowFound = false;
 		const fonts = new Set<string>();
 		document.querySelectorAll('.board-root, .board-root *').forEach((el) => {
 			const c = getComputedStyle(el);
 			if (/gradient/i.test(c.backgroundImage)) gradientFound = true;
 			if (c.backdropFilter !== 'none') backdropFound = true;
 			fonts.add(c.fontFamily.toLowerCase());
-			// ncurses is flat: no blur box-shadows anywhere (distinguishes it
-			// from the Holodeck cyan-glow direction).
-			if (c.boxShadow !== 'none') {
-				const m = c.boxShadow.match(
-					/(?:rgba?\([^)]*\)|#\S+|oklch\([^)]*\))\s+([-\d.]+px)\s+([-\d.]+px)\s+([-\d.]+px)/
-				);
-				if (m && parseFloat(m[3]) > 0) blurShadowFound = true;
-			}
+			// ncurses is flat: the stated signature is ZERO box-shadows anywhere
+			// (depth comes from borders + reverse video, never glow/cast).
+			if (c.boxShadow !== 'none') anyShadowFound = true;
 		});
 		const rootCs = cs('.board-root');
 		const barCs = cs('.app-bar');
@@ -3013,7 +3008,7 @@ test('opens the kanban-terminal design and its isolated preview states', async (
 			priorityHighText: priHigh?.textContent ?? '',
 			gradientFound,
 			backdropFound,
-			blurShadowFound
+			anyShadowFound
 		};
 	});
 	expect(sig).not.toBeNull();
@@ -3033,20 +3028,35 @@ test('opens the kanban-terminal design and its isolated preview states', async (
 	expect(sig!.countBracketed, 'count uses bracket notation').toBe(true);
 	expect(sig!.labelBracketed, 'labels use bracket notation').toBe(true);
 	expect(sig!.priorityHighText, 'priority state label is bracketed').toMatch(/\[!?HIGH\]/);
-	// distinct from Holodeck cyan-glow and Blueprint graph-paper: no blur glow,
-	// no gradient, no backdrop blur.
-	expect(sig!.blurShadowFound, 'no glow/blur shadows (distinct from Holodeck)').toBe(false);
+	// distinct from Holodeck cyan-glow and Blueprint graph-paper: the stated
+	// ncurses signature is ZERO box-shadows anywhere, plus no gradient/backdrop.
+	expect(sig!.anyShadowFound, 'zero box-shadows anywhere (flat signature)').toBe(false);
 	expect(sig!.gradientFound, 'no gradient').toBe(false);
 	expect(sig!.backdropFound, 'no backdrop blur').toBe(false);
 
-	// compact bottom function/status legend, adapted only to real specimen
-	// actions (New / Search / Board-List / Retry). Honest key hints, no fake
-	// destructive F-key behavior.
+	// Bottom status line + key map: the established inert-specimen policy.
+	// The footer is visibly AND accessibly labelled as an INACTIVE visual
+	// key-map reference (display only — no active shortcuts / not bindings),
+	// and its status is consistent with the visible "Sync paused" error
+	// (READY is absent while the error is present). No fake shortcuts exist.
 	const legend = page.locator('.status-legend');
-	await expect(legend, 'status legend present').toBeVisible();
+	await expect(legend, 'status footer present').toBeVisible();
+	const legendAria = await legend.getAttribute('aria-label');
+	expect(legendAria ?? '', 'footer accessible name conveys inactive reference').toMatch(
+		/inactive|reference|display/i
+	);
+	// A visible disclosure labels the glyphs as an inactive, display-only map.
+	await expect(legend.getByText(/reference/i)).toBeVisible();
+	await expect(legend.getByText(/display/i)).toBeVisible();
+	// READY conflicts with the visible sync error and must NOT appear.
+	expect(await legend.getByText('READY').count(), 'no READY while sync error present').toBe(0);
+	await expect(page.locator('.error-banner')).toBeVisible();
+	// The reference still documents the real specimen actions (New / Search).
 	const legendText = (await legend.textContent()) ?? '';
-	expect(legendText, 'legend maps to real New/Search actions').toMatch(/New/i);
-	expect(legendText, 'legend maps to real Search action').toMatch(/Search/i);
+	expect(legendText, 'reference documents New action').toMatch(/New/i);
+	expect(legendText, 'reference documents Search action').toMatch(/Search/i);
+	// No <kbd> (keybinding semantics) — glyphs are inert reference spans.
+	expect(await page.locator('.status-legend kbd').count(), 'no keybinding semantics (kbd)').toBe(0);
 
 	// restrained ANSI semantic colors: priority red, done green, active yellow.
 	const ansi = await page.evaluate(() => {
@@ -3066,15 +3076,189 @@ test('opens the kanban-terminal design and its isolated preview states', async (
 		};
 		const doneTitle = cs('.card.is-done .card-title');
 		const activeBorder = cs('.column.is-active');
+		const accentToken = cs('.board-root');
 		return {
 			priorityHighRed: cs('.pri-high') ? channels(cs('.pri-high')!.color).r : -1,
 			doneGreen: doneTitle ? channels(doneTitle.color).g : -1,
-			activeYellow: activeBorder ? channels(activeBorder.borderTopColor) : null
+			activeYellow: activeBorder ? channels(activeBorder.borderTopColor) : null,
+			activeYellowEqualsAccent:
+				activeBorder && accentToken
+					? JSON.stringify(channels(activeBorder.borderTopColor)) ===
+						JSON.stringify(channels(accentToken.getPropertyValue('--accent') || 'rgb(0,0,0)'))
+					: false
 		};
 	});
 	expect(ansi).not.toBeNull();
 	expect(ansi!.priorityHighRed, 'high priority is ANSI red').toBeGreaterThan(150);
 	expect(ansi!.doneGreen, 'done is ANSI green').toBeGreaterThan(140);
+	const ay = ansi!.activeYellow;
+	expect(ay, 'active-column border color resolved').not.toBeNull();
+	expect(ay!.r, 'active accent is yellow (red channel high)').toBeGreaterThan(150);
+	expect(ay!.g, 'active accent is yellow (green channel high)').toBeGreaterThan(150);
+	expect(ay!.b, 'active accent is yellow (blue channel low)').toBeLessThan(120);
+	expect(ansi!.activeYellowEqualsAccent, 'active border uses the --accent token').toBe(true);
+
+	// ----------------------------------------------------------------
+	// F1 — Header focus: controls sit on the bright reverse-video bar.
+	// A yellow outline is invisible there (~1:1), so header controls use a
+	// context-specific DARK outline; yellow focus is preserved on dark
+	// surfaces. For EVERY header control we prove: a solid >=3px outline, a
+	// COMPLETE unclipped perimeter, and outline/effective-backdrop contrast
+	// >= 3:1 (the WCAG 2.2 UI-component minimum).
+	// ----------------------------------------------------------------
+	await page.setViewportSize({ width: 1280, height: 800 });
+	const measureFocusEl = (selector?: string) =>
+		page.evaluate((sel) => {
+			const el = sel ? document.querySelector(sel) : document.activeElement;
+			if (!(el instanceof HTMLElement)) return null;
+			const ctx = document.createElement('canvas').getContext('2d');
+			if (!ctx) return null;
+			const parseRgb = (css: string) => {
+				ctx.clearRect(0, 0, 2, 2);
+				ctx.fillStyle = '#000';
+				ctx.fillStyle = css;
+				ctx.fillRect(0, 0, 2, 2);
+				const d = ctx.getImageData(0, 0, 1, 1).data;
+				return { r: d[0], g: d[1], b: d[2] };
+			};
+			const lumOf = (c: { r: number; g: number; b: number }) => {
+				const ch = (v: number) => {
+					const s = v / 255;
+					return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+				};
+				return 0.2126 * ch(c.r) + 0.7152 * ch(c.g) + 0.0722 * ch(c.b);
+			};
+			const alphaOf = (css: string) => {
+				const m = css.match(/rgba?\(([^)]*)\)/);
+				if (!m) return 1;
+				const p = m[1].split(',').map((x) => x.trim());
+				return p.length === 4 ? parseFloat(p[3]) : 1;
+			};
+			const bgRgbOf = (start: Element) => {
+				const layers: { rgb: { r: number; g: number; b: number }; a: number }[] = [];
+				let node: Element | null = start;
+				while (node instanceof HTMLElement) {
+					const bg = getComputedStyle(node).backgroundColor;
+					layers.push({ rgb: parseRgb(bg), a: alphaOf(bg) });
+					if (alphaOf(bg) >= 0.999) break;
+					node = node.parentElement;
+				}
+				let acc = layers[layers.length - 1].rgb;
+				for (let i = layers.length - 2; i >= 0; i--) {
+					const s = layers[i];
+					acc = {
+						r: s.rgb.r * s.a + acc.r * (1 - s.a),
+						g: s.rgb.g * s.a + acc.g * (1 - s.a),
+						b: s.rgb.b * s.a + acc.b * (1 - s.a)
+					};
+				}
+				return acc;
+			};
+			const cs = getComputedStyle(el);
+			const style = cs.outlineStyle;
+			const ow = parseFloat(cs.outlineWidth);
+			const oo = parseFloat(cs.outlineOffset);
+			const color = parseRgb(cs.outlineColor);
+			const cL = lumOf(color);
+			// The focus ring is an OFFSET outline that seats OUTSIDE the element
+			// box, so its effective backdrop is the surrounding (parent chain) —
+			// NOT the control's own face (e.g. a dark-filled active chip). Start
+			// the backdrop climb at the parent.
+			const bL = lumOf(bgRgbOf(el.parentElement ?? el));
+			const contrast = (Math.max(cL, bL) + 0.05) / (Math.min(cL, bL) + 0.05);
+			// perimeter completeness: a uniform solid outline whose ring rect is
+			// not clipped by any ancestor overflow box nor scrolled off-screen.
+			const rect = el.getBoundingClientRect();
+			const extent = oo + ow;
+			const ring = {
+				top: rect.top - extent,
+				right: rect.right + extent,
+				bottom: rect.bottom + extent,
+				left: rect.left - extent
+			};
+			const vw = document.documentElement.clientWidth;
+			const vh = document.documentElement.clientHeight;
+			let clipped = false;
+			if (ring.top < -0.5 || ring.left < -0.5 || ring.right > vw + 0.5 || ring.bottom > vh + 0.5)
+				clipped = true;
+			let node: Element | null = el.parentElement;
+			while (!clipped && node instanceof HTMLElement) {
+				const ov = getComputedStyle(node).overflow;
+				if (ov === 'hidden' || ov === 'clip' || ov === 'auto' || ov === 'scroll') {
+					const nr = node.getBoundingClientRect();
+					if (
+						ring.top < nr.top - 0.5 ||
+						ring.left < nr.left - 0.5 ||
+						ring.right > nr.right + 0.5 ||
+						ring.bottom > nr.bottom + 0.5
+					)
+						clipped = true;
+				}
+				node = node.parentElement;
+			}
+			return { style, width: ow, contrast, clipped, colorLum: cL };
+		}, selector);
+
+	const assertHeaderFocus = (name: string, f: unknown) => {
+		const r = f as {
+			style: string;
+			width: number;
+			contrast: number;
+			clipped: boolean;
+			colorLum: number;
+		} | null;
+		expect(r, `${name} focus measured`).not.toBeNull();
+		expect(r!.style, `${name} focus outline is solid`).toBe('solid');
+		expect(r!.width, `${name} focus outline >= 3px`).toBeGreaterThanOrEqual(3);
+		expect(r!.clipped, `${name} focus perimeter complete (unclipped)`).toBe(false);
+		expect(r!.contrast, `${name} focus contrast >= 3:1 on bar`).toBeGreaterThanOrEqual(3);
+		expect(r!.colorLum, `${name} focus is dark on the silver bar`).toBeLessThan(0.4);
+	};
+
+	// keyboard-focus the searchbox; its container (.search) carries the ring.
+	await page.getByRole('searchbox').focus();
+	assertHeaderFocus('search', await measureFocusEl('.search'));
+
+	// Tab through the header buttons (keyboard context => :focus-visible).
+	for (const name of ['All', 'Mine', 'Due this week', 'Board', 'List', 'New task']) {
+		for (let i = 0; i < 40; i++) {
+			await page.keyboard.press('Tab');
+			const match = await page.evaluate((n) => {
+				const el = document.activeElement;
+				return !!(el && el.tagName === 'BUTTON' && (el.textContent ?? '').trim() === n);
+			}, name);
+			if (match) break;
+		}
+		assertHeaderFocus(name, await measureFocusEl());
+	}
+
+	// Yellow focus is PRESERVED on dark surfaces: the first column more-actions
+	// sits on the dark reverse-video column head — its outline is the yellow
+	// accent and still reads at >= 3:1 there.
+	for (let i = 0; i < 80; i++) {
+		await page.keyboard.press('Tab');
+		const hit = await page.evaluate(() => {
+			const el = document.activeElement;
+			return !!(el && (el.getAttribute('aria-label') ?? '').startsWith('More actions for'));
+		});
+		if (hit) break;
+	}
+	const darkFocus = (await measureFocusEl()) as {
+		style: string;
+		width: number;
+		contrast: number;
+		clipped: boolean;
+		colorLum: number;
+	} | null;
+	expect(darkFocus, 'more-actions focus measured').not.toBeNull();
+	expect(darkFocus!.style, 'more-actions focus outline is solid').toBe('solid');
+	expect(darkFocus!.width, 'more-actions focus outline >= 3px').toBeGreaterThanOrEqual(3);
+	expect(
+		darkFocus!.contrast,
+		'more-actions focus contrast >= 3:1 on dark surface'
+	).toBeGreaterThanOrEqual(3);
+	expect(darkFocus!.colorLum, 'more-actions focus is yellow on dark surface').toBeGreaterThan(0.55);
+	await page.getByRole('searchbox').focus();
 
 	// --- Table-driven WCAG AA contrast: every semantic text role against its
 	//     opaque parent surface (columns/cards/bars are opaque on this board).
@@ -3129,53 +3313,119 @@ test('opens the kanban-terminal design and its isolated preview states', async (
 			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
 		};
 		const selfRatio = (sel: string) => ratio(sel, sel);
-		return [
+		// Arbitrary element: its own color vs its effective opaque backdrop.
+		const elRatio = (el: Element) => {
+			if (!(el instanceof HTMLElement)) return -1;
+			const fg = parseRgb(getComputedStyle(el).color);
+			const bg = bgRgbOf(el);
+			const tL = lumOfRgb({ r: fg.r, g: fg.g, b: fg.b });
+			const bL = lumOfRgb(bg);
+			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+		};
+		// placeholder pseudo color vs the search field bg
+		const placeholderRatio = (() => {
+			const inputEl = document.querySelector('.search input');
+			if (!(inputEl instanceof HTMLElement)) return -1;
+			const fg = parseRgb(getComputedStyle(inputEl, '::placeholder').color);
+			const bg = bgRgbOf(document.querySelector('.search'));
+			const tL = lumOfRgb({ r: fg.r, g: fg.g, b: fg.b });
+			const bL = lumOfRgb(bg);
+			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+		})();
+		const results: { role: string; ratio: number }[] = [
 			{ role: 'card-title', ratio: ratio('.card-title', '.card') },
 			{ role: 'cid', ratio: ratio('.cid', '.card') },
 			{ role: 'checklist', ratio: ratio('.checklist', '.card') },
 			{ role: 'due', ratio: ratio('.due:not(.is-done)', '.card') },
+			{ role: 'due-done', ratio: ratio('.due.is-done', '.card') },
 			{ role: 'pri-high', ratio: ratio('.pri-high', '.card') },
+			{ role: 'pri-medium', ratio: ratio('.pri-medium', '.card') },
+			{ role: 'done-title', ratio: ratio('.card.is-done .card-title', '.card') },
 			{ role: 'board-title', ratio: ratio('.title-block h1', '.app-bar') },
 			{ role: 'subtitle', ratio: ratio('.subtitle', '.app-bar') },
 			{ role: 'column-heading', ratio: ratio('.column-head h2', '.column-head') },
+			{ role: 'count-badge', ratio: selfRatio('.count') },
 			{ role: 'empty-state', ratio: ratio('.empty-col p', '.empty-col') },
 			{ role: 'error-body', ratio: ratio('.error-banner p', '.error-banner') },
+			{ role: 'error-strong', ratio: ratio('.error-banner strong', '.error-banner') },
 			{ role: 'primary-text', ratio: selfRatio('.primary') },
 			{ role: 'add-card-text', ratio: selfRatio('.add-card') },
 			{ role: 'retry-text', ratio: selfRatio('.error-retry') },
 			{ role: 'project-chip', ratio: selfRatio('.project-chip') },
-			{ role: 'legend', ratio: selfRatio('.status-legend') },
+			{ role: 'legend-body', ratio: selfRatio('.status-legend') },
+			{ role: 'key-map-glyph', ratio: selfRatio('.k') },
+			{ role: 'status-text', ratio: selfRatio('.leg-state') },
+			{ role: 'search-placeholder', ratio: placeholderRatio },
 			{ role: 'search-input', ratio: ratio('.search input', '.search') }
 		];
+		document.querySelectorAll('.label').forEach((el) => {
+			const name = el.textContent?.trim().replace(/[[\]]/g, '') || '?';
+			results.push({ role: `label:${name}`, ratio: elRatio(el) });
+		});
+		document.querySelectorAll('.avatar').forEach((el) => {
+			const initials = el.textContent?.trim() || '?';
+			results.push({ role: `avatar:${initials}`, ratio: elRatio(el) });
+		});
+		return { results };
 	});
 	expect(contrast).not.toBeNull();
-	for (const { role, ratio } of contrast!) {
+	for (const { role, ratio } of contrast!.results) {
 		expect(ratio, `${role} text contrast >= 4.5:1`).toBeGreaterThanOrEqual(4.5);
 	}
 
-	// Exact-width responsive: every interactive target is >=44px on both axes
-	// at 375/768/1280, with no horizontal document overflow.
+	// Exact-width responsive: every interactive target is >=44px on BOTH axes
+	// at 375/768/1280 — controls, search, primary, retry, dismiss, EVERY column
+	// more-actions, and EVERY add-a-card — with no horizontal document overflow.
 	const controls = ['Board', 'List', 'All', 'Mine', 'Due this week'];
+	const columnNames = ['Backlog', 'In Progress', 'In Review', 'Done'];
+	const assertTarget = async (
+		box: { width?: number; height?: number } | null,
+		label: string,
+		width: number
+	) => {
+		expect(box, `${label} present at ${width}`).not.toBeNull();
+		expect(box!.width, `${label} width at ${width}`).toBeGreaterThanOrEqual(44);
+		expect(box!.height, `${label} height at ${width}`).toBeGreaterThanOrEqual(44);
+	};
 	for (const width of [375, 768, 1280]) {
 		await page.setViewportSize({ width, height: 800 });
 		for (const name of controls) {
-			const box = await page.getByRole('button', { name, exact: true }).boundingBox();
-			expect(box?.height, `${name} height at ${width}`).toBeGreaterThanOrEqual(44);
+			await assertTarget(
+				await page.getByRole('button', { name, exact: true }).boundingBox(),
+				name,
+				width
+			);
 		}
-		const searchBox = await page.locator('.search').boundingBox();
-		expect(searchBox?.width, `search width at ${width}`).toBeGreaterThanOrEqual(44);
-		expect(searchBox?.height, `search height at ${width}`).toBeGreaterThanOrEqual(44);
-		const primary = await page.getByRole('button', { name: 'New task', exact: true }).boundingBox();
-		expect(primary?.width, `New task width at ${width}`).toBeGreaterThanOrEqual(44);
-		expect(primary?.height, `New task height at ${width}`).toBeGreaterThanOrEqual(44);
-		const retry = await page.getByRole('button', { name: 'Retry', exact: true }).boundingBox();
-		expect(retry?.width, `Retry width at ${width}`).toBeGreaterThanOrEqual(44);
-		expect(retry?.height, `Retry height at ${width}`).toBeGreaterThanOrEqual(44);
-		const dismiss = await page
-			.getByRole('button', { name: 'Dismiss error', exact: true })
-			.boundingBox();
-		expect(dismiss?.width, `dismiss width at ${width}`).toBeGreaterThanOrEqual(44);
-		expect(dismiss?.height, `dismiss height at ${width}`).toBeGreaterThanOrEqual(44);
+		await assertTarget(await page.locator('.search').boundingBox(), 'search', width);
+		await assertTarget(
+			await page.getByRole('button', { name: 'New task', exact: true }).boundingBox(),
+			'New task',
+			width
+		);
+		await assertTarget(
+			await page.getByRole('button', { name: 'Retry', exact: true }).boundingBox(),
+			'Retry',
+			width
+		);
+		await assertTarget(
+			await page.getByRole('button', { name: 'Dismiss error', exact: true }).boundingBox(),
+			'dismiss',
+			width
+		);
+		for (const col of columnNames) {
+			await assertTarget(
+				await page
+					.getByRole('button', { name: `More actions for ${col}`, exact: true })
+					.boundingBox(),
+				`${col} more-actions`,
+				width
+			);
+		}
+		const addCards = await page.locator('.add-card').all();
+		expect(addCards.length, `one add-card per column at ${width}`).toBe(columnNames.length);
+		for (const ac of addCards) {
+			await assertTarget(await ac.boundingBox(), 'add-card', width);
+		}
 		const overflow = await page.evaluate(
 			() =>
 				document.documentElement.scrollWidth - document.documentElement.clientWidth ||

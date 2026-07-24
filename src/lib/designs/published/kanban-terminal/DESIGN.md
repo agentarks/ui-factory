@@ -17,23 +17,23 @@ A Kanban board for a small product team shipping "Aurora": a board header (proje
 
 All tokens are OKLCH. There is no pure black (`#000`) or pure white (`#fff`) anywhere — the canvas is tinted and the bar is a soft silver.
 
-| Token           | Value                    | Role                                                                 |
-| --------------- | ------------------------ | -------------------------------------------------------------------- |
-| `--canvas`      | `oklch(0.12 0.014 270)`  | Tinted near-black terminal background (cool indigo tint)             |
-| `--window`      | `oklch(0.155 0.014 270)` | Slightly raised window/panel surface (error banner, status legend)   |
-| `--bar`         | `oklch(0.83 0.008 270)`  | Reverse-video header bar background (bright silver)                  |
-| `--head`        | `oklch(0.3 0.016 270)`   | Reverse-video column title bar, dark fills (chips, avatars, primary) |
-| `--ink`         | `oklch(0.9 0.006 270)`   | Primary light text on dark surfaces                                  |
-| `--ink-soft`    | `oklch(0.7 0.014 270)`   | Meta text (IDs, labels, dates, legend)                               |
-| `--on-bar`      | `oklch(0.2 0.012 270)`   | Dark text on the reverse-video bar                                   |
-| `--on-bar-soft` | `oklch(0.34 0.014 270)`  | Soft dark text/meta on the reverse-video bar                         |
-| `--rule`        | `oklch(0.42 0.016 270)`  | Window/dialog borders and separators                                 |
-| `--rule-soft`   | `oklch(0.3 0.014 270)`   | Card borders and dashed separators                                   |
-| `--accent`      | `oklch(0.84 0.16 95)`    | Yellow — active column, selection, focus ring, key hints             |
-| `--red`         | `oklch(0.7 0.19 25)`     | ANSI red — high priority, error marker/border                        |
-| `--green`       | `oklch(0.8 0.16 150)`    | ANSI green — done state, READY status                                |
+| Token           | Value                    | Role                                                                       |
+| --------------- | ------------------------ | -------------------------------------------------------------------------- |
+| `--canvas`      | `oklch(0.2 0.028 270)`   | Tinted near-black terminal background (cool indigo tint)                   |
+| `--window`      | `oklch(0.235 0.028 270)` | Slightly raised window/panel surface (error banner, status footer)         |
+| `--bar`         | `oklch(0.83 0.008 270)`  | Reverse-video header bar background (bright silver)                        |
+| `--head`        | `oklch(0.32 0.018 270)`  | Reverse-video column title bar, dark fills (chips, avatars, primary)       |
+| `--ink`         | `oklch(0.9 0.006 270)`   | Primary light text on dark surfaces                                        |
+| `--ink-soft`    | `oklch(0.7 0.014 270)`   | Meta text (IDs, labels, dates, footer)                                     |
+| `--on-bar`      | `oklch(0.2 0.012 270)`   | Dark text on the reverse-video bar; dark focus outline on the bar          |
+| `--on-bar-soft` | `oklch(0.34 0.014 270)`  | Soft dark text/meta on the reverse-video bar                               |
+| `--rule`        | `oklch(0.42 0.016 270)`  | Window/dialog borders and separators                                       |
+| `--rule-soft`   | `oklch(0.3 0.014 270)`   | Card borders and dashed separators                                         |
+| `--accent`      | `oklch(0.84 0.16 95)`    | Yellow — active column, selection, focus ring on dark surfaces, key glyphs |
+| `--red`         | `oklch(0.7 0.19 25)`     | ANSI red — high priority, error marker/border, `SYNC: PAUSED` status       |
+| `--green`       | `oklch(0.8 0.16 150)`    | ANSI green — done state                                                    |
 
-Contrast: because the canvas is very dark, light text reads at ≥7:1; meta text (`--ink-soft`) reads at ≥6:1. The reverse-video bar (`--bar`) with dark text (`--on-bar`) reads at ≈8:1. All roles pass WCAG 2.2 AA (≥4.5:1), verified by real-pixel audit.
+Measured (real-pixel) sRGB luminance: canvas ≈ 0.008, window ≈ 0.013, head ≈ 0.033, bar ≈ 0.571. Contrast: primary light text (`--ink`) reads at ≈9–13:1 on the dark surfaces and ≈11:1 on the silver bar; meta text (`--ink-soft`) reads at ≈6–7:1; reverse-video bar dark text (`--on-bar`) reads at ≈7:1; column-heading light text on the dark head reads at ≈9:1. All semantic text roles pass WCAG 2.2 AA (≥4.5:1), verified by real-pixel audit against each role's opaque parent.
 
 ## Typography
 
@@ -70,13 +70,13 @@ No display fonts, no web fonts, no gradient text. Hierarchy comes from weight, b
 - Columns are bordered dialog windows laid out in a vertical stack on mobile and a horizontal scrollable row on tablet/desktop.
 - Each window has a reverse-video title bar (`[ NAME ]` + `[count]` + active tag + more-actions), then a padded card list, then a dashed `[ ADD A CARD ]` affordance.
 - Cards are bordered mini-windows: top row (id + drag grip), title, bracketed `[label]` fields, bracketed `[2/3]` checklist, dashed foot separator with priority/due + assignee blocks.
-- A bottom status legend closes the board: key hints on the left, a status line on the right.
+- A bottom **status footer** closes the board. It is visibly AND accessibly labelled as an **inactive key-map reference** (`aria-label` = "Inactive key-map reference and board status (display only, no active shortcuts)"; a visible `KEY MAP — reference, display only` note). The glyphs (`[N]`, `[/]`, `[B/L]`, `[F5]`) document the real specimen actions as plain `<span>`s — they are **not** `<kbd>` and carry no handlers. The status line is consistent with the visible sync error (`SYNC: PAUSED` in red), never a false "READY".
 
 ## Navigation patterns
 
 - Filter (`All / Mine / Due this week`) and view (`Board / List`) controls are grouped segmented groups; each carries `aria-pressed` reflecting the current selection. They toggle selection state only — they do not re-filter cards.
 - The search field and New task / Retry / dismiss / more-actions / add-a-card controls are specimen affordances: visible, keyboard-operable, and focusable, but they perform no business behavior on the specimen.
-- The bottom legend documents key bindings (`[N]` New, `[/]` Search, `[B/L]` Board/List, `[F5]` Retry) as honest hints tied to those real controls — no invented destructive F-key behavior.
+- The bottom footer documents specimen actions (`[N]` New, `[/]` Search, `[B/L]` Board/List, `[F5]` Retry) as an **inactive key-map reference** — display-only labels, not active bindings. No handlers exist and no shortcuts are implemented.
 
 ## Component appearance and behavior
 
@@ -92,7 +92,7 @@ No display fonts, no web fonts, no gradient text. Hierarchy comes from weight, b
 
 ## Empty, loading, and error states
 
-- **Empty column (In Review):** a dashed bordered window containing `[ -- no cards -- ]` in soft ink.
+- **Empty column (In Review):** a dashed bordered window. The DOM text is the baseline "No cards yet", rendered uppercased and bracketed as `[ NO CARDS YET ]` via CSS pseudo-elements (presentational only — the accessible name stays "No cards yet").
 - **Loading skeleton:** a bordered placeholder card with solid ink-soft block bars (`skel-title`, two `skel-label`, `skel-foot`) that pulse opacity (0.28 ↔ 0.10) over 1.4s — gated behind `prefers-reduced-motion: no-preference`, so it is static under reduced motion.
 - **Inline error:** a bordered alert window with a full red border on all sides (never a colored side-stripe), a `[!]` red marker, a strong "Sync paused." lead, body copy, a Retry control (dark reverse button), and a dismiss icon. Announced via `role="status" aria-live="polite"`.
 
@@ -105,7 +105,7 @@ No display fonts, no web fonts, no gradient text. Hierarchy comes from weight, b
 ## Interaction and motion guidance
 
 - **Hover** (non-selected cards) is a multi-channel cue gated behind `(hover: hover)`: the border brightens to the accent yellow. No fill change, no transform — ncurses is flat. A tap on a touch device (`hover: none`) cannot leave a sticky state resembling selection.
-- **Focus:** every button shows a `3px solid var(--accent)` outline at `2px` offset via `:focus-visible`; the search field shows a container outline via `:focus-within`.
+- **Focus (two contexts):** every control shows a `3px solid` outline at `2px` offset via `:focus-visible`. Controls on the **bright reverse-video bar** (search, filters, view toggle, New task) use a **dark** outline (`--on-bar`) — a yellow ring would be invisible on silver (≈1:1). Controls on **dark surfaces** (more-actions, Retry, add-a-card) keep the **yellow** accent (`--accent`), which reads at ≥3:1 there. The search field shows its ring via `:focus-within` on the container. The offset ring seats outside the control, so its contrast is measured against the surrounding bar/column backdrop, not the control's own face.
 - **Motion** is limited to 150ms `ease-out` transitions on border/color/background for controls, and the 1.4s skeleton opacity pulse. All non-essential motion is suppressed under `prefers-reduced-motion: reduce`.
 
 ## Accessibility requirements
@@ -138,7 +138,7 @@ No display fonts, no web fonts, no gradient text. Hierarchy comes from weight, b
 - Do not add box-shadows, glow, gradients, `backdrop-filter`, translucency, or colored side-stripes.
 - Do not use pure black (`#000`) or pure white (`#fff`) anywhere.
 - Do not introduce a second type voice (no sans-serif, no display fonts).
-- Do not invent fake destructive F-key behavior; the legend maps only to real specimen actions.
+- Do not present footer glyphs as active key bindings — label the footer an inactive, display-only reference (no `<kbd>`, no handlers), and keep its status consistent with the real state (never a false "READY" while a sync error is shown).
 - Do not rely on color, position, or motion alone to communicate state.
 - Do not use cyan glow, graph-paper backgrounds, or technical-schematic notation (those belong to the published Holodeck and Blueprint styles).
 
@@ -162,9 +162,10 @@ No display fonts, no web fonts, no gradient text. Hierarchy comes from weight, b
 - [ ] Header bar and column title bars are reverse-video (bright bg + dark text / dark bg + light text).
 - [ ] Columns and cards are bordered dialog windows on all four sides (box-rule framing).
 - [ ] Fields, counts, priority, and checklists use bracket notation.
-- [ ] Yellow active/selection/focus, red priority/error, green done — each paired with text.
+- [ ] Yellow active/selection and focus-on-dark, red priority/error, green done — each paired with text.
+- [ ] Header controls show a DARK focus outline (≥3:1 on the silver bar, complete perimeter); dark-surface controls keep the yellow focus.
 - [ ] Zero box-shadows, zero gradients, zero `backdrop-filter`, zero colored side-stripes.
 - [ ] Clearly distinct from Holodeck (cyan glow) and Blueprint (graph paper, technical notation).
 - [ ] All five team members render as accessible avatars; empty In Review, loading skeleton, inline error + Retry/dismiss, drag affordance, done, priority, selected, hover, focus, and reduced-motion are all present.
-- [ ] Filter/view controls carry `aria-pressed`; the bottom legend maps only to real specimen actions (no fake destructive behavior).
+- [ ] Filter/view controls carry `aria-pressed`; the footer is labelled an inactive key-map reference (display only, no `<kbd>`, no handlers) and its status matches the sync error (no "READY").
 - [ ] WCAG 2.2 AA verified for every text role; all interactive targets ≥ 44×44px at 375/768/1280; no horizontal overflow; reduced motion suppresses the skeleton pulse.

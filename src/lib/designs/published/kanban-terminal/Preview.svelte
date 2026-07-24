@@ -22,8 +22,10 @@
 	const activeColumnId = 'in-progress';
 	const selectedCardId = 'au-142';
 
-	// Bottom function/status legend — adapted ONLY to real specimen actions
-	// present on this board. Honest key hints, no fake destructive behavior.
+	// Bottom status line + key map. Inert-specimen policy: this is a visual
+	// reference only — the glyphs document the specimen actions, they are NOT
+	// active bindings (no handlers, no shortcuts). The status reflects the
+	// visible sync error rather than claiming "ready".
 	const legendKeys = [
 		{ key: '[N]', action: 'New task' },
 		{ key: '[/]', action: 'Search' },
@@ -246,15 +248,21 @@
 		</section>
 	</main>
 
-	<footer class="status-legend" aria-label="Status and key legend">
+	<footer
+		class="status-legend"
+		aria-label="Inactive key-map reference and board status (display only, no active shortcuts)"
+	>
+		<span class="leg-note">KEY MAP — reference, display only</span>
 		<span class="leg-group">
 			{#each legendKeys as k (k.key)}
-				<span class="leg-item"><kbd class="k">{k.key}</kbd><span class="leg">{k.action}</span></span
+				<span class="leg-item"
+					><span class="k">{k.key}</span><span class="leg">{k.action}</span></span
 				>
 			{/each}
 		</span>
 		<span class="leg-status"
-			>aurora:board · sprint-24 · {cardTotal} tasks · <span class="leg-ok">READY</span></span
+			>aurora:board · sprint-24 · {cardTotal} tasks ·
+			<span class="leg-state">SYNC: PAUSED</span></span
 		>
 	</footer>
 </div>
@@ -441,8 +449,11 @@
 		outline: none;
 	}
 
+	/* Header controls sit on the BRIGHT reverse-video bar: a yellow outline is
+	   invisible there (~1:1), so the field shows a context-specific DARK ring.
+	   Yellow focus is preserved on dark surfaces via the global rule below. */
 	.search:focus-within {
-		outline: 3px solid var(--accent);
+		outline: 3px solid var(--on-bar);
 		outline-offset: 1px;
 	}
 
@@ -929,6 +940,14 @@
 		flex-wrap: wrap;
 	}
 
+	.leg-note {
+		font-family: var(--font-mono);
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--ink);
+	}
+
 	.leg-item {
 		display: inline-flex;
 		align-items: center;
@@ -945,11 +964,22 @@
 		color: var(--ink-soft);
 	}
 
-	.leg-ok {
-		color: var(--green);
+	.leg-state {
+		color: var(--red);
+		font-weight: 700;
 	}
 
 	/* ---------- Focus + motion ---------- */
+
+	/*
+	 * Two focus contexts: controls on the bright reverse-video bar get a DARK
+	 * outline (yellow would be ~1:1 on silver); controls on dark surfaces keep
+	 * the yellow accent. outline-width/offset come from the global rule; only
+	 * the colour is context-swapped here.
+	 */
+	.app-bar button:focus-visible {
+		outline-color: var(--on-bar);
+	}
 
 	.board-root :where(button):focus-visible {
 		outline: 3px solid var(--accent);
