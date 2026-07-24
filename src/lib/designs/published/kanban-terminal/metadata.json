@@ -1,0 +1,20 @@
+{
+	"schemaVersion": 1,
+	"slug": "kanban-terminal",
+	"version": "1.0.0",
+	"title": "Kanban Board · ncurses Terminal",
+	"summary": "A classic ncurses/TUI Kanban board on a tinted near-black canvas with full monospace, reverse-video header and column title bars, bordered dialog-window columns, bracketed field and state notation, restrained ANSI-like semantic colors, a status line consistent with the visible sync error, and an inactive key-map reference labelled display-only (no active shortcuts) — no glow, gradients, graph paper, or backdrop blur.",
+	"pageType": "data-management",
+	"applicationTypes": [
+		"project-management",
+		"productivity",
+		"team-collaboration",
+		"developer-tools"
+	],
+	"visualStyles": ["terminal", "tui", "ncurses"],
+	"theme": "dark",
+	"density": "compact",
+	"platforms": ["web", "desktop", "tablet", "mobile"],
+	"status": "production-ready",
+	"tags": ["kanban", "board", "terminal", "tui", "ncurses", "monospace", "reverse-video", "retro"]
+}

@@ -2888,3 +2888,579 @@ test('opens the kanban-dark-neon design and its isolated preview states', async 
 	expect(mf, 'measured last column Add a card focus at 1280').not.toBeNull();
 	expect(mf!.clipped, 'last column Add a card focus not clipped at 1280').toBe(false);
 });
+
+test('opens the kanban-terminal design and its isolated preview states', async ({ page }) => {
+	// ---- Detail page: exact approved public identity + summary ----
+	await page.goto('/designs/kanban-terminal');
+
+	await expect(
+		page.getByRole('heading', { name: 'Kanban Board · ncurses Terminal', exact: true })
+	).toBeVisible();
+	await expect(
+		page.getByText(
+			'A classic ncurses/TUI Kanban board on a tinted near-black canvas with full monospace, reverse-video header and column title bars, bordered dialog-window columns, bracketed field and state notation, restrained ANSI-like semantic colors, a status line consistent with the visible sync error, and an inactive key-map reference labelled display-only (no active shortcuts) — no glow, gradients, graph paper, or backdrop blur.',
+			{ exact: true }
+		)
+	).toBeVisible();
+
+	// ---- Isolated preview: locked content + empty/error/loading states ----
+	const frame = page.frameLocator('iframe[title*="preview"i]');
+	await expect(frame.getByRole('heading', { name: 'Aurora - Sprint 24 - Board' })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'New task' })).toBeVisible();
+	await expect(frame.getByText('Backlog', { exact: true })).toBeVisible();
+	await expect(frame.getByRole('heading', { name: 'In Review' })).toBeVisible();
+	await expect(frame.getByText('no items', { exact: false })).toBeVisible();
+	await expect(frame.getByText('Sync paused', { exact: false })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'Retry' })).toBeVisible();
+	await expect(frame.locator('.skel')).toHaveCount(await frame.locator('.skel').count());
+
+	// interaction smoke: toggling a filter updates its pressed state (the only
+	// controls that carry real business state are the filter/view toggles).
+	const mineBtn = frame.getByRole('button', { name: 'Mine', exact: true });
+	await mineBtn.click();
+	await expect(mineBtn).toHaveAttribute('aria-pressed', 'true');
+
+	// ------------------------------------------------------------------
+	// Direct preview route: NCURSES structural signature, a11y, responsive.
+	// The identity is STRUCTURAL, not a reskin: a reverse-video title bar,
+	// bordered dialog-window columns with "+- NAME [n] -+" headers, flat
+	// border-bottom TUI rows (NOT modern elevated cards), inline bracketed
+	// fields/priority, an F-key/status footer, and zero shadows/gradient/blur.
+	// ------------------------------------------------------------------
+	await page.goto('/designs/kanban-terminal/preview');
+	await expect(page.getByRole('heading', { name: 'Aurora - Sprint 24 - Board' })).toBeVisible();
+	await page.setViewportSize({ width: 1280, height: 800 });
+
+	// Locked content: all five team members render as accessible avatars.
+	const memberNames = ['Maya Rivera', 'Devon Chen', 'Priya Nair', 'Sam Okafor', 'Lena Foss'];
+	expect(await page.locator('.tui-team [aria-label]').count()).toBe(5);
+	for (const name of memberNames) {
+		await expect(page.locator(`.tui-team [aria-label="${name}"]`)).toBeVisible();
+	}
+
+	// Showcased states exposed programmatically.
+	await expect(page.locator('.col.is-active')).toHaveAttribute('aria-label', /active/i);
+	await expect(page.getByRole('article', { name: /selected/i })).toBeVisible();
+
+	// NCURSES STRUCTURAL signature.
+	const sig = await page.evaluate(() => {
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const channels = (cssColor: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = cssColor;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			return { r: d[0], g: d[1], b: d[2] };
+		};
+		const lum = (css: string) => {
+			const c = channels(css);
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(c.r) + 0.7152 * ch(c.g) + 0.0722 * ch(c.b);
+		};
+		const cs = (sel: string) => {
+			const el = document.querySelector(sel);
+			return el instanceof HTMLElement ? getComputedStyle(el) : null;
+		};
+		let gradientFound = false;
+		let backdropFound = false;
+		let anyShadowFound = false;
+		const fonts = new Set<string>();
+		document.querySelectorAll('.board-root, .board-root *').forEach((el) => {
+			const c = getComputedStyle(el);
+			if (/gradient/i.test(c.backgroundImage)) gradientFound = true;
+			if (c.backdropFilter !== 'none') backdropFound = true;
+			fonts.add(c.fontFamily.toLowerCase());
+			if (c.boxShadow !== 'none') anyShadowFound = true;
+		});
+		const rootCs = cs('.board-root');
+		const barCs = cs('.tui-titlebar');
+		const colCs = cs('.col');
+		const activeColCs = cs('.col.is-active');
+		const activeHeadCs = cs('.col.is-active .col-head');
+		const rowCs = cs('.tui-row:not(.is-selected)');
+		const selRowCs = cs('.tui-row.is-selected');
+		const headEl = document.querySelector('.col-head');
+		const headText = headEl?.textContent ?? '';
+		const canvasRgb = channels(rootCs?.backgroundColor ?? 'rgb(0,0,0)');
+		return {
+			canvasLum: lum(rootCs?.backgroundColor ?? '#000'),
+			canvasIsPureBlack: rootCs?.backgroundColor === 'rgb(0, 0, 0)',
+			canvasTintSpread:
+				Math.max(canvasRgb.r, canvasRgb.g, canvasRgb.b) -
+				Math.min(canvasRgb.r, canvasRgb.g, canvasRgb.b),
+			rootBgImage: rootCs?.backgroundImage ?? '',
+			nonMonoFonts: [...fonts].filter((f) => !/mono/.test(f)),
+			// reverse-video title bar: bright silver bg + dark text
+			titlebarBgLum: barCs ? lum(barCs.backgroundColor) : -1,
+			titlebarTextLum: barCs ? lum(barCs.color) : -1,
+			// dialog-window columns: full border on all four sides
+			colBorderAllSides:
+				colCs &&
+				colCs.borderTopWidth === colCs.borderBottomWidth &&
+				colCs.borderLeftWidth === colCs.borderRightWidth &&
+				colCs.borderTopWidth === colCs.borderLeftWidth &&
+				parseFloat(colCs.borderTopWidth) >= 1,
+			// header text literally carries "+- ... -+" box-rule framing + [n]
+			headHasPlusMinus: /\+-/.test(headText) && /-\+/.test(headText),
+			headHasBracketCount: /\[\d+\]/.test(headText),
+			// active column: yellow border + yellow head
+			activeBorderIsYellow: activeColCs
+				? (() => {
+						const ch = channels(activeColCs.borderTopColor);
+						return ch.r > 150 && ch.g > 150 && ch.b < 120;
+					})()
+				: false,
+			activeHeadBgYellow: activeHeadCs
+				? (() => {
+						const ch = channels(activeHeadCs.backgroundColor);
+						return ch.r > 150 && ch.g > 150 && ch.b < 120;
+					})()
+				: false,
+			// FLAT TUI rows: a non-selected card has ONLY a bottom hairline
+			// (borderTop 0) — NOT a modern elevated/boxed card.
+			rowTopBorderWidth: rowCs ? parseFloat(rowCs.borderTopWidth) : -1,
+			rowBottomBorderWidth: rowCs ? parseFloat(rowCs.borderBottomWidth) : -1,
+			// selected card is a full border box (all sides >= 1)
+			selectedAllSides:
+				selRowCs &&
+				parseFloat(selRowCs.borderTopWidth) >= 1 &&
+				parseFloat(selRowCs.borderBottomWidth) >= 1 &&
+				parseFloat(selRowCs.borderLeftWidth) >= 1 &&
+				parseFloat(selRowCs.borderRightWidth) >= 1,
+			// no modern SaaS chrome classes remain
+			modernAppbarCount: document.querySelectorAll('.app-bar').length,
+			modernSegmentedCount: document.querySelectorAll('.segmented').length,
+			gradientFound,
+			backdropFound,
+			anyShadowFound
+		};
+	});
+	expect(sig).not.toBeNull();
+	expect(sig!.canvasLum, 'canvas is near-black').toBeLessThan(0.06);
+	expect(sig!.canvasIsPureBlack, 'no pure black canvas').toBe(false);
+	expect(sig!.canvasTintSpread, 'canvas is tinted (nonzero hue spread)').toBeGreaterThan(2);
+	expect(sig!.rootBgImage, 'no graph-paper / background image on canvas').toBe('none');
+	expect(sig!.nonMonoFonts, 'all text is monospace').toEqual([]);
+	// reverse-video title bar (silver bg + dark text)
+	expect(sig!.titlebarBgLum, 'title bar is bright reverse-video').toBeGreaterThan(0.45);
+	expect(sig!.titlebarTextLum, 'title bar text is dark').toBeLessThan(0.4);
+	// NOT a modern SaaS app-bar / segmented chrome
+	expect(sig!.modernAppbarCount, 'no modern app-bar chrome').toBe(0);
+	expect(sig!.modernSegmentedCount, 'no modern segmented/chip chrome').toBe(0);
+	// bordered dialog-window columns
+	expect(sig!.colBorderAllSides, 'column is a bordered dialog window').toBe(true);
+	expect(sig!.headHasPlusMinus, 'column header has +- / -+ box-rule framing').toBe(true);
+	expect(sig!.headHasBracketCount, 'column header has bracketed [n] count').toBe(true);
+	expect(sig!.activeBorderIsYellow, 'active column border is yellow').toBe(true);
+	expect(sig!.activeHeadBgYellow, 'active column head bg is yellow').toBe(true);
+	// flat TUI rows, not elevated cards
+	expect(sig!.rowTopBorderWidth, 'non-selected card is a flat row (no top border)').toBe(0);
+	expect(sig!.rowBottomBorderWidth, 'card row has a bottom hairline').toBeGreaterThanOrEqual(1);
+	expect(sig!.selectedAllSides, 'selected card is a full-border box').toBe(true);
+	// flat signature: zero shadows, no gradient, no backdrop blur
+	expect(sig!.anyShadowFound, 'zero box-shadows anywhere (flat signature)').toBe(false);
+	expect(sig!.gradientFound, 'no gradient').toBe(false);
+	expect(sig!.backdropFound, 'no backdrop blur').toBe(false);
+
+	// bracketed inline field + priority notation, ANSI colors.
+	const firstField = page.locator('.field').first();
+	await expect(firstField).toBeVisible();
+	expect((await firstField.textContent()) ?? '').toMatch(/^\[/);
+	const priHigh = page.locator('.pri-high').first();
+	expect((await priHigh.textContent()) ?? '').toMatch(/\[!?HIGH\]/);
+	const ansi = await page.evaluate(() => {
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const channels = (cssColor: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = cssColor;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			return { r: d[0], g: d[1], b: d[2] };
+		};
+		const cs = (sel: string) => {
+			const el = document.querySelector(sel);
+			return el instanceof HTMLElement ? getComputedStyle(el) : null;
+		};
+		const accent = cs('.board-root');
+		const doneTitle = cs('.tui-row.is-done .title');
+		return {
+			priorityHighRed: cs('.pri-high') ? channels(cs('.pri-high')!.color).r : -1,
+			doneGreen: doneTitle ? channels(doneTitle.color).g : -1,
+			activeYellowEqualsAccent:
+				cs('.col.is-active') && accent
+					? JSON.stringify(channels(cs('.col.is-active')!.borderTopColor)) ===
+						JSON.stringify(channels(accent.getPropertyValue('--accent') || 'rgb(0,0,0)'))
+					: false
+		};
+	});
+	expect(ansi).not.toBeNull();
+	expect(ansi!.priorityHighRed, 'high priority is ANSI red').toBeGreaterThan(150);
+	expect(ansi!.doneGreen, 'done is ANSI green').toBeGreaterThan(140);
+	expect(ansi!.activeYellowEqualsAccent, 'active border uses the --accent token').toBe(true);
+
+	// Footer: inert-specimen policy. Visibly AND accessibly labelled an
+	// inactive key-map reference (display only); status consistent with the
+	// sync error (READY absent). No <kbd> bindings.
+	const fkeys = page.locator('.tui-fkeys');
+	await expect(fkeys, 'fkey/status footer present').toBeVisible();
+	const fkeysAria = await fkeys.getAttribute('aria-label');
+	expect(fkeysAria ?? '', 'footer accessible name conveys inactive reference').toMatch(
+		/inactive|reference|display/i
+	);
+	await expect(fkeys.getByText(/reference/i)).toBeVisible();
+	await expect(fkeys.getByText(/display/i)).toBeVisible();
+	expect(await fkeys.getByText('READY').count(), 'no READY while sync error present').toBe(0);
+	await expect(page.locator('.error-banner')).toBeVisible();
+	expect(await page.locator('.tui-fkeys kbd').count(), 'no keybinding semantics (kbd)').toBe(0);
+
+	// --- Two-context focus: search on the silver title bar gets a DARK
+	//     outline (yellow would be ~1:1 on silver); toggles on the dark
+	//     control strip keep yellow. Each: solid >=3px, complete unclipped
+	//     perimeter, >=3:1 against the surrounding backdrop. ---
+	const measureFocus = (selector?: string) =>
+		page.evaluate((sel) => {
+			const el = sel ? document.querySelector(sel) : document.activeElement;
+			if (!(el instanceof HTMLElement)) return null;
+			const ctx = document.createElement('canvas').getContext('2d');
+			if (!ctx) return null;
+			const parseRgb = (css: string) => {
+				ctx.clearRect(0, 0, 2, 2);
+				ctx.fillStyle = '#000';
+				ctx.fillStyle = css;
+				ctx.fillRect(0, 0, 2, 2);
+				const d = ctx.getImageData(0, 0, 1, 1).data;
+				return { r: d[0], g: d[1], b: d[2] };
+			};
+			const lumOf = (c: { r: number; g: number; b: number }) => {
+				const ch = (v: number) => {
+					const s = v / 255;
+					return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+				};
+				return 0.2126 * ch(c.r) + 0.7152 * ch(c.g) + 0.0722 * ch(c.b);
+			};
+			const alphaOf = (css: string) => {
+				const m = css.match(/rgba?\(([^)]*)\)/);
+				if (!m) return 1;
+				const p = m[1].split(',').map((x) => x.trim());
+				return p.length === 4 ? parseFloat(p[3]) : 1;
+			};
+			const bgRgbOf = (start: Element) => {
+				const layers: { rgb: { r: number; g: number; b: number }; a: number }[] = [];
+				let node: Element | null = start;
+				while (node instanceof HTMLElement) {
+					const bg = getComputedStyle(node).backgroundColor;
+					layers.push({ rgb: parseRgb(bg), a: alphaOf(bg) });
+					if (alphaOf(bg) >= 0.999) break;
+					node = node.parentElement;
+				}
+				let acc = layers[layers.length - 1].rgb;
+				for (let i = layers.length - 2; i >= 0; i--) {
+					const s = layers[i];
+					acc = {
+						r: s.rgb.r * s.a + acc.r * (1 - s.a),
+						g: s.rgb.g * s.a + acc.g * (1 - s.a),
+						b: s.rgb.b * s.a + acc.b * (1 - s.a)
+					};
+				}
+				return acc;
+			};
+			const cs = getComputedStyle(el);
+			const ow = parseFloat(cs.outlineWidth);
+			const oo = parseFloat(cs.outlineOffset);
+			const color = parseRgb(cs.outlineColor);
+			const cL = lumOf(color);
+			// offset ring seats outside the element -> backdrop is the parent chain
+			const bL = lumOf(bgRgbOf(el.parentElement ?? el));
+			const contrast = (Math.max(cL, bL) + 0.05) / (Math.min(cL, bL) + 0.05);
+			const rect = el.getBoundingClientRect();
+			const extent = oo + ow;
+			const ring = {
+				top: rect.top - extent,
+				right: rect.right + extent,
+				bottom: rect.bottom + extent,
+				left: rect.left - extent
+			};
+			const vw = document.documentElement.clientWidth;
+			const vh = document.documentElement.clientHeight;
+			let clipped = false;
+			if (ring.top < -0.5 || ring.left < -0.5 || ring.right > vw + 0.5 || ring.bottom > vh + 0.5)
+				clipped = true;
+			let node: Element | null = el.parentElement;
+			while (!clipped && node instanceof HTMLElement) {
+				const ov = getComputedStyle(node).overflow;
+				if (ov === 'hidden' || ov === 'clip' || ov === 'auto' || ov === 'scroll') {
+					const nr = node.getBoundingClientRect();
+					if (
+						ring.top < nr.top - 0.5 ||
+						ring.left < nr.left - 0.5 ||
+						ring.right > nr.right + 0.5 ||
+						ring.bottom > nr.bottom + 0.5
+					)
+						clipped = true;
+				}
+				node = node.parentElement;
+			}
+			return { style: cs.outlineStyle, width: ow, contrast, clipped, colorLum: cL };
+		}, selector);
+	const assertFocus = (name: string, f: unknown, expectDark: boolean) => {
+		const r = f as {
+			style: string;
+			width: number;
+			contrast: number;
+			clipped: boolean;
+			colorLum: number;
+		} | null;
+		expect(r, `${name} focus measured`).not.toBeNull();
+		expect(r!.style, `${name} focus outline solid`).toBe('solid');
+		expect(r!.width, `${name} focus outline >= 3px`).toBeGreaterThanOrEqual(3);
+		expect(r!.clipped, `${name} focus perimeter complete`).toBe(false);
+		expect(r!.contrast, `${name} focus contrast >= 3:1`).toBeGreaterThanOrEqual(3);
+		if (expectDark) {
+			expect(r!.colorLum, `${name} focus is dark on the silver bar`).toBeLessThan(0.4);
+		} else {
+			expect(r!.colorLum, `${name} focus is yellow on a dark surface`).toBeGreaterThan(0.55);
+		}
+	};
+	await page.getByRole('searchbox').focus();
+	assertFocus('search', await measureFocus('.tui-search'), true);
+	for (const name of ['All', 'Mine', 'Due this week', 'Board', 'List', 'New task']) {
+		for (let i = 0; i < 40; i++) {
+			await page.keyboard.press('Tab');
+			const match = await page.evaluate((n) => {
+				const el = document.activeElement;
+				return !!(el && el.tagName === 'BUTTON' && (el.textContent ?? '').includes(n));
+			}, name);
+			if (match) break;
+		}
+		assertFocus(name, await measureFocus(), false);
+	}
+
+	// --- Table-driven WCAG AA contrast: every semantic text role against its
+	//     opaque parent (including the reverse-video bars). ---
+	const contrast = await page.evaluate(() => {
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const parseRgb = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			return { r: d[0], g: d[1], b: d[2], a: d[3] / 255 };
+		};
+		const lumOfRgb = ({ r, g, b }: { r: number; g: number; b: number }) => {
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b);
+		};
+		const bgRgbOf = (start: Element | null): { r: number; g: number; b: number } => {
+			if (!(start instanceof HTMLElement)) return parseRgb('rgb(0,0,0)');
+			const layers: { rgb: { r: number; g: number; b: number }; a: number }[] = [];
+			let node: Element | null = start;
+			while (node instanceof HTMLElement) {
+				const parsed = parseRgb(getComputedStyle(node).backgroundColor);
+				layers.push({ rgb: { r: parsed.r, g: parsed.g, b: parsed.b }, a: parsed.a });
+				if (parsed.a >= 0.999) break;
+				node = node.parentElement;
+			}
+			let acc = layers[layers.length - 1].rgb;
+			for (let i = layers.length - 2; i >= 0; i--) {
+				const s = layers[i];
+				acc = {
+					r: s.rgb.r * s.a + acc.r * (1 - s.a),
+					g: s.rgb.g * s.a + acc.g * (1 - s.a),
+					b: s.rgb.b * s.a + acc.b * (1 - s.a)
+				};
+			}
+			return acc;
+		};
+		const ratio = (textSel: string, bgSel: string) => {
+			const textEl = document.querySelector(textSel);
+			const bgEl = document.querySelector(bgSel);
+			if (!(textEl instanceof HTMLElement) || !(bgEl instanceof HTMLElement)) return -1;
+			const fg = parseRgb(getComputedStyle(textEl).color);
+			const bg = bgRgbOf(bgEl);
+			const tL = lumOfRgb({ r: fg.r, g: fg.g, b: fg.b });
+			const bL = lumOfRgb(bg);
+			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+		};
+		const selfRatio = (sel: string) => ratio(sel, sel);
+		const elRatio = (el: Element) => {
+			if (!(el instanceof HTMLElement)) return -1;
+			const fg = parseRgb(getComputedStyle(el).color);
+			const bg = bgRgbOf(el);
+			const tL = lumOfRgb({ r: fg.r, g: fg.g, b: fg.b });
+			const bL = lumOfRgb(bg);
+			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+		};
+		const placeholderRatio = (() => {
+			const inputEl = document.querySelector('.tui-search input');
+			if (!(inputEl instanceof HTMLElement)) return -1;
+			const fg = parseRgb(getComputedStyle(inputEl, '::placeholder').color);
+			const bg = bgRgbOf(document.querySelector('.tui-search'));
+			const tL = lumOfRgb({ r: fg.r, g: fg.g, b: fg.b });
+			const bL = lumOfRgb(bg);
+			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+		})();
+		const results: { role: string; ratio: number }[] = [
+			{ role: 'card-title', ratio: ratio('.title', '.tui-row') },
+			{ role: 'cid', ratio: ratio('.cid', '.tui-row') },
+			{ role: 'field', ratio: selfRatio('.field') },
+			{ role: 'pri-high', ratio: selfRatio('.pri-high') },
+			{ role: 'pri-medium', ratio: selfRatio('.pri-medium') },
+			{ role: 'done-title', ratio: ratio('.tui-row.is-done .title', '.tui-row.is-done') },
+			{ role: 'due', ratio: ratio('.due', '.tui-row') },
+			{ role: 'title-bar-title', ratio: ratio('.tui-title', '.tui-titlebar') },
+			{ role: 'col-head-name', ratio: ratio('.col-name', '.col-head') },
+			{ role: 'empty', ratio: ratio('.empty', '.col') },
+			{ role: 'error-body', ratio: ratio('.error-banner p', '.error-banner') },
+			{ role: 'error-strong', ratio: ratio('.error-banner strong', '.error-banner') },
+			{ role: 'new-task', ratio: selfRatio('.tui-new') },
+			{ role: 'toggle-inactive', ratio: selfRatio('.tui-toggle:not([aria-pressed="true"])') },
+			{ role: 'toggle-active', ratio: selfRatio('.tui-toggle[aria-pressed="true"]') },
+			{ role: 'retry', ratio: selfRatio('.tui-retry') },
+			{ role: 'fkeys-body', ratio: selfRatio('.tui-fkeys') },
+			{ role: 'search-placeholder', ratio: placeholderRatio }
+		];
+		document.querySelectorAll('.assignee').forEach((el) => {
+			const initials = el.textContent?.replace(/[[\]]/g, '').trim() || '?';
+			results.push({ role: `assignee:${initials}`, ratio: elRatio(el) });
+		});
+		document.querySelectorAll('.tui-avatar').forEach((el) => {
+			const initials = el.textContent?.replace(/[[\]]/g, '').trim() || '?';
+			results.push({ role: `team-avatar:${initials}`, ratio: elRatio(el) });
+		});
+		return { results };
+	});
+	expect(contrast).not.toBeNull();
+	for (const { role, ratio } of contrast!.results) {
+		expect(ratio, `${role} text contrast >= 4.5:1`).toBeGreaterThanOrEqual(4.5);
+	}
+
+	// Exact-width responsive: every interactive target >=44px on BOTH axes at
+	// 375/768/1280 (search, filters, view, New task, Retry, dismiss), no overflow.
+	const targets = ['All', 'Mine', 'Due this week', 'Board', 'List', 'New task', 'Retry'];
+	for (const width of [375, 768, 1280]) {
+		await page.setViewportSize({ width, height: 800 });
+		for (const name of targets) {
+			const box = await page.getByRole('button', { name, exact: true }).boundingBox();
+			expect(box?.width, `${name} width at ${width}`).toBeGreaterThanOrEqual(44);
+			expect(box?.height, `${name} height at ${width}`).toBeGreaterThanOrEqual(44);
+		}
+		const searchBox = await page.locator('.tui-search').boundingBox();
+		expect(searchBox?.width, `search width at ${width}`).toBeGreaterThanOrEqual(44);
+		expect(searchBox?.height, `search height at ${width}`).toBeGreaterThanOrEqual(44);
+		const dismiss = await page
+			.getByRole('button', { name: 'Dismiss error', exact: true })
+			.boundingBox();
+		expect(dismiss?.width, `dismiss width at ${width}`).toBeGreaterThanOrEqual(44);
+		expect(dismiss?.height, `dismiss height at ${width}`).toBeGreaterThanOrEqual(44);
+		const overflow = await page.evaluate(
+			() =>
+				document.documentElement.scrollWidth - document.documentElement.clientWidth ||
+				window.scrollX
+		);
+		expect(overflow, `horizontal overflow at ${width}`).toBeLessThanOrEqual(0);
+	}
+
+	// --- Hover = ncurses cursor-row highlight: a faint accent (yellow) wash on
+	//     the row plus the drag token lifting to full opacity. Gated to
+	//     (hover: hover); excluded from .is-selected so selection still wins;
+	//     flat (no shadow/transform/gradient); title stays AA on hover. ---
+	await page.setViewportSize({ width: 1280, height: 800 });
+	const hoverRow = page.locator('.tui-row:not(.is-selected)').first();
+	const readHoverState = () =>
+		page.evaluate(() => {
+			const el = document.querySelector('.tui-row:not(.is-selected)');
+			if (!(el instanceof HTMLElement)) return null;
+			const ctx = document.createElement('canvas').getContext('2d');
+			if (!ctx) return null;
+			// Chrome serializes modern colors as oklch/oklab/color-mix, so parse via
+			// canvas pixels (straight rgba) instead of a regex.
+			const px = (css: string) => {
+				ctx.clearRect(0, 0, 2, 2);
+				ctx.fillStyle = '#000';
+				ctx.fillStyle = css;
+				ctx.fillRect(0, 0, 2, 2);
+				const d = ctx.getImageData(0, 0, 1, 1).data;
+				return { r: d[0], g: d[1], b: d[2], a: d[3] / 255 };
+			};
+			const lumOf = ({ r, g, b }: { r: number; g: number; b: number }) => {
+				const ch = (v: number) => {
+					const s = v / 255;
+					return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+				};
+				return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b);
+			};
+			// composite the row's translucent wash over its ancestor chain
+			const bgRgbOf = (start: HTMLElement) => {
+				const layers: { rgb: { r: number; g: number; b: number }; a: number }[] = [];
+				let node: Element | null = start;
+				while (node instanceof HTMLElement) {
+					const p = px(getComputedStyle(node).backgroundColor);
+					layers.push({ rgb: { r: p.r, g: p.g, b: p.b }, a: p.a });
+					if (p.a >= 0.999) break;
+					node = node.parentElement;
+				}
+				let acc = layers[layers.length - 1].rgb;
+				for (let i = layers.length - 2; i >= 0; i--) {
+					const s = layers[i];
+					acc = {
+						r: s.rgb.r * s.a + acc.r * (1 - s.a),
+						g: s.rgb.g * s.a + acc.g * (1 - s.a),
+						b: s.rgb.b * s.a + acc.b * (1 - s.a)
+					};
+				}
+				return acc;
+			};
+			const bg = px(getComputedStyle(el).backgroundColor);
+			const titleEl = el.querySelector('.title');
+			let titleContrast = -1;
+			if (titleEl instanceof HTMLElement) {
+				const fg = px(getComputedStyle(titleEl).color);
+				const tL = lumOf({ r: fg.r, g: fg.g, b: fg.b });
+				const bL = lumOf(bgRgbOf(el));
+				titleContrast = (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+			}
+			return { a: bg.a, r: bg.r, g: bg.g, b: bg.b, titleContrast };
+		});
+	const restHover = await readHoverState();
+	expect(restHover, 'hover state measured').not.toBeNull();
+	expect(restHover!.a, 'resting row background is transparent').toBe(0);
+	await hoverRow.hover();
+	// the wash fades in over 0.12s (reduced-motion lands instantly); poll to settle.
+	let actHover = await readHoverState();
+	for (let i = 0; i < 30 && actHover!.a < 0.12; i++) {
+		await page.waitForTimeout(30);
+		actHover = await readHoverState();
+	}
+	expect(actHover!.a, 'hover adds an accent wash').toBeGreaterThan(0.08);
+	expect(actHover!.r, 'wash is the yellow accent').toBeGreaterThan(200);
+	expect(actHover!.b, 'wash is yellow, not neutral').toBeLessThan(160);
+	expect(actHover!.titleContrast, 'card title stays AA on hover').toBeGreaterThanOrEqual(4.5);
+	// selection precedence: hovering the selected card does not add the wash.
+	const selCard = page.locator('.tui-row.is-selected');
+	const selRest = await selCard.evaluate((e) => getComputedStyle(e as HTMLElement).backgroundColor);
+	await selCard.hover();
+	const selHov = await selCard.evaluate((e) => getComputedStyle(e as HTMLElement).backgroundColor);
+	expect(selHov, 'selected card background unchanged by hover').toBe(selRest);
+
+	// reduced-motion: skeleton pulse suppressed while blocks remain visible.
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	const skeletonStatic = await page.evaluate(() => {
+		const el = document.querySelector('.skel');
+		if (!(el instanceof HTMLElement)) return null;
+		return getComputedStyle(el).animationName === 'none';
+	});
+	expect(skeletonStatic).toBe(true);
+	await page.emulateMedia({ reducedMotion: null });
+});
