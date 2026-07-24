@@ -3372,6 +3372,88 @@ test('opens the kanban-terminal design and its isolated preview states', async (
 		expect(overflow, `horizontal overflow at ${width}`).toBeLessThanOrEqual(0);
 	}
 
+	// --- Hover = ncurses cursor-row highlight: a faint accent (yellow) wash on
+	//     the row plus the drag token lifting to full opacity. Gated to
+	//     (hover: hover); excluded from .is-selected so selection still wins;
+	//     flat (no shadow/transform/gradient); title stays AA on hover. ---
+	await page.setViewportSize({ width: 1280, height: 800 });
+	const hoverRow = page.locator('.tui-row:not(.is-selected)').first();
+	const readHoverState = () =>
+		page.evaluate(() => {
+			const el = document.querySelector('.tui-row:not(.is-selected)');
+			if (!(el instanceof HTMLElement)) return null;
+			const ctx = document.createElement('canvas').getContext('2d');
+			if (!ctx) return null;
+			// Chrome serializes modern colors as oklch/oklab/color-mix, so parse via
+			// canvas pixels (straight rgba) instead of a regex.
+			const px = (css: string) => {
+				ctx.clearRect(0, 0, 2, 2);
+				ctx.fillStyle = '#000';
+				ctx.fillStyle = css;
+				ctx.fillRect(0, 0, 2, 2);
+				const d = ctx.getImageData(0, 0, 1, 1).data;
+				return { r: d[0], g: d[1], b: d[2], a: d[3] / 255 };
+			};
+			const lumOf = ({ r, g, b }: { r: number; g: number; b: number }) => {
+				const ch = (v: number) => {
+					const s = v / 255;
+					return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+				};
+				return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b);
+			};
+			// composite the row's translucent wash over its ancestor chain
+			const bgRgbOf = (start: HTMLElement) => {
+				const layers: { rgb: { r: number; g: number; b: number }; a: number }[] = [];
+				let node: Element | null = start;
+				while (node instanceof HTMLElement) {
+					const p = px(getComputedStyle(node).backgroundColor);
+					layers.push({ rgb: { r: p.r, g: p.g, b: p.b }, a: p.a });
+					if (p.a >= 0.999) break;
+					node = node.parentElement;
+				}
+				let acc = layers[layers.length - 1].rgb;
+				for (let i = layers.length - 2; i >= 0; i--) {
+					const s = layers[i];
+					acc = {
+						r: s.rgb.r * s.a + acc.r * (1 - s.a),
+						g: s.rgb.g * s.a + acc.g * (1 - s.a),
+						b: s.rgb.b * s.a + acc.b * (1 - s.a)
+					};
+				}
+				return acc;
+			};
+			const bg = px(getComputedStyle(el).backgroundColor);
+			const titleEl = el.querySelector('.title');
+			let titleContrast = -1;
+			if (titleEl instanceof HTMLElement) {
+				const fg = px(getComputedStyle(titleEl).color);
+				const tL = lumOf({ r: fg.r, g: fg.g, b: fg.b });
+				const bL = lumOf(bgRgbOf(el));
+				titleContrast = (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+			}
+			return { a: bg.a, r: bg.r, g: bg.g, b: bg.b, titleContrast };
+		});
+	const restHover = await readHoverState();
+	expect(restHover, 'hover state measured').not.toBeNull();
+	expect(restHover!.a, 'resting row background is transparent').toBe(0);
+	await hoverRow.hover();
+	// the wash fades in over 0.12s (reduced-motion lands instantly); poll to settle.
+	let actHover = await readHoverState();
+	for (let i = 0; i < 30 && actHover!.a < 0.12; i++) {
+		await page.waitForTimeout(30);
+		actHover = await readHoverState();
+	}
+	expect(actHover!.a, 'hover adds an accent wash').toBeGreaterThan(0.08);
+	expect(actHover!.r, 'wash is the yellow accent').toBeGreaterThan(200);
+	expect(actHover!.b, 'wash is yellow, not neutral').toBeLessThan(160);
+	expect(actHover!.titleContrast, 'card title stays AA on hover').toBeGreaterThanOrEqual(4.5);
+	// selection precedence: hovering the selected card does not add the wash.
+	const selCard = page.locator('.tui-row.is-selected');
+	const selRest = await selCard.evaluate((e) => getComputedStyle(e as HTMLElement).backgroundColor);
+	await selCard.hover();
+	const selHov = await selCard.evaluate((e) => getComputedStyle(e as HTMLElement).backgroundColor);
+	expect(selHov, 'selected card background unchanged by hover').toBe(selRest);
+
 	// reduced-motion: skeleton pulse suppressed while blocks remain visible.
 	await page.emulateMedia({ reducedMotion: 'reduce' });
 	const skeletonStatic = await page.evaluate(() => {

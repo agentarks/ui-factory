@@ -586,9 +586,28 @@
 		opacity: 0.5;
 	}
 
+	/*
+	 * Hover = ncurses cursor-row highlight (the mc/htop "current row" idiom):
+	 * a faint accent (yellow) wash on the row, plus the drag token lifting to
+	 * full opacity. Gated to (hover: hover) so a touch tap cannot leave a
+	 * sticky state resembling selection; excluded from .is-selected so the
+	 * stronger full-border selection treatment wins. Flat — no shadow, no
+	 * transform, no gradient. The wash lands instantly; only the short colour
+	 * transition is motion-gated (reduced motion keeps the instant wash).
+	 */
 	@media (hover: hover) {
+		.tui-row:not(.is-selected):hover {
+			background: color-mix(in oklch, var(--accent) 14%, transparent);
+		}
+
 		.tui-row:hover .grip {
 			opacity: 1;
+		}
+	}
+
+	@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+		.tui-row {
+			transition: background-color 0.12s ease;
 		}
 	}
 
