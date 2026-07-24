@@ -22,245 +22,203 @@
 	const activeColumnId = 'in-progress';
 	const selectedCardId = 'au-142';
 
-	// Bottom status line + key map. Inert-specimen policy: this is a visual
-	// reference only — the glyphs document the specimen actions, they are NOT
-	// active bindings (no handlers, no shortcuts). The status reflects the
-	// visible sync error rather than claiming "ready".
-	const legendKeys = [
-		{ key: '[N]', action: 'New task' },
-		{ key: '[/]', action: 'Search' },
-		{ key: '[B/L]', action: 'Board / List' },
-		{ key: '[F5]', action: 'Retry sync' }
+	// Bottom F-key + status strip — inert-specimen policy: a visual reference
+	// only (display only, no shortcuts). The glyphs document the specimen
+	// actions, they are NOT active bindings. Status mirrors the sync error.
+	const fkeys = [
+		{ key: 'F1', action: 'Help' },
+		{ key: 'F5', action: 'Retry sync' },
+		{ key: 'F7', action: 'New task' },
+		{ key: '/', action: 'Search' },
+		{ key: 'B/L', action: 'Board / List' }
 	];
 </script>
 
 <div class="board-root">
-	<header class="app-bar">
-		<div class="bar-row bar-left">
-			<span class="project-chip">[AURORA]</span>
-			<div class="title-block">
-				<h1>Sprint 24 · Board</h1>
-				<p class="subtitle">{columns.length} cols · {cardTotal} cards · updated 2m ago</p>
-			</div>
-			<ul class="team-avatars" aria-label="Team members">
-				{#each members as m (m.id)}
-					<li class="avatar" aria-label={m.name} title={m.name}>{m.initials}</li>
-				{/each}
-			</ul>
-		</div>
-
-		<div class="bar-row bar-right">
-			<label class="search">
-				<span class="search-label">SEARCH</span>
-				<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-					<circle cx="7" cy="7" r="4.6" fill="none" stroke="currentColor" stroke-width="1.5" />
-					<path
-						d="M10.6 10.6l3.1 3.1"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.5"
-						stroke-linecap="round"
-					/>
-				</svg>
-				<input
-					type="search"
-					placeholder="search cards"
-					aria-label="Search cards"
-					bind:value={query}
+	<!-- ncurses reverse-video title/status bar: title left, bracketed search right -->
+	<header class="tui-titlebar">
+		<h1 class="tui-title">Aurora - Sprint 24 - Board</h1>
+		<label class="tui-search">
+			<span class="brk" aria-hidden="true">[</span>
+			<span class="search-label">SEARCH</span>
+			<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+				<circle cx="7" cy="7" r="4.6" fill="none" stroke="currentColor" stroke-width="1.5" />
+				<path
+					d="M10.6 10.6l3.1 3.1"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
 				/>
-			</label>
-
-			<div class="segmented filters" role="group" aria-label="Filter cards">
-				{#each filters as f (f.id)}
-					<button
-						type="button"
-						class="chip"
-						aria-pressed={activeFilter === f.id}
-						onclick={() => (activeFilter = f.id)}>{f.label}</button
-					>
-				{/each}
-			</div>
-
-			<div class="segmented view-toggle" role="group" aria-label="Board view">
-				<button
-					type="button"
-					aria-pressed={activeView === 'board'}
-					onclick={() => (activeView = 'board')}>Board</button
-				>
-				<button
-					type="button"
-					aria-pressed={activeView === 'list'}
-					onclick={() => (activeView = 'list')}>List</button
-				>
-			</div>
-
-			<button type="button" class="primary">
-				<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-					<path d="M8 2v12M2 8h12" fill="none" stroke="currentColor" stroke-width="1.8" />
-				</svg>
-				New task
-			</button>
-		</div>
+			</svg>
+			<input
+				type="search"
+				placeholder="search cards"
+				aria-label="Search cards"
+				bind:value={query}
+			/>
+			<span class="brk" aria-hidden="true">]</span>
+		</label>
 	</header>
 
+	<!-- Thin control strip: filters / view / New task / team as bracketed TUI cells -->
+	<div class="tui-controls">
+		<div class="tui-group" role="group" aria-label="Filter cards">
+			{#each filters as f (f.id)}
+				<button
+					type="button"
+					class="tui-toggle"
+					aria-pressed={activeFilter === f.id}
+					onclick={() => (activeFilter = f.id)}
+				>
+					<span class="brk" aria-hidden="true">[</span>
+					{f.label}
+					<span class="brk" aria-hidden="true">]</span>
+				</button>
+			{/each}
+		</div>
+		<div class="tui-group" role="group" aria-label="Board view">
+			<button
+				type="button"
+				class="tui-toggle"
+				aria-pressed={activeView === 'board'}
+				onclick={() => (activeView = 'board')}
+			>
+				<span class="brk" aria-hidden="true">[</span> Board
+				<span class="brk" aria-hidden="true">]</span>
+			</button>
+			<button
+				type="button"
+				class="tui-toggle"
+				aria-pressed={activeView === 'list'}
+				onclick={() => (activeView = 'list')}
+			>
+				<span class="brk" aria-hidden="true">[</span> List
+				<span class="brk" aria-hidden="true">]</span>
+			</button>
+		</div>
+		<button type="button" class="tui-new">
+			<span class="brk" aria-hidden="true">[ +</span> New task
+			<span class="brk" aria-hidden="true">]</span>
+		</button>
+		<span class="tui-team" aria-label="Team members">
+			{#each members as m (m.id)}
+				<span class="tui-avatar" aria-label={m.name} title={m.name}>[{m.initials}]</span>
+			{/each}
+		</span>
+	</div>
+
 	<main class="board-shell">
+		<!-- Inline error: reverse-video/bracketed banner with [!] + Retry + dismiss -->
 		<div class="error-banner" role="status" aria-live="polite">
 			<span class="error-mark" aria-hidden="true">[!]</span>
 			<p>
 				<strong>Sync paused.</strong> Couldn't reach the server. Recent changes may not be saved.
 			</p>
 			<div class="error-actions">
-				<button type="button" class="error-retry">Retry</button>
-				<button type="button" class="icon-btn error-dismiss" aria-label="Dismiss error">
-					<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-						<path
-							d="M3.5 3.5l9 9M12.5 3.5l-9 9"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="1.7"
-							stroke-linecap="round"
-						/>
-					</svg>
+				<button type="button" class="tui-retry">
+					<span class="brk" aria-hidden="true">[</span> Retry
+					<span class="brk" aria-hidden="true">/ F5 ]</span>
 				</button>
+				<button type="button" class="tui-dismiss" aria-label="Dismiss error"> [x] </button>
 			</div>
 		</div>
 
 		<section class="board-body" aria-label="Kanban board">
 			{#each columns as col (col.id)}
 				<section
-					class="column{col.id === activeColumnId ? ' is-active' : ''}"
+					class="col{col.id === activeColumnId ? ' is-active' : ''}"
 					aria-label={col.id === activeColumnId ? `${col.name}, active column` : col.name}
 				>
-					<header class="column-head">
-						<h2>{col.name}</h2>
-						{#if col.id === activeColumnId}
-							<span class="active-tag" aria-hidden="true">&lt;ACTIVE&gt;</span>
-						{/if}
+					<header class="col-head">
+						<span class="brk" aria-hidden="true">+-</span>
+						<h2 class="col-name">{col.name}</h2>
 						<span
 							class="count"
 							aria-label={`${col.cards.length} ${col.cards.length === 1 ? 'card' : 'cards'}`}
+							>[{col.cards.length}]</span
 						>
-							[{col.cards.length}]
-						</span>
-						<button type="button" class="icon-btn" aria-label="More actions for {col.name}">
-							<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-								<circle cx="3.5" cy="8" r="1.4" fill="currentColor" />
-								<circle cx="8" cy="8" r="1.4" fill="currentColor" />
-								<circle cx="12.5" cy="8" r="1.4" fill="currentColor" />
-							</svg>
-						</button>
+						<span class="brk" aria-hidden="true">-+</span>
 					</header>
 
-					<div class="card-list">
+					<div class="col-body">
 						{#each col.cards as card (card.id)}
 							<article
-								class="card{card.done ? ' is-done' : ''}{card.id === selectedCardId
+								class="tui-row{card.done ? ' is-done' : ''}{card.id === selectedCardId
 									? ' is-selected'
 									: ''}"
 								aria-label={card.id === selectedCardId ? `${card.title}, selected` : undefined}
 								aria-labelledby={card.id === selectedCardId ? undefined : `title-${card.id}`}
 							>
-								<div class="card-top">
+								<div class="row-main">
 									<span class="cid">{card.id}</span>
-									<span class="grip" aria-hidden="true" title="Drag to move">
-										<svg viewBox="0 0 16 16" width="11" height="11">
-											<circle cx="5.5" cy="4" r="1.1" fill="currentColor" />
-											<circle cx="10.5" cy="4" r="1.1" fill="currentColor" />
-											<circle cx="5.5" cy="8" r="1.1" fill="currentColor" />
-											<circle cx="10.5" cy="8" r="1.1" fill="currentColor" />
-											<circle cx="5.5" cy="12" r="1.1" fill="currentColor" />
-											<circle cx="10.5" cy="12" r="1.1" fill="currentColor" />
-										</svg>
-									</span>
-								</div>
-
-								<h3 class="card-title" id="title-{card.id}">{card.title}</h3>
-
-								{#if card.labels.length}
-									<ul class="labels">
-										{#each card.labels as l (`${card.id}-${l.name}`)}
-											<li class="label">[{l.name}]</li>
-										{/each}
-									</ul>
-								{/if}
-
-								{#if card.checklist}
-									<p class="checklist">[ {card.checklist.done}/{card.checklist.total} ] subtasks</p>
-								{/if}
-
-								<footer class="card-foot">
-									<span class="foot-meta">
-										{#if card.priority}
-											<span class="priority pri-{card.priority}">
-												{card.priority === 'high' ? '[!HIGH]' : '[MED]'}
-											</span>
-										{/if}
-										<span class="due {card.done ? 'is-done' : ''}">
-											{#if card.done}
-												<span class="done-mark" aria-hidden="true">[x]</span>
-											{:else}
-												<span class="due-tag" aria-hidden="true">DUE</span>
-											{/if}
-											{card.due}
+									<span class="grip" aria-hidden="true" title="Drag to move">[..]</span>
+									<h3 class="title" id="title-{card.id}">
+										{#if card.done}<span class="done-x" aria-hidden="true">[x]</span>{/if}
+										{card.title}
+									</h3>
+									{#each card.labels as l (`${card.id}-${l.name}`)}
+										<span class="field">[{l.name}]</span>
+									{/each}
+									{#if card.priority}
+										<span class="pri pri-{card.priority}">
+											{card.priority === 'high' ? '[!HIGH]' : '[MED]'}
 										</span>
-									</span>
-
-									<ul class="assignees" aria-label="Assignees">
-										{#each card.assignees as id (id)}
-											{@const m = byId.get(id)}
-											{#if m}
-												<li class="avatar sm" aria-label={m.name} title={m.name}>
-													{m.initials}
-												</li>
-											{/if}
-										{/each}
-									</ul>
-								</footer>
+									{/if}
+								</div>
+								<div class="row-meta">
+									{#if card.checklist}
+										<span class="chk">[{card.checklist.done}/{card.checklist.total}]</span>
+									{/if}
+									<span class="due">{card.done ? '' : 'Due:'} {card.due}</span>
+									{#each card.assignees as id (id)}
+										{@const m = byId.get(id)}
+										{#if m}
+											<span class="assignee" aria-label={m.name} title={m.name}>[{m.initials}]</span
+											>
+										{/if}
+									{/each}
+								</div>
 							</article>
 						{/each}
 
 						{#if col.id === 'backlog'}
-							<div class="skeleton-card" aria-hidden="true">
-								<div class="skel skel-title"></div>
-								<div class="skel-row">
-									<div class="skel skel-label"></div>
-									<div class="skel skel-label"></div>
-								</div>
-								<div class="skel skel-foot"></div>
+							<!-- Loading: TUI block-element rows -->
+							<div class="skel-row" aria-hidden="true">
+								<div class="skel skel-bar"></div>
+								<div class="skel skel-bar short"></div>
+							</div>
+							<div class="skel-row" aria-hidden="true">
+								<div class="skel skel-bar"></div>
 							</div>
 						{/if}
 
 						{#if col.cards.length === 0}
-							<div class="empty-col">
-								<p>No cards yet</p>
+							<div class="empty">
+								<span class="brk" aria-hidden="true">+--</span> no items
+								<span class="brk" aria-hidden="true">--+</span>
 							</div>
 						{/if}
-
-						<button type="button" class="add-card">
-							<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
-								<path d="M8 2v12M2 8h12" fill="none" stroke="currentColor" stroke-width="1.8" />
-							</svg>
-							[ ADD A CARD ]
-						</button>
 					</div>
 				</section>
 			{/each}
 		</section>
 	</main>
 
+	<!-- Bottom F-key + status strip (mb-fkeys) -->
 	<footer
-		class="status-legend"
+		class="tui-fkeys"
 		aria-label="Inactive key-map reference and board status (display only, no active shortcuts)"
 	>
 		<span class="leg-note">KEY MAP — reference, display only</span>
-		<span class="leg-group">
-			{#each legendKeys as k (k.key)}
-				<span class="leg-item"
-					><span class="k">{k.key}</span><span class="leg">{k.action}</span></span
+		<span class="fkey-group">
+			{#each fkeys as k (k.key)}
+				<span class="fkey-item"
+					><span class="fkey">{k.key}</span><span class="fkey-act">{k.action}</span></span
 				>
 			{/each}
 		</span>
-		<span class="leg-status"
+		<span class="fkey-status"
 			>aurora:board · sprint-24 · {cardTotal} tasks ·
 			<span class="leg-state">SYNC: PAUSED</span></span
 		>
@@ -282,14 +240,12 @@
 
 	.board-root {
 		/*
-		 * ncurses / TUI tokens.
-		 * Tinted near-black terminal canvas (no pure black/white); full
-		 * monospace; reverse-video header bar and column title bars; bordered
-		 * dialog-window columns and cards (box-rule framing); bracketed field
-		 * and state notation; restrained ANSI-like semantic colors (yellow
-		 * active, red priority/error, green done). No glow, no gradients, no
-		 * backdrop blur, no graph paper, no coloured side-stripes — depth
-		 * comes from borders and reverse video, not shadows.
+		 * ncurses / TUI tokens (faithful to the concept's c-ncurses palette,
+		 * scaled, tinted, no pure black/white). Structural identity:
+		 * reverse-video title bar, bordered dialog-window columns with
+		 * "+- NAME [n] -+" headers, flat border-bottom TUI rows, bracketed
+		 * fields/priority, an F-key/status footer. Flat — zero shadows,
+		 * no gradients, no backdrop blur, no graph paper, no side-stripes.
 		 */
 		--canvas: oklch(0.2 0.028 270);
 		--window: oklch(0.235 0.028 270);
@@ -316,113 +272,53 @@
 		font-synthesis: none;
 		color: var(--ink);
 		background: var(--canvas);
-		padding: clamp(0.75rem, 2vw, 1.1rem);
+		padding: clamp(0.6rem, 2vw, 1rem);
+		line-height: 1.4;
 	}
 
-	/* ---------- Reverse-video app bar ---------- */
+	/* ---------- Reverse-video title bar (mb-head) ---------- */
 
-	.app-bar {
+	.tui-titlebar {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 0.5rem 0.75rem;
+		gap: 0.5rem;
 		flex-wrap: wrap;
-		padding: 0.6rem clamp(0.65rem, 1.5vw, 0.85rem);
+		padding: 0 0.6rem;
+		min-height: 44px;
 		background: var(--bar);
 		color: var(--on-bar);
 		border: 1px solid var(--rule);
-		margin-bottom: clamp(0.6rem, 1.5vw, 0.85rem);
 	}
 
-	.bar-row {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		flex-wrap: wrap;
-		min-width: 0;
-	}
-
-	.project-chip {
-		display: inline-grid;
-		place-items: center;
-		height: 1.75rem;
-		padding: 0 0.6rem;
+	.tui-title {
+		margin: 0;
 		font-family: var(--font-mono);
-		font-size: 0.74rem;
+		font-size: 0.86rem;
 		font-weight: 700;
-		letter-spacing: 0.04em;
-		color: var(--ink);
-		background: var(--head);
+		letter-spacing: 0.02em;
+		color: var(--on-bar);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.tui-search {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		min-height: 44px;
+		padding: 0 0.4rem;
+		color: var(--on-bar);
+		background: transparent;
 		border: 1px solid var(--rule);
 	}
 
-	.title-block h1 {
-		margin: 0;
-		font-family: var(--font-mono);
-		font-size: 1.05rem;
-		font-weight: 700;
-		letter-spacing: -0.01em;
-		line-height: 1.2;
-		color: var(--on-bar);
-	}
-
-	.subtitle {
-		margin: 0.1rem 0 0;
-		font-family: var(--font-mono);
-		font-size: 0.7rem;
-		letter-spacing: 0.02em;
+	.tui-search .brk {
 		color: var(--on-bar-soft);
 	}
 
-	.team-avatars {
-		display: flex;
-		list-style: none;
-		margin: 0;
-		padding: 0;
-	}
-
-	.team-avatars li {
-		margin-left: -6px;
-	}
-
-	.team-avatars li:first-child {
-		margin-left: 0;
-	}
-
-	.avatar {
-		width: 30px;
-		height: 30px;
-		display: grid;
-		place-items: center;
-		border-radius: 0;
-		font-size: 0.66rem;
-		font-weight: 700;
-		color: var(--ink);
-		background: var(--head);
-		border: 1px solid var(--rule);
-	}
-
-	.avatar.sm {
-		width: 24px;
-		height: 24px;
-		font-size: 0.54rem;
-	}
-
-	/* ---------- Header controls (on the reverse-video bar) ---------- */
-
-	.search {
-		display: flex;
-		align-items: center;
-		gap: 0.4rem;
-		padding: 0 0.6rem;
-		height: 44px;
-		background: transparent;
-		color: var(--on-bar);
-		border: 1px solid var(--rule);
-	}
-
-	.search-label {
-		flex: none;
+	.tui-search .search-label {
 		font-family: var(--font-mono);
 		font-size: 0.6rem;
 		font-weight: 700;
@@ -430,92 +326,114 @@
 		color: var(--on-bar-soft);
 	}
 
-	.search input {
-		width: 8rem;
+	.tui-search svg {
+		color: var(--on-bar-soft);
+		flex: none;
+	}
+
+	.tui-search input {
+		width: 7.5rem;
 		max-width: 100%;
 		min-width: 0;
 		border: 0;
 		background: transparent;
 		color: var(--on-bar);
 		font: inherit;
-		font-size: 0.8rem;
+		font-size: 0.78rem;
 	}
 
-	.search input::placeholder {
+	.tui-search input::placeholder {
 		color: var(--on-bar-soft);
 	}
 
-	.search input:focus-visible {
+	.tui-search input:focus-visible {
 		outline: none;
 	}
 
-	/* Header controls sit on the BRIGHT reverse-video bar: a yellow outline is
-	   invisible there (~1:1), so the field shows a context-specific DARK ring.
-	   Yellow focus is preserved on dark surfaces via the global rule below. */
-	.search:focus-within {
+	/* Search sits on the bright bar: a DARK ring (yellow would be ~1:1). */
+	.tui-search:focus-within {
 		outline: 3px solid var(--on-bar);
 		outline-offset: 1px;
 	}
 
-	.segmented {
-		display: inline-flex;
-		padding: 3px;
-		gap: 3px;
-		background: transparent;
+	/* ---------- Thin control strip (filters / view / New / team) ---------- */
+
+	.tui-controls {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem 0.6rem;
+		flex-wrap: wrap;
+		padding: 0.35rem 0.6rem;
+		margin-top: 3px;
+		background: var(--window);
 		border: 1px solid var(--rule);
 	}
 
-	.chip,
-	.view-toggle button {
+	.tui-group {
 		display: inline-flex;
 		align-items: center;
-		font: inherit;
-		font-size: 0.76rem;
-		font-weight: 600;
-		color: var(--on-bar);
-		border: 1px solid transparent;
+		gap: 0.25rem;
+		flex-wrap: wrap;
+	}
+
+	.tui-toggle,
+	.tui-new,
+	.tui-retry,
+	.tui-dismiss {
+		font-family: var(--font-mono);
+		font-size: 0.74rem;
+		font-weight: 700;
+		letter-spacing: 0.02em;
+		color: var(--ink);
 		background: transparent;
-		padding: 0 0.8rem;
-		min-width: 44px;
+		border: 1px solid var(--rule);
 		min-height: 44px;
-		justify-content: center;
+		min-width: 44px;
+		padding: 0 0.6rem;
 		cursor: pointer;
 	}
 
-	/* Selection = reverse video: dark fill + light text. */
-	.chip[aria-pressed='true'],
-	.view-toggle button[aria-pressed='true'] {
-		color: var(--ink);
-		font-weight: 700;
-		background: var(--head);
+	/* pressed = reverse video (silver fill + dark text) */
+	.tui-toggle[aria-pressed='true'] {
+		color: var(--on-bar);
+		background: var(--bar);
 		border-color: var(--rule);
 	}
 
-	.primary {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.4rem;
-		font: inherit;
-		font-size: 0.8rem;
-		font-weight: 700;
+	.tui-new {
 		color: var(--ink);
-		min-height: 44px;
-		padding: 0 0.9rem;
-		cursor: pointer;
-		background: var(--head);
-		border: 1px solid var(--accent);
+		border-color: var(--accent);
 	}
 
-	/* ---------- Error banner (bordered alert window + red marker) ---------- */
+	.tui-team {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.2rem;
+		flex-wrap: wrap;
+		margin-left: auto;
+	}
+
+	.tui-avatar {
+		font-family: var(--font-mono);
+		font-size: 0.66rem;
+		font-weight: 700;
+		color: var(--ink);
+		background: var(--head);
+		border: 1px solid var(--rule);
+		padding: 0.12rem 0.18rem;
+		white-space: nowrap;
+	}
+
+	/* ---------- Inline error banner ---------- */
 
 	.error-banner {
 		display: flex;
 		align-items: center;
-		gap: 0.6rem;
-		margin-bottom: clamp(0.6rem, 1.5vw, 0.85rem);
-		padding: 0.6rem 0.75rem;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+		margin-top: 6px;
+		padding: 0.4rem 0.6rem;
 		background: var(--window);
-		/* full red border on all sides — never a coloured side-stripe */
 		border: 1px solid var(--red);
 	}
 
@@ -528,7 +446,8 @@
 	.error-banner p {
 		margin: 0;
 		flex: 1;
-		font-size: 0.78rem;
+		min-width: 12rem;
+		font-size: 0.76rem;
 		color: var(--ink);
 	}
 
@@ -537,376 +456,256 @@
 	}
 
 	.error-actions {
-		display: flex;
+		display: inline-flex;
 		align-items: center;
 		gap: 0.3rem;
 	}
 
-	.error-retry {
-		font: inherit;
-		font-size: 0.76rem;
-		font-weight: 700;
+	.tui-retry {
 		color: var(--ink);
-		background: var(--head);
-		border: 1px solid var(--rule);
-		min-height: 44px;
-		min-width: 44px;
-		padding: 0 0.8rem;
-		cursor: pointer;
+		border-color: var(--rule);
 	}
 
-	.error-dismiss {
+	.tui-dismiss {
+		min-width: 44px;
 		color: var(--ink-soft);
 	}
 
-	/* ---------- Board shell ---------- */
+	/* ---------- Board body + dialog-window columns ---------- */
 
 	.board-body {
 		display: flex;
 		flex-direction: column;
-		gap: clamp(0.6rem, 1.5vw, 0.85rem);
+		gap: 6px;
+		margin-top: 6px;
 	}
 
-	/* ---------- Columns: bordered dialog windows ---------- */
-
-	.column {
+	.col {
 		display: flex;
 		flex-direction: column;
-		background: transparent;
+		background: var(--canvas);
 		border: 1px solid var(--rule);
 	}
 
-	.column-head {
-		display: flex;
-		align-items: center;
-		gap: 0.45rem;
-		padding: 0.4rem 0.6rem;
-		background: var(--head);
-		border-bottom: 1px solid var(--rule);
-		margin-bottom: 0;
-	}
-
-	.column.is-active {
+	.col.is-active {
 		border-color: var(--accent);
 	}
 
-	.column.is-active .column-head {
+	.col-head {
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+		padding: 0.35rem 0.5rem;
 		background: var(--head);
+		color: var(--ink);
+		border-bottom: 1px solid var(--rule);
+	}
+
+	.col.is-active .col-head {
+		background: var(--accent);
+		color: var(--on-bar);
 		border-bottom-color: var(--accent);
 	}
 
-	.column-head h2 {
+	.col-head .brk {
+		font-weight: 700;
+		color: inherit;
+		opacity: 0.85;
+	}
+
+	.col-name {
 		margin: 0;
 		font-family: var(--font-mono);
 		font-size: 0.8rem;
 		font-weight: 700;
-		letter-spacing: 0.02em;
-		color: var(--ink);
-		/* ncurses dialog-title flavor via CSS only: the DOM text stays the
-		   semantic column name ("Backlog"), but it renders uppercased and
-		   bracketed as `[ BACKLOG ]`. */
+		letter-spacing: 0.04em;
 		text-transform: uppercase;
-	}
-
-	.column-head h2::before {
-		content: '[ ';
-	}
-
-	.column-head h2::after {
-		content: ' ]';
-	}
-
-	.active-tag {
-		margin-left: -0.1rem;
-		padding: 0.05rem 0.32rem;
-		font-family: var(--font-mono);
-		font-size: 0.56rem;
-		font-weight: 700;
-		letter-spacing: 0.06em;
-		color: var(--accent);
+		color: inherit;
 	}
 
 	.count {
-		margin-left: auto;
-		text-align: center;
 		font-family: var(--font-mono);
-		font-size: 0.68rem;
+		font-size: 0.72rem;
 		font-weight: 700;
-		color: var(--ink);
+		color: inherit;
 	}
 
-	.icon-btn {
-		display: inline-grid;
-		place-items: center;
-		width: 44px;
-		height: 44px;
-		flex: none;
-		font: inherit;
-		border: 1px solid var(--rule);
-		background: transparent;
-		color: var(--ink-soft);
-		cursor: pointer;
-	}
-
-	@media (hover: hover) {
-		.icon-btn:hover {
-			color: var(--accent);
-		}
-	}
-
-	.card-list {
+	.col-body {
 		display: flex;
 		flex-direction: column;
-		gap: 0.5rem;
-		padding: 0.5rem;
 	}
 
-	/* ---------- Cards: bordered mini-windows ---------- */
+	/* ---------- Flat TUI rows (mb-card): border-bottom hairline only ---------- */
 
-	.card {
-		padding: 0.6rem 0.65rem;
+	.tui-row {
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+		padding: 0.45rem 0.55rem;
 		background: transparent;
-		border: 1px solid var(--rule-soft);
+		border: 0;
+		border-bottom: 1px solid var(--rule-soft);
 		cursor: auto;
 	}
 
-	.card.is-selected {
+	.tui-row:last-child {
+		border-bottom: 0;
+	}
+
+	/* selected = full-border box (TUI cursor/selection), never a side-stripe */
+	.tui-row.is-selected {
 		border: 1px solid var(--accent);
 	}
 
-	.card-top {
+	.row-main {
+		display: flex;
+		align-items: baseline;
+		gap: 0.35rem;
+		flex-wrap: wrap;
+	}
+
+	.row-meta {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
-		gap: 0.4rem;
+		gap: 0.35rem;
+		flex-wrap: wrap;
+		padding-left: 0.1rem;
 	}
 
 	.cid {
 		font-family: var(--font-mono);
-		font-size: 0.64rem;
+		font-size: 0.66rem;
 		font-weight: 700;
-		letter-spacing: 0.04em;
 		color: var(--ink-soft);
 	}
 
 	.grip {
-		flex: none;
+		font-family: var(--font-mono);
+		font-size: 0.64rem;
 		color: var(--ink-soft);
-		opacity: 0.4;
+		opacity: 0.5;
 	}
 
 	@media (hover: hover) {
-		.card:hover .grip {
+		.tui-row:hover .grip {
 			opacity: 1;
 		}
 	}
 
-	.card-title {
-		margin: 0.3rem 0 0;
+	.title {
+		margin: 0;
 		font-family: var(--font-mono);
 		font-size: 0.82rem;
 		font-weight: 600;
-		line-height: 1.3;
 		color: var(--ink);
 	}
 
-	.card.is-done .card-title {
+	.tui-row.is-done .title {
 		text-decoration: line-through;
 		color: var(--green);
 	}
 
-	/* Bracketed label fields. */
-	.labels {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.25rem;
-		margin: 0.4rem 0 0;
-		padding: 0;
-		list-style: none;
+	.done-x {
+		color: var(--green);
+		font-weight: 700;
+		margin-right: 0.1rem;
 	}
 
-	.label {
+	.field {
+		display: inline-block;
 		font-family: var(--font-mono);
 		font-size: 0.62rem;
 		font-weight: 600;
-		letter-spacing: 0.01em;
 		color: var(--ink-soft);
-		background: transparent;
-		padding: 0.12rem 0.1rem;
+		border: 1px solid var(--rule);
+		padding: 0 0.3rem;
+		white-space: nowrap;
 	}
 
-	.checklist {
-		display: flex;
-		align-items: center;
-		gap: 0.3rem;
-		margin: 0.4rem 0 0;
-		font-family: var(--font-mono);
-		font-size: 0.7rem;
-		color: var(--ink-soft);
-	}
-
-	.card-foot {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 0.4rem;
-		margin-top: 0.45rem;
-		padding-top: 0.4rem;
-		border-top: 1px dashed var(--rule-soft);
-	}
-
-	.foot-meta {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.45rem;
-		min-width: 0;
-	}
-
-	.priority {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.25rem;
+	.pri {
 		font-family: var(--font-mono);
 		font-size: 0.62rem;
 		font-weight: 700;
-		letter-spacing: 0.04em;
+		letter-spacing: 0.02em;
 	}
 
-	.priority.pri-high {
+	.pri-high {
 		color: var(--red);
 	}
 
-	.priority.pri-medium {
+	.pri-medium {
+		color: var(--accent);
+	}
+
+	.chk {
+		font-family: var(--font-mono);
+		font-size: 0.64rem;
+		font-weight: 700;
 		color: var(--accent);
 	}
 
 	.due {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.25rem;
-		font-family: var(--font-mono);
-		font-size: 0.7rem;
-		font-weight: 600;
-		color: var(--ink-soft);
-	}
-
-	.done-mark {
-		color: var(--green);
-	}
-
-	.due-tag {
-		color: var(--ink-soft);
-	}
-
-	.assignees {
-		display: flex;
-		list-style: none;
-		margin: 0;
-		padding: 0;
-	}
-
-	.assignees li {
-		margin-left: -6px;
-	}
-
-	.add-card {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: 0.35rem;
-		width: 100%;
 		font-family: var(--font-mono);
 		font-size: 0.66rem;
-		font-weight: 700;
-		letter-spacing: 0.06em;
 		color: var(--ink-soft);
-		border: 1px dashed var(--rule-soft);
-		background: transparent;
-		min-height: 44px;
-		padding: 0.5rem;
-		cursor: pointer;
 	}
 
-	@media (hover: hover) {
-		.add-card:hover {
-			color: var(--accent);
-			border-color: var(--accent);
-		}
-	}
-
-	/* ---------- States: empty + loading skeleton ---------- */
-
-	.empty-col {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.4rem;
-		padding: 0.9rem 0.5rem;
-		background: transparent;
-		border: 1px dashed var(--rule-soft);
-	}
-
-	.empty-col p {
-		margin: 0;
+	.assignee {
 		font-family: var(--font-mono);
-		font-size: 0.7rem;
-		font-weight: 600;
-		letter-spacing: 0.02em;
+		font-size: 0.62rem;
+		font-weight: 700;
+		color: var(--ink);
+		background: var(--head);
+		border: 1px solid var(--rule);
+		padding: 0.04rem 0.18rem;
+		white-space: nowrap;
+	}
+
+	/* ---------- Empty + loading states ---------- */
+
+	.empty {
+		padding: 0.6rem 0.55rem;
+		font-family: var(--font-mono);
+		font-size: 0.72rem;
 		color: var(--ink-soft);
-		/* ncurses empty-window flavor via CSS only: DOM text stays the
-		   baseline "No cards yet", rendering as `[ NO CARDS YET ]`. */
-		text-transform: uppercase;
+		border: 1px dashed var(--rule-soft);
+		margin: 0.4rem;
+		text-align: center;
 	}
 
-	.empty-col p::before {
-		content: '[ ';
-	}
-
-	.empty-col p::after {
-		content: ' ]';
-	}
-
-	.skeleton-card {
-		display: flex;
-		flex-direction: column;
-		gap: 0.45rem;
-		padding: 0.6rem 0.65rem;
-		background: transparent;
-		border: 1px solid var(--rule-soft);
-	}
-
-	.skel {
-		background: var(--ink-soft);
-		opacity: 0.28;
-	}
-
-	.skel-title {
-		height: 10px;
-		width: 70%;
+	.empty .brk {
+		color: var(--rule);
 	}
 
 	.skel-row {
 		display: flex;
-		gap: 0.25rem;
+		flex-direction: column;
+		gap: 0.3rem;
+		padding: 0.45rem 0.55rem;
+		border-bottom: 1px solid var(--rule-soft);
 	}
 
-	.skel-label {
-		height: 10px;
-		width: 40px;
+	.skel {
+		background: var(--ink-soft);
+		opacity: 0.22;
 	}
 
-	.skel-foot {
+	.skel-bar {
 		height: 9px;
-		width: 36%;
+		width: 80%;
+	}
+
+	.skel-bar.short {
+		width: 45%;
 	}
 
 	@keyframes skel-pulse {
 		0%,
 		100% {
-			opacity: 0.28;
+			opacity: 0.22;
 		}
 		50% {
-			opacity: 0.1;
+			opacity: 0.08;
 		}
 	}
 
@@ -916,51 +715,50 @@
 		}
 	}
 
-	/* ---------- Bottom function / status legend ---------- */
+	/* ---------- Bottom F-key + status strip (mb-fkeys) ---------- */
 
-	.status-legend {
+	.tui-fkeys {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
 		gap: 0.5rem;
 		flex-wrap: wrap;
-		margin-top: clamp(0.6rem, 1.5vw, 0.85rem);
-		padding: 0.45rem 0.6rem;
+		margin-top: 6px;
+		padding: 0.4rem 0.6rem;
 		background: var(--window);
+		border-top: 1px solid var(--rule);
 		border: 1px solid var(--rule);
 		font-family: var(--font-mono);
 		font-size: 0.66rem;
 		color: var(--ink-soft);
 	}
 
-	.leg-group {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.6rem;
-		flex-wrap: wrap;
-	}
-
 	.leg-note {
-		font-family: var(--font-mono);
 		font-weight: 700;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
 		color: var(--ink);
 	}
 
-	.leg-item {
+	.fkey-group {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.25rem;
+		gap: 0.5rem;
+		flex-wrap: wrap;
 	}
 
-	.k {
-		font-family: var(--font-mono);
+	.fkey-item {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.2rem;
+	}
+
+	.fkey {
 		font-weight: 700;
 		color: var(--accent);
 	}
 
-	.leg-status {
+	.fkey-status {
+		margin-left: auto;
 		color: var(--ink-soft);
 	}
 
@@ -971,42 +769,35 @@
 
 	/* ---------- Focus + motion ---------- */
 
-	/*
-	 * Two focus contexts: controls on the bright reverse-video bar get a DARK
-	 * outline (yellow would be ~1:1 on silver); controls on dark surfaces keep
-	 * the yellow accent. outline-width/offset come from the global rule; only
-	 * the colour is context-swapped here.
-	 */
-	.app-bar button:focus-visible {
-		outline-color: var(--on-bar);
-	}
-
 	.board-root :where(button):focus-visible {
 		outline: 3px solid var(--accent);
 		outline-offset: 2px;
 	}
 
-	/*
-	 * Hover (non-selected cards) is a multi-channel cue: a brightened border
-	 * + an accented border colour, with no fill change and no transform. Gated
-	 * behind (hover: hover) so a tap on a touch device cannot leave a sticky
-	 * state resembling selection. Cards stay non-interactive (cursor: auto —
-	 * no pointer/grab). ncurses is flat: there are no shadows anywhere.
-	 */
+	/* Controls on the bright reverse-video title bar (search) get a DARK ring. */
+	.tui-titlebar .tui-search:focus-within {
+		outline-color: var(--on-bar);
+	}
+
 	@media (hover: hover) {
-		.card:not(.is-selected):hover {
+		.tui-toggle:hover,
+		.tui-new:hover,
+		.tui-retry:hover,
+		.tui-dismiss:hover {
 			border-color: var(--accent);
+			color: var(--accent);
+		}
+
+		.tui-toggle[aria-pressed='true']:hover {
+			color: var(--on-bar);
 		}
 	}
 
 	@media (prefers-reduced-motion: no-preference) {
-		.card,
-		.chip,
-		.view-toggle button,
-		.primary,
-		.add-card,
-		.icon-btn,
-		.error-retry {
+		.tui-toggle,
+		.tui-new,
+		.tui-retry,
+		.tui-dismiss {
 			transition:
 				border-color 0.15s ease-out,
 				color 0.15s ease-out,
@@ -1020,15 +811,10 @@
 		.board-body {
 			flex-direction: row;
 			overflow-x: auto;
-			/* Internal padding keeps offset focus rings of every column control
-			   from clipping at the scroll edges. The focus extent is 3px outline
-			   + 2px offset (5px), so >=6px breathing room is required on every
-			   side (overflow-x:auto also clips the block axis). */
 			padding: 6px;
-			gap: clamp(0.6rem, 1.5vw, 0.85rem);
 		}
 
-		.column {
+		.col {
 			flex: 1 0 15rem;
 		}
 	}

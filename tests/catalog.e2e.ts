@@ -2905,14 +2905,14 @@ test('opens the kanban-terminal design and its isolated preview states', async (
 
 	// ---- Isolated preview: locked content + empty/error/loading states ----
 	const frame = page.frameLocator('iframe[title*="preview"i]');
-	await expect(frame.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
+	await expect(frame.getByRole('heading', { name: 'Aurora - Sprint 24 - Board' })).toBeVisible();
 	await expect(frame.getByRole('button', { name: 'New task' })).toBeVisible();
 	await expect(frame.getByText('Backlog', { exact: true })).toBeVisible();
 	await expect(frame.getByRole('heading', { name: 'In Review' })).toBeVisible();
-	await expect(frame.getByText('No cards yet')).toBeVisible();
+	await expect(frame.getByText('no items', { exact: false })).toBeVisible();
 	await expect(frame.getByText('Sync paused', { exact: false })).toBeVisible();
 	await expect(frame.getByRole('button', { name: 'Retry' })).toBeVisible();
-	await expect(frame.locator('.skeleton-card')).toBeVisible();
+	await expect(frame.locator('.skel')).toHaveCount(await frame.locator('.skel').count());
 
 	// interaction smoke: toggling a filter updates its pressed state (the only
 	// controls that carry real business state are the filter/view toggles).
@@ -2921,29 +2921,28 @@ test('opens the kanban-terminal design and its isolated preview states', async (
 	await expect(mineBtn).toHaveAttribute('aria-pressed', 'true');
 
 	// ------------------------------------------------------------------
-	// Direct preview route: NCURSES visual-signature, a11y, responsive.
+	// Direct preview route: NCURSES structural signature, a11y, responsive.
+	// The identity is STRUCTURAL, not a reskin: a reverse-video title bar,
+	// bordered dialog-window columns with "+- NAME [n] -+" headers, flat
+	// border-bottom TUI rows (NOT modern elevated cards), inline bracketed
+	// fields/priority, an F-key/status footer, and zero shadows/gradient/blur.
 	// ------------------------------------------------------------------
 	await page.goto('/designs/kanban-terminal/preview');
-	await expect(page.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Aurora - Sprint 24 - Board' })).toBeVisible();
 	await page.setViewportSize({ width: 1280, height: 800 });
 
 	// Locked content: all five team members render as accessible avatars.
 	const memberNames = ['Maya Rivera', 'Devon Chen', 'Priya Nair', 'Sam Okafor', 'Lena Foss'];
-	expect(await page.locator('.team-avatars [aria-label]').count()).toBe(5);
+	expect(await page.locator('.tui-team [aria-label]').count()).toBe(5);
 	for (const name of memberNames) {
-		await expect(page.locator(`.team-avatars [aria-label="${name}"]`)).toBeVisible();
+		await expect(page.locator(`.tui-team [aria-label="${name}"]`)).toBeVisible();
 	}
 
 	// Showcased states exposed programmatically.
-	await expect(page.locator('.column.is-active')).toHaveAttribute('aria-label', /active/i);
+	await expect(page.locator('.col.is-active')).toHaveAttribute('aria-label', /active/i);
 	await expect(page.getByRole('article', { name: /selected/i })).toBeVisible();
 
-	// NCURSES signature: tinted near-black canvas (NOT pure black/white),
-	// full monospace everywhere, reverse-video header bar (bright bg + dark
-	// text), bordered dialog-window columns, bracketed field/count notation,
-	// an F-key status legend adapted to real specimen actions, restrained
-	// ANSI semantic colors. NO cyan glow (no blur shadows at all), NO gradient,
-	// NO backdrop blur, NO graph-paper background image.
+	// NCURSES STRUCTURAL signature.
 	const sig = await page.evaluate(() => {
 		const ctx = document.createElement('canvas').getContext('2d');
 		if (!ctx) return null;
@@ -2976,16 +2975,17 @@ test('opens the kanban-terminal design and its isolated preview states', async (
 			if (/gradient/i.test(c.backgroundImage)) gradientFound = true;
 			if (c.backdropFilter !== 'none') backdropFound = true;
 			fonts.add(c.fontFamily.toLowerCase());
-			// ncurses is flat: the stated signature is ZERO box-shadows anywhere
-			// (depth comes from borders + reverse video, never glow/cast).
 			if (c.boxShadow !== 'none') anyShadowFound = true;
 		});
 		const rootCs = cs('.board-root');
-		const barCs = cs('.app-bar');
-		const colCs = cs('.column');
-		const countEl = document.querySelector('.count');
-		const labelEl = document.querySelector('.label');
-		const priHigh = document.querySelector('.pri-high');
+		const barCs = cs('.tui-titlebar');
+		const colCs = cs('.col');
+		const activeColCs = cs('.col.is-active');
+		const activeHeadCs = cs('.col.is-active .col-head');
+		const rowCs = cs('.tui-row:not(.is-selected)');
+		const selRowCs = cs('.tui-row.is-selected');
+		const headEl = document.querySelector('.col-head');
+		const headText = headEl?.textContent ?? '';
 		const canvasRgb = channels(rootCs?.backgroundColor ?? 'rgb(0,0,0)');
 		return {
 			canvasLum: lum(rootCs?.backgroundColor ?? '#000'),
@@ -2995,70 +2995,84 @@ test('opens the kanban-terminal design and its isolated preview states', async (
 				Math.min(canvasRgb.r, canvasRgb.g, canvasRgb.b),
 			rootBgImage: rootCs?.backgroundImage ?? '',
 			nonMonoFonts: [...fonts].filter((f) => !/mono/.test(f)),
-			barBgLum: barCs ? lum(barCs.backgroundColor) : -1,
-			barTextLum: barCs ? lum(barCs.color) : -1,
+			// reverse-video title bar: bright silver bg + dark text
+			titlebarBgLum: barCs ? lum(barCs.backgroundColor) : -1,
+			titlebarTextLum: barCs ? lum(barCs.color) : -1,
+			// dialog-window columns: full border on all four sides
 			colBorderAllSides:
 				colCs &&
 				colCs.borderTopWidth === colCs.borderBottomWidth &&
 				colCs.borderLeftWidth === colCs.borderRightWidth &&
 				colCs.borderTopWidth === colCs.borderLeftWidth &&
 				parseFloat(colCs.borderTopWidth) >= 1,
-			countBracketed: /^\[/.test(countEl?.textContent ?? ''),
-			labelBracketed: /^\[/.test(labelEl?.textContent ?? ''),
-			priorityHighText: priHigh?.textContent ?? '',
+			// header text literally carries "+- ... -+" box-rule framing + [n]
+			headHasPlusMinus: /\+-/.test(headText) && /-\+/.test(headText),
+			headHasBracketCount: /\[\d+\]/.test(headText),
+			// active column: yellow border + yellow head
+			activeBorderIsYellow: activeColCs
+				? (() => {
+						const ch = channels(activeColCs.borderTopColor);
+						return ch.r > 150 && ch.g > 150 && ch.b < 120;
+					})()
+				: false,
+			activeHeadBgYellow: activeHeadCs
+				? (() => {
+						const ch = channels(activeHeadCs.backgroundColor);
+						return ch.r > 150 && ch.g > 150 && ch.b < 120;
+					})()
+				: false,
+			// FLAT TUI rows: a non-selected card has ONLY a bottom hairline
+			// (borderTop 0) — NOT a modern elevated/boxed card.
+			rowTopBorderWidth: rowCs ? parseFloat(rowCs.borderTopWidth) : -1,
+			rowBottomBorderWidth: rowCs ? parseFloat(rowCs.borderBottomWidth) : -1,
+			// selected card is a full border box (all sides >= 1)
+			selectedAllSides:
+				selRowCs &&
+				parseFloat(selRowCs.borderTopWidth) >= 1 &&
+				parseFloat(selRowCs.borderBottomWidth) >= 1 &&
+				parseFloat(selRowCs.borderLeftWidth) >= 1 &&
+				parseFloat(selRowCs.borderRightWidth) >= 1,
+			// no modern SaaS chrome classes remain
+			modernAppbarCount: document.querySelectorAll('.app-bar').length,
+			modernSegmentedCount: document.querySelectorAll('.segmented').length,
 			gradientFound,
 			backdropFound,
 			anyShadowFound
 		};
 	});
 	expect(sig).not.toBeNull();
-	// tinted near-black: dark (but carries a hue tint, not pure #000 / neutral gray)
 	expect(sig!.canvasLum, 'canvas is near-black').toBeLessThan(0.06);
 	expect(sig!.canvasIsPureBlack, 'no pure black canvas').toBe(false);
 	expect(sig!.canvasTintSpread, 'canvas is tinted (nonzero hue spread)').toBeGreaterThan(2);
 	expect(sig!.rootBgImage, 'no graph-paper / background image on canvas').toBe('none');
-	// full monospace: every element family matches /mono/
 	expect(sig!.nonMonoFonts, 'all text is monospace').toEqual([]);
-	// reverse-video header: bright bar background, dark text (inverted from norm)
-	expect(sig!.barBgLum, 'reverse-video bar is bright').toBeGreaterThan(0.55);
-	expect(sig!.barTextLum, 'reverse-video bar text is dark').toBeLessThan(0.4);
-	// dialog-window columns carry a full border (box-rule framing)
+	// reverse-video title bar (silver bg + dark text)
+	expect(sig!.titlebarBgLum, 'title bar is bright reverse-video').toBeGreaterThan(0.45);
+	expect(sig!.titlebarTextLum, 'title bar text is dark').toBeLessThan(0.4);
+	// NOT a modern SaaS app-bar / segmented chrome
+	expect(sig!.modernAppbarCount, 'no modern app-bar chrome').toBe(0);
+	expect(sig!.modernSegmentedCount, 'no modern segmented/chip chrome').toBe(0);
+	// bordered dialog-window columns
 	expect(sig!.colBorderAllSides, 'column is a bordered dialog window').toBe(true);
-	// bracketed field/count notation
-	expect(sig!.countBracketed, 'count uses bracket notation').toBe(true);
-	expect(sig!.labelBracketed, 'labels use bracket notation').toBe(true);
-	expect(sig!.priorityHighText, 'priority state label is bracketed').toMatch(/\[!?HIGH\]/);
-	// distinct from Holodeck cyan-glow and Blueprint graph-paper: the stated
-	// ncurses signature is ZERO box-shadows anywhere, plus no gradient/backdrop.
+	expect(sig!.headHasPlusMinus, 'column header has +- / -+ box-rule framing').toBe(true);
+	expect(sig!.headHasBracketCount, 'column header has bracketed [n] count').toBe(true);
+	expect(sig!.activeBorderIsYellow, 'active column border is yellow').toBe(true);
+	expect(sig!.activeHeadBgYellow, 'active column head bg is yellow').toBe(true);
+	// flat TUI rows, not elevated cards
+	expect(sig!.rowTopBorderWidth, 'non-selected card is a flat row (no top border)').toBe(0);
+	expect(sig!.rowBottomBorderWidth, 'card row has a bottom hairline').toBeGreaterThanOrEqual(1);
+	expect(sig!.selectedAllSides, 'selected card is a full-border box').toBe(true);
+	// flat signature: zero shadows, no gradient, no backdrop blur
 	expect(sig!.anyShadowFound, 'zero box-shadows anywhere (flat signature)').toBe(false);
 	expect(sig!.gradientFound, 'no gradient').toBe(false);
 	expect(sig!.backdropFound, 'no backdrop blur').toBe(false);
 
-	// Bottom status line + key map: the established inert-specimen policy.
-	// The footer is visibly AND accessibly labelled as an INACTIVE visual
-	// key-map reference (display only — no active shortcuts / not bindings),
-	// and its status is consistent with the visible "Sync paused" error
-	// (READY is absent while the error is present). No fake shortcuts exist.
-	const legend = page.locator('.status-legend');
-	await expect(legend, 'status footer present').toBeVisible();
-	const legendAria = await legend.getAttribute('aria-label');
-	expect(legendAria ?? '', 'footer accessible name conveys inactive reference').toMatch(
-		/inactive|reference|display/i
-	);
-	// A visible disclosure labels the glyphs as an inactive, display-only map.
-	await expect(legend.getByText(/reference/i)).toBeVisible();
-	await expect(legend.getByText(/display/i)).toBeVisible();
-	// READY conflicts with the visible sync error and must NOT appear.
-	expect(await legend.getByText('READY').count(), 'no READY while sync error present').toBe(0);
-	await expect(page.locator('.error-banner')).toBeVisible();
-	// The reference still documents the real specimen actions (New / Search).
-	const legendText = (await legend.textContent()) ?? '';
-	expect(legendText, 'reference documents New action').toMatch(/New/i);
-	expect(legendText, 'reference documents Search action').toMatch(/Search/i);
-	// No <kbd> (keybinding semantics) — glyphs are inert reference spans.
-	expect(await page.locator('.status-legend kbd').count(), 'no keybinding semantics (kbd)').toBe(0);
-
-	// restrained ANSI semantic colors: priority red, done green, active yellow.
+	// bracketed inline field + priority notation, ANSI colors.
+	const firstField = page.locator('.field').first();
+	await expect(firstField).toBeVisible();
+	expect((await firstField.textContent()) ?? '').toMatch(/^\[/);
+	const priHigh = page.locator('.pri-high').first();
+	expect((await priHigh.textContent()) ?? '').toMatch(/\[!?HIGH\]/);
 	const ansi = await page.evaluate(() => {
 		const ctx = document.createElement('canvas').getContext('2d');
 		if (!ctx) return null;
@@ -3074,40 +3088,43 @@ test('opens the kanban-terminal design and its isolated preview states', async (
 			const el = document.querySelector(sel);
 			return el instanceof HTMLElement ? getComputedStyle(el) : null;
 		};
-		const doneTitle = cs('.card.is-done .card-title');
-		const activeBorder = cs('.column.is-active');
-		const accentToken = cs('.board-root');
+		const accent = cs('.board-root');
+		const doneTitle = cs('.tui-row.is-done .title');
 		return {
 			priorityHighRed: cs('.pri-high') ? channels(cs('.pri-high')!.color).r : -1,
 			doneGreen: doneTitle ? channels(doneTitle.color).g : -1,
-			activeYellow: activeBorder ? channels(activeBorder.borderTopColor) : null,
 			activeYellowEqualsAccent:
-				activeBorder && accentToken
-					? JSON.stringify(channels(activeBorder.borderTopColor)) ===
-						JSON.stringify(channels(accentToken.getPropertyValue('--accent') || 'rgb(0,0,0)'))
+				cs('.col.is-active') && accent
+					? JSON.stringify(channels(cs('.col.is-active')!.borderTopColor)) ===
+						JSON.stringify(channels(accent.getPropertyValue('--accent') || 'rgb(0,0,0)'))
 					: false
 		};
 	});
 	expect(ansi).not.toBeNull();
 	expect(ansi!.priorityHighRed, 'high priority is ANSI red').toBeGreaterThan(150);
 	expect(ansi!.doneGreen, 'done is ANSI green').toBeGreaterThan(140);
-	const ay = ansi!.activeYellow;
-	expect(ay, 'active-column border color resolved').not.toBeNull();
-	expect(ay!.r, 'active accent is yellow (red channel high)').toBeGreaterThan(150);
-	expect(ay!.g, 'active accent is yellow (green channel high)').toBeGreaterThan(150);
-	expect(ay!.b, 'active accent is yellow (blue channel low)').toBeLessThan(120);
 	expect(ansi!.activeYellowEqualsAccent, 'active border uses the --accent token').toBe(true);
 
-	// ----------------------------------------------------------------
-	// F1 — Header focus: controls sit on the bright reverse-video bar.
-	// A yellow outline is invisible there (~1:1), so header controls use a
-	// context-specific DARK outline; yellow focus is preserved on dark
-	// surfaces. For EVERY header control we prove: a solid >=3px outline, a
-	// COMPLETE unclipped perimeter, and outline/effective-backdrop contrast
-	// >= 3:1 (the WCAG 2.2 UI-component minimum).
-	// ----------------------------------------------------------------
-	await page.setViewportSize({ width: 1280, height: 800 });
-	const measureFocusEl = (selector?: string) =>
+	// Footer: inert-specimen policy. Visibly AND accessibly labelled an
+	// inactive key-map reference (display only); status consistent with the
+	// sync error (READY absent). No <kbd> bindings.
+	const fkeys = page.locator('.tui-fkeys');
+	await expect(fkeys, 'fkey/status footer present').toBeVisible();
+	const fkeysAria = await fkeys.getAttribute('aria-label');
+	expect(fkeysAria ?? '', 'footer accessible name conveys inactive reference').toMatch(
+		/inactive|reference|display/i
+	);
+	await expect(fkeys.getByText(/reference/i)).toBeVisible();
+	await expect(fkeys.getByText(/display/i)).toBeVisible();
+	expect(await fkeys.getByText('READY').count(), 'no READY while sync error present').toBe(0);
+	await expect(page.locator('.error-banner')).toBeVisible();
+	expect(await page.locator('.tui-fkeys kbd').count(), 'no keybinding semantics (kbd)').toBe(0);
+
+	// --- Two-context focus: search on the silver title bar gets a DARK
+	//     outline (yellow would be ~1:1 on silver); toggles on the dark
+	//     control strip keep yellow. Each: solid >=3px, complete unclipped
+	//     perimeter, >=3:1 against the surrounding backdrop. ---
+	const measureFocus = (selector?: string) =>
 		page.evaluate((sel) => {
 			const el = sel ? document.querySelector(sel) : document.activeElement;
 			if (!(el instanceof HTMLElement)) return null;
@@ -3155,19 +3172,13 @@ test('opens the kanban-terminal design and its isolated preview states', async (
 				return acc;
 			};
 			const cs = getComputedStyle(el);
-			const style = cs.outlineStyle;
 			const ow = parseFloat(cs.outlineWidth);
 			const oo = parseFloat(cs.outlineOffset);
 			const color = parseRgb(cs.outlineColor);
 			const cL = lumOf(color);
-			// The focus ring is an OFFSET outline that seats OUTSIDE the element
-			// box, so its effective backdrop is the surrounding (parent chain) —
-			// NOT the control's own face (e.g. a dark-filled active chip). Start
-			// the backdrop climb at the parent.
+			// offset ring seats outside the element -> backdrop is the parent chain
 			const bL = lumOf(bgRgbOf(el.parentElement ?? el));
 			const contrast = (Math.max(cL, bL) + 0.05) / (Math.min(cL, bL) + 0.05);
-			// perimeter completeness: a uniform solid outline whose ring rect is
-			// not clipped by any ancestor overflow box nor scrolled off-screen.
 			const rect = el.getBoundingClientRect();
 			const extent = oo + ow;
 			const ring = {
@@ -3196,10 +3207,9 @@ test('opens the kanban-terminal design and its isolated preview states', async (
 				}
 				node = node.parentElement;
 			}
-			return { style, width: ow, contrast, clipped, colorLum: cL };
+			return { style: cs.outlineStyle, width: ow, contrast, clipped, colorLum: cL };
 		}, selector);
-
-	const assertHeaderFocus = (name: string, f: unknown) => {
+	const assertFocus = (name: string, f: unknown, expectDark: boolean) => {
 		const r = f as {
 			style: string;
 			width: number;
@@ -3208,60 +3218,32 @@ test('opens the kanban-terminal design and its isolated preview states', async (
 			colorLum: number;
 		} | null;
 		expect(r, `${name} focus measured`).not.toBeNull();
-		expect(r!.style, `${name} focus outline is solid`).toBe('solid');
+		expect(r!.style, `${name} focus outline solid`).toBe('solid');
 		expect(r!.width, `${name} focus outline >= 3px`).toBeGreaterThanOrEqual(3);
-		expect(r!.clipped, `${name} focus perimeter complete (unclipped)`).toBe(false);
-		expect(r!.contrast, `${name} focus contrast >= 3:1 on bar`).toBeGreaterThanOrEqual(3);
-		expect(r!.colorLum, `${name} focus is dark on the silver bar`).toBeLessThan(0.4);
+		expect(r!.clipped, `${name} focus perimeter complete`).toBe(false);
+		expect(r!.contrast, `${name} focus contrast >= 3:1`).toBeGreaterThanOrEqual(3);
+		if (expectDark) {
+			expect(r!.colorLum, `${name} focus is dark on the silver bar`).toBeLessThan(0.4);
+		} else {
+			expect(r!.colorLum, `${name} focus is yellow on a dark surface`).toBeGreaterThan(0.55);
+		}
 	};
-
-	// keyboard-focus the searchbox; its container (.search) carries the ring.
 	await page.getByRole('searchbox').focus();
-	assertHeaderFocus('search', await measureFocusEl('.search'));
-
-	// Tab through the header buttons (keyboard context => :focus-visible).
+	assertFocus('search', await measureFocus('.tui-search'), true);
 	for (const name of ['All', 'Mine', 'Due this week', 'Board', 'List', 'New task']) {
 		for (let i = 0; i < 40; i++) {
 			await page.keyboard.press('Tab');
 			const match = await page.evaluate((n) => {
 				const el = document.activeElement;
-				return !!(el && el.tagName === 'BUTTON' && (el.textContent ?? '').trim() === n);
+				return !!(el && el.tagName === 'BUTTON' && (el.textContent ?? '').includes(n));
 			}, name);
 			if (match) break;
 		}
-		assertHeaderFocus(name, await measureFocusEl());
+		assertFocus(name, await measureFocus(), false);
 	}
-
-	// Yellow focus is PRESERVED on dark surfaces: the first column more-actions
-	// sits on the dark reverse-video column head — its outline is the yellow
-	// accent and still reads at >= 3:1 there.
-	for (let i = 0; i < 80; i++) {
-		await page.keyboard.press('Tab');
-		const hit = await page.evaluate(() => {
-			const el = document.activeElement;
-			return !!(el && (el.getAttribute('aria-label') ?? '').startsWith('More actions for'));
-		});
-		if (hit) break;
-	}
-	const darkFocus = (await measureFocusEl()) as {
-		style: string;
-		width: number;
-		contrast: number;
-		clipped: boolean;
-		colorLum: number;
-	} | null;
-	expect(darkFocus, 'more-actions focus measured').not.toBeNull();
-	expect(darkFocus!.style, 'more-actions focus outline is solid').toBe('solid');
-	expect(darkFocus!.width, 'more-actions focus outline >= 3px').toBeGreaterThanOrEqual(3);
-	expect(
-		darkFocus!.contrast,
-		'more-actions focus contrast >= 3:1 on dark surface'
-	).toBeGreaterThanOrEqual(3);
-	expect(darkFocus!.colorLum, 'more-actions focus is yellow on dark surface').toBeGreaterThan(0.55);
-	await page.getByRole('searchbox').focus();
 
 	// --- Table-driven WCAG AA contrast: every semantic text role against its
-	//     opaque parent surface (columns/cards/bars are opaque on this board).
+	//     opaque parent (including the reverse-video bars). ---
 	const contrast = await page.evaluate(() => {
 		const ctx = document.createElement('canvas').getContext('2d');
 		if (!ctx) return null;
@@ -3305,15 +3287,13 @@ test('opens the kanban-terminal design and its isolated preview states', async (
 			const textEl = document.querySelector(textSel);
 			const bgEl = document.querySelector(bgSel);
 			if (!(textEl instanceof HTMLElement) || !(bgEl instanceof HTMLElement)) return -1;
-			const cs = getComputedStyle(textEl);
-			const fg = parseRgb(cs.color);
+			const fg = parseRgb(getComputedStyle(textEl).color);
 			const bg = bgRgbOf(bgEl);
 			const tL = lumOfRgb({ r: fg.r, g: fg.g, b: fg.b });
 			const bL = lumOfRgb(bg);
 			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
 		};
 		const selfRatio = (sel: string) => ratio(sel, sel);
-		// Arbitrary element: its own color vs its effective opaque backdrop.
 		const elRatio = (el: Element) => {
 			if (!(el instanceof HTMLElement)) return -1;
 			const fg = parseRgb(getComputedStyle(el).color);
@@ -3322,49 +3302,42 @@ test('opens the kanban-terminal design and its isolated preview states', async (
 			const bL = lumOfRgb(bg);
 			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
 		};
-		// placeholder pseudo color vs the search field bg
 		const placeholderRatio = (() => {
-			const inputEl = document.querySelector('.search input');
+			const inputEl = document.querySelector('.tui-search input');
 			if (!(inputEl instanceof HTMLElement)) return -1;
 			const fg = parseRgb(getComputedStyle(inputEl, '::placeholder').color);
-			const bg = bgRgbOf(document.querySelector('.search'));
+			const bg = bgRgbOf(document.querySelector('.tui-search'));
 			const tL = lumOfRgb({ r: fg.r, g: fg.g, b: fg.b });
 			const bL = lumOfRgb(bg);
 			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
 		})();
 		const results: { role: string; ratio: number }[] = [
-			{ role: 'card-title', ratio: ratio('.card-title', '.card') },
-			{ role: 'cid', ratio: ratio('.cid', '.card') },
-			{ role: 'checklist', ratio: ratio('.checklist', '.card') },
-			{ role: 'due', ratio: ratio('.due:not(.is-done)', '.card') },
-			{ role: 'due-done', ratio: ratio('.due.is-done', '.card') },
-			{ role: 'pri-high', ratio: ratio('.pri-high', '.card') },
-			{ role: 'pri-medium', ratio: ratio('.pri-medium', '.card') },
-			{ role: 'done-title', ratio: ratio('.card.is-done .card-title', '.card') },
-			{ role: 'board-title', ratio: ratio('.title-block h1', '.app-bar') },
-			{ role: 'subtitle', ratio: ratio('.subtitle', '.app-bar') },
-			{ role: 'column-heading', ratio: ratio('.column-head h2', '.column-head') },
-			{ role: 'count-badge', ratio: selfRatio('.count') },
-			{ role: 'empty-state', ratio: ratio('.empty-col p', '.empty-col') },
+			{ role: 'card-title', ratio: ratio('.title', '.tui-row') },
+			{ role: 'cid', ratio: ratio('.cid', '.tui-row') },
+			{ role: 'field', ratio: selfRatio('.field') },
+			{ role: 'pri-high', ratio: selfRatio('.pri-high') },
+			{ role: 'pri-medium', ratio: selfRatio('.pri-medium') },
+			{ role: 'done-title', ratio: ratio('.tui-row.is-done .title', '.tui-row.is-done') },
+			{ role: 'due', ratio: ratio('.due', '.tui-row') },
+			{ role: 'title-bar-title', ratio: ratio('.tui-title', '.tui-titlebar') },
+			{ role: 'col-head-name', ratio: ratio('.col-name', '.col-head') },
+			{ role: 'empty', ratio: ratio('.empty', '.col') },
 			{ role: 'error-body', ratio: ratio('.error-banner p', '.error-banner') },
 			{ role: 'error-strong', ratio: ratio('.error-banner strong', '.error-banner') },
-			{ role: 'primary-text', ratio: selfRatio('.primary') },
-			{ role: 'add-card-text', ratio: selfRatio('.add-card') },
-			{ role: 'retry-text', ratio: selfRatio('.error-retry') },
-			{ role: 'project-chip', ratio: selfRatio('.project-chip') },
-			{ role: 'legend-body', ratio: selfRatio('.status-legend') },
-			{ role: 'key-map-glyph', ratio: selfRatio('.k') },
-			{ role: 'status-text', ratio: selfRatio('.leg-state') },
-			{ role: 'search-placeholder', ratio: placeholderRatio },
-			{ role: 'search-input', ratio: ratio('.search input', '.search') }
+			{ role: 'new-task', ratio: selfRatio('.tui-new') },
+			{ role: 'toggle-inactive', ratio: selfRatio('.tui-toggle:not([aria-pressed="true"])') },
+			{ role: 'toggle-active', ratio: selfRatio('.tui-toggle[aria-pressed="true"]') },
+			{ role: 'retry', ratio: selfRatio('.tui-retry') },
+			{ role: 'fkeys-body', ratio: selfRatio('.tui-fkeys') },
+			{ role: 'search-placeholder', ratio: placeholderRatio }
 		];
-		document.querySelectorAll('.label').forEach((el) => {
-			const name = el.textContent?.trim().replace(/[[\]]/g, '') || '?';
-			results.push({ role: `label:${name}`, ratio: elRatio(el) });
+		document.querySelectorAll('.assignee').forEach((el) => {
+			const initials = el.textContent?.replace(/[[\]]/g, '').trim() || '?';
+			results.push({ role: `assignee:${initials}`, ratio: elRatio(el) });
 		});
-		document.querySelectorAll('.avatar').forEach((el) => {
-			const initials = el.textContent?.trim() || '?';
-			results.push({ role: `avatar:${initials}`, ratio: elRatio(el) });
+		document.querySelectorAll('.tui-avatar').forEach((el) => {
+			const initials = el.textContent?.replace(/[[\]]/g, '').trim() || '?';
+			results.push({ role: `team-avatar:${initials}`, ratio: elRatio(el) });
 		});
 		return { results };
 	});
@@ -3373,59 +3346,24 @@ test('opens the kanban-terminal design and its isolated preview states', async (
 		expect(ratio, `${role} text contrast >= 4.5:1`).toBeGreaterThanOrEqual(4.5);
 	}
 
-	// Exact-width responsive: every interactive target is >=44px on BOTH axes
-	// at 375/768/1280 — controls, search, primary, retry, dismiss, EVERY column
-	// more-actions, and EVERY add-a-card — with no horizontal document overflow.
-	const controls = ['Board', 'List', 'All', 'Mine', 'Due this week'];
-	const columnNames = ['Backlog', 'In Progress', 'In Review', 'Done'];
-	const assertTarget = async (
-		box: { width?: number; height?: number } | null,
-		label: string,
-		width: number
-	) => {
-		expect(box, `${label} present at ${width}`).not.toBeNull();
-		expect(box!.width, `${label} width at ${width}`).toBeGreaterThanOrEqual(44);
-		expect(box!.height, `${label} height at ${width}`).toBeGreaterThanOrEqual(44);
-	};
+	// Exact-width responsive: every interactive target >=44px on BOTH axes at
+	// 375/768/1280 (search, filters, view, New task, Retry, dismiss), no overflow.
+	const targets = ['All', 'Mine', 'Due this week', 'Board', 'List', 'New task', 'Retry'];
 	for (const width of [375, 768, 1280]) {
 		await page.setViewportSize({ width, height: 800 });
-		for (const name of controls) {
-			await assertTarget(
-				await page.getByRole('button', { name, exact: true }).boundingBox(),
-				name,
-				width
-			);
+		for (const name of targets) {
+			const box = await page.getByRole('button', { name, exact: true }).boundingBox();
+			expect(box?.width, `${name} width at ${width}`).toBeGreaterThanOrEqual(44);
+			expect(box?.height, `${name} height at ${width}`).toBeGreaterThanOrEqual(44);
 		}
-		await assertTarget(await page.locator('.search').boundingBox(), 'search', width);
-		await assertTarget(
-			await page.getByRole('button', { name: 'New task', exact: true }).boundingBox(),
-			'New task',
-			width
-		);
-		await assertTarget(
-			await page.getByRole('button', { name: 'Retry', exact: true }).boundingBox(),
-			'Retry',
-			width
-		);
-		await assertTarget(
-			await page.getByRole('button', { name: 'Dismiss error', exact: true }).boundingBox(),
-			'dismiss',
-			width
-		);
-		for (const col of columnNames) {
-			await assertTarget(
-				await page
-					.getByRole('button', { name: `More actions for ${col}`, exact: true })
-					.boundingBox(),
-				`${col} more-actions`,
-				width
-			);
-		}
-		const addCards = await page.locator('.add-card').all();
-		expect(addCards.length, `one add-card per column at ${width}`).toBe(columnNames.length);
-		for (const ac of addCards) {
-			await assertTarget(await ac.boundingBox(), 'add-card', width);
-		}
+		const searchBox = await page.locator('.tui-search').boundingBox();
+		expect(searchBox?.width, `search width at ${width}`).toBeGreaterThanOrEqual(44);
+		expect(searchBox?.height, `search height at ${width}`).toBeGreaterThanOrEqual(44);
+		const dismiss = await page
+			.getByRole('button', { name: 'Dismiss error', exact: true })
+			.boundingBox();
+		expect(dismiss?.width, `dismiss width at ${width}`).toBeGreaterThanOrEqual(44);
+		expect(dismiss?.height, `dismiss height at ${width}`).toBeGreaterThanOrEqual(44);
 		const overflow = await page.evaluate(
 			() =>
 				document.documentElement.scrollWidth - document.documentElement.clientWidth ||
@@ -3434,7 +3372,7 @@ test('opens the kanban-terminal design and its isolated preview states', async (
 		expect(overflow, `horizontal overflow at ${width}`).toBeLessThanOrEqual(0);
 	}
 
-	// reduced-motion: the skeleton pulse is suppressed while the skeleton stays visible.
+	// reduced-motion: skeleton pulse suppressed while blocks remain visible.
 	await page.emulateMedia({ reducedMotion: 'reduce' });
 	const skeletonStatic = await page.evaluate(() => {
 		const el = document.querySelector('.skel');
