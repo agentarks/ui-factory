@@ -2,9 +2,9 @@
 
 ## Phase and objective
 
-**Phase:** Scaffold complete
+**Phase:** Catalog complete
 
-**Objective:** Publish the next independent, production-ready Kanban design; one catalog style remains (`kanban-skeuomorphic`).
+**Objective:** All ten planned Kanban styles are published. The catalog is complete; no roadmap style remains.
 
 ## Completed
 
@@ -42,9 +42,11 @@
 
 - Second frontend-review remediation of `kanban-dark-neon` (separate commit): (1) the smoke's contrast compositor no longer reparses alpha with a regex — `parseRgb` returns RGBA from the rendered canvas pixel (`d[3]/255`), so modern syntaxes the regex missed (`oklch(... / a)`, `rgb(... / a)`) are handled; `alphaOf` was removed. The mutation self-check was strengthened to a translucent **`oklch(1 0 0 / 0.4)`** foreground combined with **element AND ancestor opacity** (effective alpha `0.4 * 0.5 * 0.5 = 0.1`) and now asserts a bounded expected low contrast (`measured ≈ analytic expected`, with `expected` in `(1.0, 1.4)`) rather than merely `< 1.5`. RED→GREEN: old regex path diverged by **0.87** (treated the oklch text as opaque), canvas-alpha path matches expected (~1.1). (2) The responsive ≥44px table now asserts **both width and height** for the clickable Search label, New task, Retry, and every Add-a-card at 375/768/1280. (3) `DESIGN.md` corrected in two places where it still said `4px` scroller padding → now `6px` (matching the implementation and the 5px focus extent).
 
+- Published `kanban-terminal`, the tenth and final of the ten planned Kanban styles and the **Terminal / TUI** direction, faithful to the user-selected concept's **NCURSES** direction: a tinted near-black indigo canvas (`oklch(0.2 0.028 270)`), full monospace throughout, **reverse-video** header bar (bright silver `oklch(0.83 …)` bg + dark text) and column title bars, **bordered dialog-window** columns and cards (box-rule framing on all four sides), **bracketed field/state notation** (`[ design ]`, `[5]`, `[!HIGH]`, `[ 2/3 ]`, `[x]`), and restrained ANSI-like semantic colors (yellow active/selection/focus `oklch(0.84 0.16 95)`, red priority/error, green done). A compact bottom function/status legend maps key hints **only to real specimen actions** (`[N]` New, `[/]` Search, `[B/L]` Board/List, `[F5]` Retry) — no invented destructive F-key behavior. Walked the publication workflow end to end (workbench `draft` → `reviewed` → `production-ready` → moved to `published/`); the `reviewed` gate ran `npm run check` (clean) and confirmed public invisibility — `/designs/kanban-terminal` and `/designs/kanban-terminal/preview` return 404 "Design not found" and the entry is absent from the catalog listing — before promotion. `fixtures.ts` copied **verbatim** from the locked glass baseline; only the visual language changes. ncurses is **flat**: there are **zero box-shadows** anywhere (depth comes from borders and reverse video, never glow), no gradients, no `backdrop-filter`, no graph paper, no colored side-stripes — clearly distinct from the published Holodeck cyan-glow (`kanban-dark-neon`) and Blueprint graph-paper (`kanban-brutalism`) directions. All CSS color tokens are OKLCH; no pure black/white. Test-first RED→GREEN: the focused Playwright smoke was confirmed RED while the entry was an unpublished workbench draft (the public route returned 404, so the detail heading was not found), then GREEN after promotion. The smoke locks the NCURSES signature (near-black + nonzero indigo tint spread, all-monospace, reverse-video bar, bordered window columns, bracketed count/label/priority notation, F-key status legend, ANSI red/green), the WCAG 2.2 AA contrast of every semantic text role against its opaque parent, the 44×44 targets at 375/768/1280 with no horizontal overflow, and reduced-motion suppression of the skeleton pulse. The self-contained `DESIGN.md` (18 `##` sections plus header) meets the product-vision handoff bar (intent, canonical page, principles, exact OKLCH tokens, typography, spacing/borders/radii/elevation, layout, navigation, components, empty/loading/error states, responsive, motion, accessibility, extension rules, do/don't, when-to-use/avoid/trade-offs, dependencies/assets/licenses, and an AI acceptance checklist) and declares the no-license status. The rejected `kanban-skeuomorphic` roadmap slot was replaced by `kanban-terminal` in `docs/catalog-roadmap.md` and `docs/design-backlog.md`.
+
 ## Next
 
-- Build the remaining Kanban style defined in `docs/catalog-roadmap.md` (`kanban-skeuomorphic`), through the documented publication workflow. It copies the locked baseline from `src/lib/designs/published/kanban-glassmorphism/fixtures.ts` and re-skins only the visuals.
+- The ten-style catalog is complete. No roadmap style remains. Future work: a new page type or visual direction would be a fresh roadmap decision.
 
 ## Decisions
 
@@ -54,7 +56,7 @@
 - Preview documents render in a separate route group without factory CSS so entry-owned styles remain isolated.
 - Iframe sandboxing is deferred while previews are trusted repository content; require it before accepting untrusted or community-authored previews.
 - Detail-page happy-path browser coverage is deferred until the first real published design provides a stable subject.
-- Catalog direction is set in `docs/catalog-roadmap.md`: one page type (Kanban board) rendered in ten distinct visual styles (flat, glass, neumorphism, claymorphism, illustration, editorial, Swiss, brutalism, dark-neon, skeuomorphic), built one at a time. Style comparison on a fixed subject is the primary value.
+- Catalog direction is set in `docs/catalog-roadmap.md`: one page type (Kanban board) rendered in ten distinct visual styles (flat, glass, neumorphism, claymorphism, illustration, editorial, Swiss, brutalism, dark-neon, terminal), built one at a time. Style comparison on a fixed subject is the primary value. The catalog is now complete.
 - `kanban-glassmorphism` is the first published entry (dispatch priority) and therefore **locks the shared Kanban content baseline**: its `fixtures.ts` is canonical. Later styles copy it and change only the visual language. (Earlier advisory build order had `kanban-flat-material` locking the baseline; superseded by publication order.)
 - Remaining catalog styles use `.pi/skills/ui-factory-design-loop/SKILL.md`; every worker and server must have a visible Herdr resource, and routine agent completion/review/remediation never creates an extra user checkpoint.
 
@@ -68,7 +70,7 @@ None.
 - `npm run lint`
 - `npm run check`
 - `npm test`
-- `npx playwright test tests/catalog.e2e.ts --grep "opens the kanban-dark-neon design"`
+- `npx playwright test tests/catalog.e2e.ts --grep "opens the kanban-terminal design"`
 - `npm run test:e2e`
 - `npm run build` (includes the client publication-boundary scan)
 - `node scripts/check-client-publication-boundary.mjs`

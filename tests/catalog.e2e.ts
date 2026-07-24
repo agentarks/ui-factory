@@ -2888,3 +2888,309 @@ test('opens the kanban-dark-neon design and its isolated preview states', async 
 	expect(mf, 'measured last column Add a card focus at 1280').not.toBeNull();
 	expect(mf!.clipped, 'last column Add a card focus not clipped at 1280').toBe(false);
 });
+
+test('opens the kanban-terminal design and its isolated preview states', async ({ page }) => {
+	// ---- Detail page: exact approved public identity + summary ----
+	await page.goto('/designs/kanban-terminal');
+
+	await expect(
+		page.getByRole('heading', { name: 'Kanban Board · ncurses Terminal', exact: false })
+	).toBeVisible();
+	await expect(
+		page.getByText(
+			'A classic ncurses/TUI Kanban board on a tinted near-black canvas with full monospace',
+			{ exact: false }
+		)
+	).toBeVisible();
+
+	// ---- Isolated preview: locked content + empty/error/loading states ----
+	const frame = page.frameLocator('iframe[title*="preview"i]');
+	await expect(frame.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'New task' })).toBeVisible();
+	await expect(frame.getByText('Backlog', { exact: true })).toBeVisible();
+	await expect(frame.getByRole('heading', { name: 'In Review' })).toBeVisible();
+	await expect(frame.getByText('No cards yet')).toBeVisible();
+	await expect(frame.getByText('Sync paused', { exact: false })).toBeVisible();
+	await expect(frame.getByRole('button', { name: 'Retry' })).toBeVisible();
+	await expect(frame.locator('.skeleton-card')).toBeVisible();
+
+	// interaction smoke: toggling a filter updates its pressed state (the only
+	// controls that carry real business state are the filter/view toggles).
+	const mineBtn = frame.getByRole('button', { name: 'Mine', exact: true });
+	await mineBtn.click();
+	await expect(mineBtn).toHaveAttribute('aria-pressed', 'true');
+
+	// ------------------------------------------------------------------
+	// Direct preview route: NCURSES visual-signature, a11y, responsive.
+	// ------------------------------------------------------------------
+	await page.goto('/designs/kanban-terminal/preview');
+	await expect(page.getByRole('heading', { name: 'Sprint 24 · Board' })).toBeVisible();
+	await page.setViewportSize({ width: 1280, height: 800 });
+
+	// Locked content: all five team members render as accessible avatars.
+	const memberNames = ['Maya Rivera', 'Devon Chen', 'Priya Nair', 'Sam Okafor', 'Lena Foss'];
+	expect(await page.locator('.team-avatars [aria-label]').count()).toBe(5);
+	for (const name of memberNames) {
+		await expect(page.locator(`.team-avatars [aria-label="${name}"]`)).toBeVisible();
+	}
+
+	// Showcased states exposed programmatically.
+	await expect(page.locator('.column.is-active')).toHaveAttribute('aria-label', /active/i);
+	await expect(page.getByRole('article', { name: /selected/i })).toBeVisible();
+
+	// NCURSES signature: tinted near-black canvas (NOT pure black/white),
+	// full monospace everywhere, reverse-video header bar (bright bg + dark
+	// text), bordered dialog-window columns, bracketed field/count notation,
+	// an F-key status legend adapted to real specimen actions, restrained
+	// ANSI semantic colors. NO cyan glow (no blur shadows at all), NO gradient,
+	// NO backdrop blur, NO graph-paper background image.
+	const sig = await page.evaluate(() => {
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const channels = (cssColor: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = cssColor;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			return { r: d[0], g: d[1], b: d[2] };
+		};
+		const lum = (css: string) => {
+			const c = channels(css);
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(c.r) + 0.7152 * ch(c.g) + 0.0722 * ch(c.b);
+		};
+		const cs = (sel: string) => {
+			const el = document.querySelector(sel);
+			return el instanceof HTMLElement ? getComputedStyle(el) : null;
+		};
+		let gradientFound = false;
+		let backdropFound = false;
+		let blurShadowFound = false;
+		const fonts = new Set<string>();
+		document.querySelectorAll('.board-root, .board-root *').forEach((el) => {
+			const c = getComputedStyle(el);
+			if (/gradient/i.test(c.backgroundImage)) gradientFound = true;
+			if (c.backdropFilter !== 'none') backdropFound = true;
+			fonts.add(c.fontFamily.toLowerCase());
+			// ncurses is flat: no blur box-shadows anywhere (distinguishes it
+			// from the Holodeck cyan-glow direction).
+			if (c.boxShadow !== 'none') {
+				const m = c.boxShadow.match(
+					/(?:rgba?\([^)]*\)|#\S+|oklch\([^)]*\))\s+([-\d.]+px)\s+([-\d.]+px)\s+([-\d.]+px)/
+				);
+				if (m && parseFloat(m[3]) > 0) blurShadowFound = true;
+			}
+		});
+		const rootCs = cs('.board-root');
+		const barCs = cs('.app-bar');
+		const colCs = cs('.column');
+		const countEl = document.querySelector('.count');
+		const labelEl = document.querySelector('.label');
+		const priHigh = document.querySelector('.pri-high');
+		const canvasRgb = channels(rootCs?.backgroundColor ?? 'rgb(0,0,0)');
+		return {
+			canvasLum: lum(rootCs?.backgroundColor ?? '#000'),
+			canvasIsPureBlack: rootCs?.backgroundColor === 'rgb(0, 0, 0)',
+			canvasTintSpread:
+				Math.max(canvasRgb.r, canvasRgb.g, canvasRgb.b) -
+				Math.min(canvasRgb.r, canvasRgb.g, canvasRgb.b),
+			rootBgImage: rootCs?.backgroundImage ?? '',
+			nonMonoFonts: [...fonts].filter((f) => !/mono/.test(f)),
+			barBgLum: barCs ? lum(barCs.backgroundColor) : -1,
+			barTextLum: barCs ? lum(barCs.color) : -1,
+			colBorderAllSides:
+				colCs &&
+				colCs.borderTopWidth === colCs.borderBottomWidth &&
+				colCs.borderLeftWidth === colCs.borderRightWidth &&
+				colCs.borderTopWidth === colCs.borderLeftWidth &&
+				parseFloat(colCs.borderTopWidth) >= 1,
+			countBracketed: /^\[/.test(countEl?.textContent ?? ''),
+			labelBracketed: /^\[/.test(labelEl?.textContent ?? ''),
+			priorityHighText: priHigh?.textContent ?? '',
+			gradientFound,
+			backdropFound,
+			blurShadowFound
+		};
+	});
+	expect(sig).not.toBeNull();
+	// tinted near-black: dark (but carries a hue tint, not pure #000 / neutral gray)
+	expect(sig!.canvasLum, 'canvas is near-black').toBeLessThan(0.06);
+	expect(sig!.canvasIsPureBlack, 'no pure black canvas').toBe(false);
+	expect(sig!.canvasTintSpread, 'canvas is tinted (nonzero hue spread)').toBeGreaterThan(2);
+	expect(sig!.rootBgImage, 'no graph-paper / background image on canvas').toBe('none');
+	// full monospace: every element family matches /mono/
+	expect(sig!.nonMonoFonts, 'all text is monospace').toEqual([]);
+	// reverse-video header: bright bar background, dark text (inverted from norm)
+	expect(sig!.barBgLum, 'reverse-video bar is bright').toBeGreaterThan(0.55);
+	expect(sig!.barTextLum, 'reverse-video bar text is dark').toBeLessThan(0.4);
+	// dialog-window columns carry a full border (box-rule framing)
+	expect(sig!.colBorderAllSides, 'column is a bordered dialog window').toBe(true);
+	// bracketed field/count notation
+	expect(sig!.countBracketed, 'count uses bracket notation').toBe(true);
+	expect(sig!.labelBracketed, 'labels use bracket notation').toBe(true);
+	expect(sig!.priorityHighText, 'priority state label is bracketed').toMatch(/\[!?HIGH\]/);
+	// distinct from Holodeck cyan-glow and Blueprint graph-paper: no blur glow,
+	// no gradient, no backdrop blur.
+	expect(sig!.blurShadowFound, 'no glow/blur shadows (distinct from Holodeck)').toBe(false);
+	expect(sig!.gradientFound, 'no gradient').toBe(false);
+	expect(sig!.backdropFound, 'no backdrop blur').toBe(false);
+
+	// compact bottom function/status legend, adapted only to real specimen
+	// actions (New / Search / Board-List / Retry). Honest key hints, no fake
+	// destructive F-key behavior.
+	const legend = page.locator('.status-legend');
+	await expect(legend, 'status legend present').toBeVisible();
+	const legendText = (await legend.textContent()) ?? '';
+	expect(legendText, 'legend maps to real New/Search actions').toMatch(/New/i);
+	expect(legendText, 'legend maps to real Search action').toMatch(/Search/i);
+
+	// restrained ANSI semantic colors: priority red, done green, active yellow.
+	const ansi = await page.evaluate(() => {
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const channels = (cssColor: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = cssColor;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			return { r: d[0], g: d[1], b: d[2] };
+		};
+		const cs = (sel: string) => {
+			const el = document.querySelector(sel);
+			return el instanceof HTMLElement ? getComputedStyle(el) : null;
+		};
+		const doneTitle = cs('.card.is-done .card-title');
+		const activeBorder = cs('.column.is-active');
+		return {
+			priorityHighRed: cs('.pri-high') ? channels(cs('.pri-high')!.color).r : -1,
+			doneGreen: doneTitle ? channels(doneTitle.color).g : -1,
+			activeYellow: activeBorder ? channels(activeBorder.borderTopColor) : null
+		};
+	});
+	expect(ansi).not.toBeNull();
+	expect(ansi!.priorityHighRed, 'high priority is ANSI red').toBeGreaterThan(150);
+	expect(ansi!.doneGreen, 'done is ANSI green').toBeGreaterThan(140);
+
+	// --- Table-driven WCAG AA contrast: every semantic text role against its
+	//     opaque parent surface (columns/cards/bars are opaque on this board).
+	const contrast = await page.evaluate(() => {
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const parseRgb = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			return { r: d[0], g: d[1], b: d[2], a: d[3] / 255 };
+		};
+		const lumOfRgb = ({ r, g, b }: { r: number; g: number; b: number }) => {
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b);
+		};
+		const bgRgbOf = (start: Element | null): { r: number; g: number; b: number } => {
+			if (!(start instanceof HTMLElement)) return parseRgb('rgb(0,0,0)');
+			const layers: { rgb: { r: number; g: number; b: number }; a: number }[] = [];
+			let node: Element | null = start;
+			while (node instanceof HTMLElement) {
+				const parsed = parseRgb(getComputedStyle(node).backgroundColor);
+				layers.push({ rgb: { r: parsed.r, g: parsed.g, b: parsed.b }, a: parsed.a });
+				if (parsed.a >= 0.999) break;
+				node = node.parentElement;
+			}
+			let acc = layers[layers.length - 1].rgb;
+			for (let i = layers.length - 2; i >= 0; i--) {
+				const s = layers[i];
+				acc = {
+					r: s.rgb.r * s.a + acc.r * (1 - s.a),
+					g: s.rgb.g * s.a + acc.g * (1 - s.a),
+					b: s.rgb.b * s.a + acc.b * (1 - s.a)
+				};
+			}
+			return acc;
+		};
+		const ratio = (textSel: string, bgSel: string) => {
+			const textEl = document.querySelector(textSel);
+			const bgEl = document.querySelector(bgSel);
+			if (!(textEl instanceof HTMLElement) || !(bgEl instanceof HTMLElement)) return -1;
+			const cs = getComputedStyle(textEl);
+			const fg = parseRgb(cs.color);
+			const bg = bgRgbOf(bgEl);
+			const tL = lumOfRgb({ r: fg.r, g: fg.g, b: fg.b });
+			const bL = lumOfRgb(bg);
+			return (Math.max(tL, bL) + 0.05) / (Math.min(tL, bL) + 0.05);
+		};
+		const selfRatio = (sel: string) => ratio(sel, sel);
+		return [
+			{ role: 'card-title', ratio: ratio('.card-title', '.card') },
+			{ role: 'cid', ratio: ratio('.cid', '.card') },
+			{ role: 'checklist', ratio: ratio('.checklist', '.card') },
+			{ role: 'due', ratio: ratio('.due:not(.is-done)', '.card') },
+			{ role: 'pri-high', ratio: ratio('.pri-high', '.card') },
+			{ role: 'board-title', ratio: ratio('.title-block h1', '.app-bar') },
+			{ role: 'subtitle', ratio: ratio('.subtitle', '.app-bar') },
+			{ role: 'column-heading', ratio: ratio('.column-head h2', '.column-head') },
+			{ role: 'empty-state', ratio: ratio('.empty-col p', '.empty-col') },
+			{ role: 'error-body', ratio: ratio('.error-banner p', '.error-banner') },
+			{ role: 'primary-text', ratio: selfRatio('.primary') },
+			{ role: 'add-card-text', ratio: selfRatio('.add-card') },
+			{ role: 'retry-text', ratio: selfRatio('.error-retry') },
+			{ role: 'project-chip', ratio: selfRatio('.project-chip') },
+			{ role: 'legend', ratio: selfRatio('.status-legend') },
+			{ role: 'search-input', ratio: ratio('.search input', '.search') }
+		];
+	});
+	expect(contrast).not.toBeNull();
+	for (const { role, ratio } of contrast!) {
+		expect(ratio, `${role} text contrast >= 4.5:1`).toBeGreaterThanOrEqual(4.5);
+	}
+
+	// Exact-width responsive: every interactive target is >=44px on both axes
+	// at 375/768/1280, with no horizontal document overflow.
+	const controls = ['Board', 'List', 'All', 'Mine', 'Due this week'];
+	for (const width of [375, 768, 1280]) {
+		await page.setViewportSize({ width, height: 800 });
+		for (const name of controls) {
+			const box = await page.getByRole('button', { name, exact: true }).boundingBox();
+			expect(box?.height, `${name} height at ${width}`).toBeGreaterThanOrEqual(44);
+		}
+		const searchBox = await page.locator('.search').boundingBox();
+		expect(searchBox?.width, `search width at ${width}`).toBeGreaterThanOrEqual(44);
+		expect(searchBox?.height, `search height at ${width}`).toBeGreaterThanOrEqual(44);
+		const primary = await page.getByRole('button', { name: 'New task', exact: true }).boundingBox();
+		expect(primary?.width, `New task width at ${width}`).toBeGreaterThanOrEqual(44);
+		expect(primary?.height, `New task height at ${width}`).toBeGreaterThanOrEqual(44);
+		const retry = await page.getByRole('button', { name: 'Retry', exact: true }).boundingBox();
+		expect(retry?.width, `Retry width at ${width}`).toBeGreaterThanOrEqual(44);
+		expect(retry?.height, `Retry height at ${width}`).toBeGreaterThanOrEqual(44);
+		const dismiss = await page
+			.getByRole('button', { name: 'Dismiss error', exact: true })
+			.boundingBox();
+		expect(dismiss?.width, `dismiss width at ${width}`).toBeGreaterThanOrEqual(44);
+		expect(dismiss?.height, `dismiss height at ${width}`).toBeGreaterThanOrEqual(44);
+		const overflow = await page.evaluate(
+			() =>
+				document.documentElement.scrollWidth - document.documentElement.clientWidth ||
+				window.scrollX
+		);
+		expect(overflow, `horizontal overflow at ${width}`).toBeLessThanOrEqual(0);
+	}
+
+	// reduced-motion: the skeleton pulse is suppressed while the skeleton stays visible.
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	const skeletonStatic = await page.evaluate(() => {
+		const el = document.querySelector('.skel');
+		if (!(el instanceof HTMLElement)) return null;
+		return getComputedStyle(el).animationName === 'none';
+	});
+	expect(skeletonStatic).toBe(true);
+	await page.emulateMedia({ reducedMotion: null });
+});

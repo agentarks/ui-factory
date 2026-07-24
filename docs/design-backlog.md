@@ -11,4 +11,4 @@ Dispatch source for `/cmux-dispatch`. One Kanban board rendered in ten distinct 
 - [ ] `kanban-swiss` — strict grid, austere sans, monochrome + one accent, high craft. light, comfortable
 - [ ] `kanban-brutalism` — raw monospace, harsh borders, black/white + one accent, exposed grid. light, compact
 - [ ] `kanban-dark-neon` — near-black canvas, glowing neon accents, monospace, terminal vibe. dark, compact
-- [ ] `kanban-skeuomorphic` — realistic textures and depth, bevels, physical affordances. light, comfortable
+- [ ] `kanban-terminal` — ncurses/TUI: tinted near-black canvas, full monospace, reverse-video bars, bordered dialog windows, bracketed fields, ANSI semantic colors, F-key status legend. dark, compact
