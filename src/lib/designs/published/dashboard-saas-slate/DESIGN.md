@@ -18,33 +18,33 @@ A product-analytics dashboard for **Aurora**: a sticky header (logo + breadcrumb
 
 ## Color system (OKLCH)
 
-| Token             | Value                         | Role                                                              |
-| ----------------- | ----------------------------- | ----------------------------------------------------------------- |
-| `--canvas`        | `oklch(0.974 0.006 248)`      | Cool light-gray page background                                   |
-| `--surface`       | `oklch(0.99 0.004 248)`       | Panels, KPI cards, inputs, table header                           |
-| `--surface-2`     | `oklch(0.98 0.005 248)`       | Hover fill, badge/chip backgrounds                                |
-| `--surface-3`     | `oklch(0.952 0.007 248)`      | Skeleton placeholder bars                                         |
-| `--border`        | `oklch(0.908 0.008 248)`      | 1px hairlines on every panel/card/divider                         |
-| `--border-strong` | `oklch(0.865 0.011 248)`      | Hover border, raised emphasis                                     |
-| `--text`          | `oklch(0.23 0.01 250)`        | Primary ink (≈ 16:1 on surface)                                   |
-| `--muted`         | `oklch(0.46 0.012 250)`       | Secondary text, axis labels, meta (≈ 7:1)                         |
-| `--faint`         | `oklch(0.5 0.012 250)`        | Tertiary text, placeholder, account IDs (≈ 5.5:1)                 |
-| `--accent`        | `oklch(0.5 0.1 220)`          | Teal — MRR line, donut Pro segment, logo dot (non-text uses)      |
-| `--accent-ink`    | `oklch(0.4 0.1 220)`          | Darker teal — Export fill, links, active-segment text, focus      |
-| `--pos`           | `oklch(0.42 0.11 165)`        | Positive delta text/sparkline (≈ 5.3:1 on surface)                |
-| `--neg`           | `oklch(0.4 0.14 25)`          | Negative delta text/sparkline, error icon (≈ 5.9:1)               |
-| `--on-accent`     | `oklch(0.99 0.003 248)`       | Near-white text on teal/primary fills (≈ 5.3:1 on `--accent-ink`) |
-| `--bar-bg`        | `oklch(0.99 0.004 248 / 0.8)` | Sticky header translucent fill (paired with backdrop blur)        |
-| `--chart-grid`    | `oklch(0.89 0.009 248)`       | Trend chart grid lines                                            |
-| `--chart-users`   | `oklch(0.58 0.014 250)`       | Active-users secondary line                                       |
-| `--track`         | `oklch(0.91 0.009 248)`       | Donut track                                                       |
-| `--err-bg`        | `oklch(0.95 0.022 28)`        | Error banner surface                                              |
-| `--err-border`    | `oklch(0.74 0.1 28)`          | Error banner border                                               |
+| Token             | Value                         | Role                                                                                |
+| ----------------- | ----------------------------- | ----------------------------------------------------------------------------------- |
+| `--canvas`        | `oklch(0.974 0.006 248)`      | Cool light-gray page background                                                     |
+| `--surface`       | `oklch(0.99 0.004 248)`       | Panels, KPI cards, inputs, table header                                             |
+| `--surface-2`     | `oklch(0.98 0.005 248)`       | Hover fill, badge/chip backgrounds                                                  |
+| `--surface-3`     | `oklch(0.952 0.007 248)`      | Skeleton placeholder bars                                                           |
+| `--border`        | `oklch(0.908 0.008 248)`      | 1px hairlines on every panel/card/divider                                           |
+| `--border-strong` | `oklch(0.865 0.011 248)`      | Hover border, raised emphasis                                                       |
+| `--text`          | `oklch(0.23 0.01 250)`        | Primary ink (16.5:1 on surface)                                                     |
+| `--muted`         | `oklch(0.46 0.012 250)`       | Secondary text, axis labels, meta (6.9:1)                                           |
+| `--faint`         | `oklch(0.5 0.012 250)`        | Tertiary text, placeholder, account IDs (5.8:1)                                     |
+| `--accent`        | `oklch(0.5 0.1 220)`          | Teal — MRR line, donut Pro segment, logo dot (5.5:1 as text; reserved for non-text) |
+| `--accent-ink`    | `oklch(0.4 0.1 220)`          | Darker teal — Export fill, links, active-segment text, focus (8.3:1 on surface)     |
+| `--pos`           | `oklch(0.42 0.11 165)`        | Positive delta text/sparkline (7.5:1 on surface)                                    |
+| `--neg`           | `oklch(0.4 0.14 25)`          | Negative delta text/sparkline, error icon (9.6:1 on surface)                        |
+| `--on-accent`     | `oklch(0.99 0.003 248)`       | Near-white text on teal/primary fills (8.3:1 on `--accent-ink`)                     |
+| `--bar-bg`        | `oklch(0.99 0.004 248 / 0.8)` | Sticky header translucent fill (paired with backdrop blur)                          |
+| `--chart-grid`    | `oklch(0.89 0.009 248)`       | Trend chart grid lines                                                              |
+| `--chart-users`   | `oklch(0.58 0.014 250)`       | Active-users secondary line                                                         |
+| `--track`         | `oklch(0.91 0.009 248)`       | Donut track                                                                         |
+| `--err-bg`        | `oklch(0.95 0.022 28)`        | Error banner surface                                                                |
+| `--err-border`    | `oklch(0.74 0.1 28)`          | Error banner border                                                                 |
 
 - **Neutrals are cool slate** (hue ≈ 248–250) at very low chroma (≤ 0.012). No pure grey/black/white anywhere — ink floors at L 0.23, canvas tops at L 0.974.
-- **`--accent` (L 0.5) is never used as text on light surfaces** — its contrast (~4:1) falls below AA. All text/primary uses `--accent-ink` (L 0.4, ~5.3:1). The concept's lighter teal is reserved for data-viz strokes and fills where contrast rules don't apply.
-- **`--neg` is darkened** from the concept's `oklch(0.52 0.15 25)` to `oklch(0.4 0.14 25)` so negative delta text clears AA on the light surface (the concept value measured ~3.3:1).
-- **Avatar fills** sit at L 0.42 (chroma 0.1) so near-white initials clear AA on every hue. Five hues: MR 250, DC 210, PN 30, SO 180, LF 300.
+- **`--accent` (L 0.5) already clears AA at 5.5:1** but is reserved for data-viz strokes and fills (MRR line, donut segment, logo dot) where maximum legibility is not the priority. All text and primary fills use `--accent-ink` (L 0.4, 8.3:1) for stronger contrast and clearer small-text legibility.
+- **`--neg` is conservatively darkened** from the concept's `oklch(0.52 0.15 25)` to `oklch(0.4 0.14 25)`. The concept value already cleared AA at 5.8:1; the darkening to 9.6:1 provides extra headroom for the small monospace delta numerals and was a conservative choice, not an AA necessity.
+- **Avatar fills** sit at L 0.42 (chroma 0.1) so near-white initials clear AA on every hue (7.5–8.7:1 measured). Five hues: MR 250, DC 210, PN 30, SO 180, LF 300.
 - **Plan/donut segment colors:** Pro `--accent`, Team `oklch(0.55 0.09 200)`, Enterprise `oklch(0.68 0.012 248)`, Free `oklch(0.82 0.01 248)` — a calm teal-to-neutral ramp, no rainbow.
 
 ## Typography
@@ -108,8 +108,8 @@ These are **visual state demonstrations** (the specimen is static; controls refl
 - Landmarks: `<header>` (banner) + `<main>` + `<section aria-label>` per region (KPIs, trend, revenue, top accounts) + `<aside aria-label>` for the rail. Charts are `role="img"` with descriptive `aria-label`.
 - All controls are real `<button>`/`<input>`/`<a>`; the segmented toggle carries `aria-pressed`; the range pill and filter input carry `aria-label`; icons are `aria-hidden`.
 - **Avatars expose the full name** via `aria-label` (initials alone are insufficient). Deltas expose direction + favourability via `aria-label` ("MRR: 6.4% up, favorable").
-- **Visible focus:** `outline: 3px solid var(--accent-ink)` with `outline-offset: 2px` on every interactive element — teal reads ≥3:1 against all light surfaces.
-- **WCAG 2.2 AA** is met by construction and verified by a real-pixel contrast audit across every text role (ink ≈ 16:1, muted ≈ 7:1, faint ≈ 5.5:1, deltas ≥ 5.3:1, accent-ink text ≈ 5.3:1, avatar initials ≈ 5.3:1). **Deltas never rely on color alone** — each carries an ▲/▼ arrow glyph + text and an accessible label.
+- **Visible focus:** `outline: 3px solid var(--accent-ink)` with `outline-offset: 2px` on every interactive element — teal reads ≥3:1 against all light surfaces. The chart-range `.seg` container uses `overflow: visible` (end buttons are rounded directly) so the offset ring is never clipped.
+- **WCAG 2.2 AA** is met by construction and verified by a real-pixel contrast audit across every text role (ink 16.5:1, muted 6.9:1, faint 5.8:1, positive delta 7.5:1, negative delta 9.6:1, accent-ink text/links 8.3:1, avatar initials 7.5–8.7:1). **Deltas never rely on color alone** — each carries an ▲/▼ arrow glyph + text and an accessible label.
 - Status meaning is always text + dot, never color alone.
 
 ## Extending the design to new pages
@@ -164,8 +164,8 @@ Keep the token set, the hairline-first elevation rule, and the two-type-voice sy
 - [ ] Monospace stack for all numerals/IDs/timestamps/labels; system-grotesque for words; tight tracking (−0.02em) on values; weight 500/600.
 - [ ] Every semantic delta carries an ▲/▼ arrow + text + accessible label; status badges always carry text + dot; meaning is never color alone.
 - [ ] Charts are real inline SVG (no charting dependency); the trend chart is dual-series with a subtle grid; the donut is `stroke-dasharray` segments computed from data; sparklines are tiny SVG polylines.
-- [ ] Every interactive element has a ≥3:1 teal focus ring (`--accent-ink`), ≥44×44 target at 375/768/1280, and a real role/label; avatars expose the full name.
-- [ ] All text meets WCAG 2.2 AA (≥4.5:1) against its actual surface; `--neg` is darkened to L 0.4 for AA.
+- [ ] Every interactive element has a ≥3:1 teal focus ring (`--accent-ink`, 3px + 2px offset), ≥44×44 target at 375/768/1280, and a real role/label; avatars expose the full name; the `.seg` container uses `overflow: visible` so the offset ring is never clipped.
+- [ ] All text meets WCAG 2.2 AA (≥4.5:1) against its actual surface (ink 16.5:1, muted 6.9:1, deltas 7.5–9.6:1, accent-ink 8.3:1, avatars 7.5–8.7:1); `--neg` is conservatively darkened to L 0.4 (9.6:1; the concept L 0.52 already cleared AA at 5.8:1).
 - [ ] Layout is responsive: KPI row wraps, grids collapse, table scrolls; no document horizontal overflow at 375/768/1280.
 - [ ] Normal UI transitions ≤0.16s and the skeleton opacity pulse is 1.5s, both gated behind `prefers-reduced-motion: no-preference` (reduced-motion shows a fully static dashboard).
 - [ ] Loading (skeleton with opacity pulse), error (inline pale-red banner + Retry + Dismiss), and empty (anomaly segment) states are all shown; the content matches the locked `fixtures.ts` baseline.

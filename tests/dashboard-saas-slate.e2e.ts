@@ -1,4 +1,89 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+// Focus-perimeter helper for the chart-range segmented control. Asserts that
+// the focused .seg button has a solid >=3px accent-ink (teal) outline whose
+// extent reaches beyond the .seg container on the sides that matter (top and
+// bottom always; left for the first button, right for the last), proving the
+// ring needs overflow:visible to render and is therefore unclipped. Also
+// asserts the ring reads >=3:1 against the surrounding panel-header backdrop.
+async function assertSegFocusPerimeter(page: Page, label: string, horizSide: 'left' | 'right') {
+	const info = await page.evaluate((side) => {
+		const el = document.activeElement;
+		if (!(el instanceof HTMLElement)) return null;
+		const seg = el.closest('.seg');
+		if (!seg) return null;
+		const cs = getComputedStyle(el);
+		const segCs = getComputedStyle(seg);
+		const ow = parseFloat(cs.outlineWidth);
+		const oo = parseFloat(cs.outlineOffset || '0');
+		const extent = ow + oo;
+		const btnRect = el.getBoundingClientRect();
+		const segRect = seg.getBoundingClientRect();
+		const segBorderL = parseFloat(segCs.borderLeftWidth);
+		const segBorderR = parseFloat(segCs.borderRightWidth);
+		const segBorderT = parseFloat(segCs.borderTopWidth);
+		const segBorderB = parseFloat(segCs.borderBottomWidth);
+		// Top and bottom always extend beyond the seg (buttons fill its height).
+		const extendsTop = btnRect.top - extent < segRect.top + segBorderT;
+		const extendsBottom = btnRect.bottom + extent > segRect.bottom - segBorderB;
+		// The relevant horizontal side: left for the first button, right for the last.
+		const extendsHoriz =
+			side === 'left'
+				? btnRect.left - extent < segRect.left + segBorderL
+				: btnRect.right + extent > segRect.right - segBorderR;
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const surround = el.closest('.panel-h') ?? el.closest('.panel');
+		// Climb to the nearest OPAQUE ancestor for the effective backdrop
+		// (panel-h is transparent; the ring actually renders on the panel surface).
+		const isOpaque = (c: string) => {
+			const m = c.match(/rgba?\([^)]*\)/);
+			if (!m) return true;
+			const p = m[0].replace(/[^\d.,]/g, '').split(',');
+			return p.length < 4 || parseFloat(p[3]) > 0;
+		};
+		let bgNode: Element | null = surround;
+		let bgColor = 'rgb(255,255,255)';
+		while (bgNode) {
+			const bg = getComputedStyle(bgNode).backgroundColor;
+			if (isOpaque(bg)) {
+				bgColor = bg;
+				break;
+			}
+			bgNode = bgNode.parentElement;
+		}
+		const oL = lum(cs.outlineColor);
+		const bL = lum(bgColor);
+		const contrast = (Math.max(oL, bL) + 0.05) / (Math.min(oL, bL) + 0.05);
+		return {
+			outlineStyle: cs.outlineStyle,
+			outlineWidth: ow,
+			extendsHoriz,
+			extendsTop,
+			extendsBottom,
+			contrast
+		};
+	}, horizSide);
+	expect(info, `seg focus info for ${label}`).not.toBeNull();
+	expect(info!.outlineStyle, `${label} outline solid`).toBe('solid');
+	expect(info!.outlineWidth, `${label} outline >= 3px`).toBeGreaterThanOrEqual(3);
+	expect(info!.extendsHoriz, `${label} ring extends ${horizSide} of seg`).toBe(true);
+	expect(info!.extendsTop, `${label} ring extends top of seg`).toBe(true);
+	expect(info!.extendsBottom, `${label} ring extends bottom of seg`).toBe(true);
+	expect(info!.contrast, `${label} focus ring >= 3:1`).toBeGreaterThanOrEqual(3);
+}
 
 test('opens the dashboard-saas-slate design and its isolated preview states', async ({ page }) => {
 	// ---- Detail page: identity + exact public summary ----
@@ -197,7 +282,8 @@ test('opens the dashboard-saas-slate design and its isolated preview states', as
 			{ role: 'seg-off', ratio: selfRatio('.seg button:not(.on)') },
 			{ role: 'search-placeholder', ratio: ratio('.search input', '.search', '::placeholder') },
 			{ role: 'search-input', ratio: ratio('.search input', '.search') },
-			{ role: 'mini-value', ratio: ratio('.mini .v', '.mini') }
+			{ role: 'mini-value', ratio: ratio('.mini .v', '.mini') },
+			{ role: 'link-text', ratio: ratio('.link', '.panel') }
 		];
 		document.querySelectorAll('.delta').forEach((el) => {
 			const cls = el.className;
@@ -226,6 +312,43 @@ test('opens the dashboard-saas-slate design and its isolated preview states', as
 	expect(deltaArrows.length, 'deltas present').toBeGreaterThan(0);
 	for (const d of deltaArrows) {
 		expect(d.hasArrow, `delta "${d.text}" has an up/down arrow`).toBe(true);
+	}
+
+	// ------------------------------------------------------------------
+	// Chart-range segmented control: focus-perimeter regression (WCAG
+	// 2.4.11/2.4.13). .seg { overflow: hidden } clips the offset
+	// :focus-visible ring (3px + 2px = 5px extent) on every side, making
+	// keyboard focus on the 7D/30D/90D/12M buttons invisible. Same root
+	// cause as the kanban-editorial fix.
+	// ------------------------------------------------------------------
+	// Root-cause lock first: the .seg container must not clip.
+	const segOverflow = await page.evaluate(() =>
+		Array.from(document.querySelectorAll('.seg')).map((el) => {
+			const cs = getComputedStyle(el);
+			return { ox: cs.overflowX, oy: cs.overflowY };
+		})
+	);
+	expect(segOverflow.length, 'seg groups present').toBeGreaterThan(0);
+	for (const o of segOverflow) {
+		expect(o.ox, 'seg overflow-x visible (no clip)').toBe('visible');
+		expect(o.oy, 'seg overflow-y visible (no clip)').toBe('visible');
+	}
+
+	// Then Tab-walk keyboard focus to the FIRST and LAST .seg button at
+	// 768 and 1280, and assert an unclipped accent-ink (teal) ring renders
+	// on all four sides at >=3:1 against the surrounding backdrop.
+	for (const width of [768, 1280]) {
+		await page.setViewportSize({ width, height: 900 });
+		// Focus the Retry button (last focusable before the seg group in tab
+		// order), then Tab into the first seg button so :focus-visible applies.
+		await page.getByRole('button', { name: 'Retry' }).focus();
+		await page.keyboard.press('Tab'); // -> 7D (first .seg button)
+		await assertSegFocusPerimeter(page, 'first (7D)', 'left');
+		// Tab to the last seg button (12M).
+		await page.keyboard.press('Tab'); // -> 30D
+		await page.keyboard.press('Tab'); // -> 90D
+		await page.keyboard.press('Tab'); // -> 12M (last .seg button)
+		await assertSegFocusPerimeter(page, 'last (12M)', 'right');
 	}
 
 	// 44x44 targets at 375/768/1280 + no horizontal overflow.

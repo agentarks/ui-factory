@@ -427,7 +427,9 @@
 				<div class="mini">
 					<div class="mini-lab"><span class="eyebrow">Seats sold</span></div>
 					<div class="v">1,280</div>
-					<span class="delta pos"><span class="tri" aria-hidden="true">▲</span>4.2%</span>
+					<span class="delta pos" aria-label="Seats sold: 4.2% up, favorable"
+						><span class="tri" aria-hidden="true">▲</span>4.2%</span
+					>
 				</div>
 			</aside>
 		</div>
@@ -867,7 +869,6 @@
 		display: inline-flex;
 		border: 1px solid var(--border);
 		border-radius: 8px;
-		overflow: hidden;
 		background: var(--surface);
 	}
 
@@ -883,6 +884,16 @@
 		padding: 6px 11px;
 		cursor: pointer;
 		border-radius: 0;
+	}
+
+	/* Round the end buttons directly so the pill shape survives without
+	   overflow:hidden (which would clip the offset :focus-visible ring). */
+	.seg button:first-child {
+		border-radius: 8px 0 0 8px;
+	}
+
+	.seg button:last-child {
+		border-radius: 0 8px 8px 0;
 	}
 
 	.seg button.on {
