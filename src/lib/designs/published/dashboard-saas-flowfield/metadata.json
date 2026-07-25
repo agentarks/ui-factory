@@ -1,0 +1,15 @@
+{
+	"schemaVersion": 1,
+	"slug": "dashboard-saas-flowfield",
+	"version": "1.0.0",
+	"title": "SaaS Analytics · Flow Field",
+	"summary": "A calm SaaS product-analytics dashboard on warm tinted paper with opaque hairline-bordered cards floating over a generative canvas particle flow-field. Particle drift speed subtly scales with the active-users delta; a single restrained indigo accent carries every data-viz stroke and focus ring.",
+	"pageType": "dashboard",
+	"applicationTypes": ["product-analytics", "saas", "business-intelligence"],
+	"visualStyles": ["flow-field", "generative", "data-viz"],
+	"theme": "light",
+	"density": "comfortable",
+	"platforms": ["web", "desktop", "tablet", "mobile"],
+	"status": "production-ready",
+	"tags": ["dashboard", "saas", "analytics", "flow-field", "generative", "canvas", "oklch"]
+}
