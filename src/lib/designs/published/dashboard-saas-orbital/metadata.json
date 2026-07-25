@@ -1,0 +1,15 @@
+{
+	"schemaVersion": 1,
+	"slug": "dashboard-saas-orbital",
+	"version": "1.0.0",
+	"title": "SaaS Analytics · Orbital Telemetry",
+	"summary": "A dark deep-space telemetry console for the Aurora product-analytics dashboard: a conic radar sweep rotates over concentric telemetry rings while KPI readouts dock to ring quadrants and sparklines render as orbit arcs. Phosphor teal dominates, with signal-green and alert-amber as restrained semantic secondaries.",
+	"pageType": "dashboard",
+	"applicationTypes": ["product-analytics", "saas", "business-intelligence"],
+	"visualStyles": ["telemetry", "mission-control", "data-viz"],
+	"theme": "dark",
+	"density": "comfortable",
+	"platforms": ["web", "desktop", "tablet", "mobile"],
+	"status": "production-ready",
+	"tags": ["dashboard", "saas", "analytics", "orbital", "telemetry", "radar", "dark", "oklch"]
+}
