@@ -1,0 +1,15 @@
+{
+	"schemaVersion": 1,
+	"slug": "dashboard-saas-slate",
+	"version": "1.0.0",
+	"title": "SaaS Analytics · Cool Slate",
+	"summary": "A calm, crafted SaaS product-analytics dashboard on a cool light-gray canvas with low-chroma slate neutrals, a single restrained teal accent, system-grotesque tight-tracked type, monospace numerals, 1px hairline borders, and a backdrop-blur sticky header.",
+	"pageType": "dashboard",
+	"applicationTypes": ["product-analytics", "saas", "business-intelligence"],
+	"visualStyles": ["flat", "slate", "data-viz"],
+	"theme": "light",
+	"density": "comfortable",
+	"platforms": ["web", "desktop", "tablet", "mobile"],
+	"status": "production-ready",
+	"tags": ["dashboard", "saas", "analytics", "slate", "teal", "oklch"]
+}
