@@ -1,0 +1,25 @@
+{
+	"schemaVersion": 1,
+	"slug": "dashboard-saas-riso",
+	"version": "1.0.0",
+	"title": "SaaS Analytics · Risograph Broadsheet",
+	"summary": "A warm anti-corporate risograph-printed broadsheet for the Aurora product-analytics dashboard: SVG halftone dot screens encode plan share by density and two spot colors (fluorescent red and federal blue) deliberately misregister with mix-blend-mode multiply overprint so the clash reads as a physical print. Editorial serif italic display over tiny mono captions, off-grid broadsheet columns with an intentional 3° skew on decorative blocks.",
+	"pageType": "dashboard",
+	"applicationTypes": ["product-analytics", "saas", "business-intelligence"],
+	"visualStyles": ["risograph", "editorial", "print"],
+	"theme": "light",
+	"density": "comfortable",
+	"platforms": ["web", "desktop", "tablet", "mobile"],
+	"status": "production-ready",
+	"tags": [
+		"dashboard",
+		"saas",
+		"analytics",
+		"riso",
+		"risograph",
+		"halftone",
+		"overprint",
+		"editorial",
+		"oklch"
+	]
+}
