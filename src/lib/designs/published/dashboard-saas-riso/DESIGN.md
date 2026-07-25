@@ -25,24 +25,24 @@ A product-analytics dashboard for **Aurora** rendered as a printed broadsheet: a
 | `--surface`       | `oklch(0.955 0.011 85)` | Inputs, chips, raised control fills                                                       |
 | `--surface-2`     | `oklch(0.925 0.013 85)` | Hover fill, goal-bar track, skeleton base                                                 |
 | `--surface-3`     | `oklch(0.89 0.015 85)`  | Skeleton hatch                                                                            |
-| `--ink`           | `oklch(0.28 0.02 85)`   | Primary warm ink — body text, rules, borders (≈13.7:1 on newsprint)                       |
-| `--muted`         | `oklch(0.42 0.018 85)`  | Secondary ink — captions, axis, meta (≈12.5:1)                                            |
-| `--faint`         | `oklch(0.46 0.018 85)`  | Tertiary ink — IDs, notes, placeholders (≈11.9:1)                                         |
+| `--ink`           | `oklch(0.28 0.02 85)`   | Primary warm ink — body text, rules, borders (≈12.3:1 on newsprint)                       |
+| `--muted`         | `oklch(0.42 0.018 85)`  | Secondary ink — captions, axis, meta (≈7.1:1)                                             |
+| `--faint`         | `oklch(0.46 0.018 85)`  | Tertiary ink — IDs, notes, placeholders (≈6.0:1)                                          |
 | `--rule`          | `oklch(0.7 0.02 85)`    | Broadsheet hairline rules, table row dividers                                             |
 | `--rule-strong`   | `oklch(0.55 0.02 85)`   | Raised emphasis rules                                                                     |
 | `--spot-blue`     | `oklch(0.46 0.12 250)`  | Federal blue — pos/good delta, healthy badges, MRR line, logo dot, primary fill           |
-| `--spot-blue-ink` | `oklch(0.42 0.12 250)`  | Darker blue for small/caption text and focus (≈12.0:1 on newsprint)                       |
+| `--spot-blue-ink` | `oklch(0.42 0.12 250)`  | Darker blue for small/caption text and focus (≈7.1:1 on newsprint)                        |
 | `--spot-red`      | `oklch(0.54 0.2 25)`    | Fluorescent red — **decorative overprint dots only** (NOT text; renders `rgb(201,34,43)`) |
-| `--spot-red-ink`  | `oklch(0.48 0.19 25)`   | Darkened red for AA text — neg delta, at-risk badge dot, error icon (≈8.5:1)              |
-| `--on-blue`       | `oklch(0.97 0.008 85)`  | Near-newsprint text on blue fills (≈13.6:1 on `--spot-blue`)                              |
+| `--spot-red-ink`  | `oklch(0.48 0.19 25)`   | Darkened red for AA text — neg delta, at-risk badge dot, error icon (≈6.1:1)              |
+| `--on-blue`       | `oklch(0.97 0.008 85)`  | Near-newsprint text on blue fills (≈6.5:1 on `--spot-blue`)                               |
 | `--err-bg`        | `oklch(0.93 0.028 25)`  | Error banner surface                                                                      |
 | `--err-border`    | `oklch(0.62 0.18 25)`   | Error banner border                                                                       |
 | `--spark-up`      | `var(--spot-blue-ink)`  | KPI up-sparkline dot fill                                                                 |
 | `--spark-down`    | `var(--spot-red-ink)`   | KPI down-sparkline dot fill                                                               |
 
-- **Neutrals are warm** (hue ≈ 85) at low chroma (≤ 0.02). No pure black/white anywhere — ink floors at L 0.28, newsprint tops at L 0.94. Every text token clears AA by a wide margin (ink 13.7:1, muted 12.5:1, faint 11.9:1).
-- **The spot red is conservatively darkened for every text role.** The decorative `--spot-red` (`oklch(0.54 0.2 25)`, `rgb(201,34,43)`) is reserved for the overprint dot screen and renders at ~6.2:1 on newsprint — strong enough for an L 0.54 swatch but used **decoratively only**. All red text (neg deltas, at-risk dot, error icon) steps down to `--spot-red-ink` (`oklch(0.48 0.19 25)`, ≈8.5:1), matching slate's conservative-darkening precedent for small monospace numerals.
-- **Avatar fills** sit at L 0.42 (chroma 0.11) across five hues (MR 250, DC 210, PN 30, SO 180, LF 300); near-newsprint initials read ≈14.5–15.1:1 on every hue.
+- **Neutrals are warm** (hue ≈ 85) at low chroma (≤ 0.02). No pure black/white anywhere — ink floors at L 0.28, newsprint tops at L 0.94. Every text token clears AA (ink 12.3:1, muted 7.1:1, faint 6.0:1; measured by real-pixel audit).
+- **The spot red is conservatively darkened for every text role.** The decorative `--spot-red` (`oklch(0.54 0.2 25)`, `rgb(201,34,43)`) is reserved for the overprint dot screen and renders at ~4.7:1 on newsprint — borderline for an L 0.54 swatch and therefore used **decoratively only**. All red text (neg deltas, at-risk dot, error icon) steps down to `--spot-red-ink` (`oklch(0.48 0.19 25)`, ≈6.1:1), matching slate's conservative-darkening precedent for small monospace numerals.
+- **Avatar fills** sit at L 0.42 (chroma 0.11) across five hues (MR 250, DC 210, PN 30, SO 180, LF 300); near-newsprint initials read ≈7.0–8.2:1 on every hue (measured by real-pixel audit).
 - **The overprint "clash" color** (where blue and red dots overlap under `mix-blend-mode: multiply`) is an emergent dark warm composite — not a declared token — and is decorative only.
 
 ## Typography
@@ -75,7 +75,7 @@ This specimen is a single dashboard with no route navigation. When extending: ke
 - **Masthead:** serif italic nameplate ("_Aurora_ · Product analytics") + mono dateline ("Broadsheet · Last 30 days · Vol. IV, No. 7") over a 3px double ink rule. A skewed halftone ornament sits behind it (decorative).
 - **KPI cell:** mono eyebrow label · serif italic value · directional delta (▲/▼, colored, with text + sr-label "good"/"bad") · mono caption. A 12-point **halftone-dot sparkline** (dot radius grows along the series) sits beside the value.
 - **Trend chart:** real inline SVG (viewBox 760×290). Subtle grid, mono axis labels, a **halftone dot wash** beneath the blue MRR line (decorative), the blue MRR line+dots+end-point ring, a red active-users polyline. A range segmented toggle (7D/30D/90D/12M) and a two-swatch legend sit in the panel header.
-- **Revenue by plan (the signature):** four rows, each a halftone dot bar. **Dot radius encodes the plan share** (`r = 0.9 + (percent/50)·2.5`, so Pro 44% → r≈3.1, Free 6% → r≈0.97). Each bar is an **overprint layer**: two stacked dot SVGs, `--spot-blue` at the grid origin and `--spot-red` offset by a **fixed 3×2px**, the red pass blended with `mix-blend-mode: multiply` so overlapping dots composite dark like physical inks. The `%` label and value text are the redundant accessible encoding (the layer also carries a descriptive `role="img"` `aria-label`).
+- **Revenue by plan (the signature):** four rows, each a halftone dot bar. **Dot radius encodes the plan share** (`r = 0.9 + (percent/50)·2.5`, so Pro 44% → r≈3.1, Free 6% → r≈1.2). Each bar is an **overprint layer**: two stacked dot SVGs, `--spot-blue` at the grid origin and `--spot-red` offset by a **fixed 3×2px**, the red pass blended with `mix-blend-mode: multiply` so overlapping dots composite dark like physical inks. The `%` label and value text are the redundant accessible encoding (the layer also carries a descriptive `role="img"` `aria-label`).
 - **Top-accounts table:** five hairline rows — serif italic account name (+ mono ID), plan chip, right-aligned mono MRR, status badge (Healthy=blue dot / At risk=red dot / New=ink dot, always text + dot), owner avatar + name.
 - **Metric rail:** three mini panels — NRR (loading skeleton), Q3 MRR goal (value + 96% readout + blue goal bar + "On track" label), Anomalies (empty state).
 - **Status badges:** zero-radius mono uppercase pill with a 7px dot + text. `s-pos` (blue dot, Healthy), `s-neg` (red dot, At risk), `s-acc` (ink dot, New). Badge text is always `--ink` on `--surface`.
@@ -110,8 +110,8 @@ These are **visual state demonstrations** (the specimen is static; controls refl
 - Landmarks: `<header>` (banner) + `<main>` + `<section aria-label>` per region (KPIs, trend, revenue, top accounts) + `<aside aria-label>` for the rail + `<footer>` (colophon). Charts and the overprint layer are `role="img"` with descriptive `aria-label`s; the trend chart's `aria-label` narrates both series over 12 months.
 - All controls are real `<button>`/`<input>`; the segmented toggle carries `aria-pressed`; the range pill and filter input carry `aria-label`; decorative icons, the nameplate ornament, and the halftone dot layers are `aria-hidden`.
 - **Avatars expose the full name** via `aria-label` (initials alone are insufficient). Deltas expose direction + favourability via `aria-label` ("MRR: 6.4% up, favorable") and carry a visually-hidden "good"/"bad" word.
-- **Visible focus:** `outline: 3px solid var(--spot-blue-ink)` with `outline-offset: 2px` on every interactive element — blue reads ≈12:1 against all newsprint surfaces. The segmented toggle uses zero radius and `overflow: visible` so the offset ring is never clipped.
-- **WCAG 2.2 AA** is met by construction and verified by a real-pixel contrast audit across every text role against its opaque newsprint parent (ink 13.7:1, muted 12.5:1, faint 11.9:1, blue delta 12.0:1, red delta 8.5:1, on-blue-on-primary 13.6:1, avatars ≈14.5–15.1:1). **Deltas never rely on color alone** — each carries an ▲/▼ arrow glyph + text and an accessible label. **Status badges always carry text + dot.**
+- **Visible focus:** `outline: 3px solid var(--spot-blue-ink)` with `outline-offset: 2px` on every interactive element — blue reads ≈7.1:1 against all newsprint surfaces. The segmented toggle uses zero radius and `overflow: visible` so the offset ring is never clipped.
+- **WCAG 2.2 AA** is met by construction and verified by a real-pixel contrast audit across every text role against its opaque newsprint parent (ink 12.3:1, muted 7.1:1, faint 6.0:1, blue delta 7.1:1, red delta 6.1:1, on-blue-on-primary 6.5:1, avatars ≈7.0–8.2:1). **Deltas never rely on color alone** — each carries an ▲/▼ arrow glyph + text and an accessible label. **Status badges always carry text + dot.**
 - The halftone/overprint decoration is **decorative** wherever it does not encode data (`aria-hidden`/`pointer-events: none` on the nameplate ornament and the trend dot wash). Where dots encode plan share, that encoding is redundant with the visible `%` label, value text, and the overprint layer's `role="img"` `aria-label`.
 
 ## Extending the design to new pages
@@ -138,7 +138,7 @@ Keep the token set, the zero-radius hairline-ink rule, the two-type-voice system
 
 - Don't use box-shadow, glow, gradients, gradient text, `backdrop-filter`, translucency on surfaces, or colored side-stripes.
 - Don't round corners (except avatar discs and tiny semantic dots) — the zero-radius broadsheet is the anti-SaaS signal.
-- Don't use `--spot-red` (L 0.54) as text — it is decorative overprint only; always step down to `--spot-red-ink` (L 0.48, ≈8.5:1).
+- Don't use `--spot-red` (L 0.54) as text — it is decorative overprint only (≈4.7:1 on newsprint); always step down to `--spot-red-ink` (L 0.48, ≈6.1:1).
 - Don't animate the overprint misregistration — the print artifact is static; the 3×2px offset is fixed.
 - Don't ship motion (including the skeleton hatch pulse) without a `prefers-reduced-motion` fallback.
 - Don't add a charting library, external fonts, images, or any dependency — charts, halftone screens, and sparklines are inline SVG.
@@ -164,12 +164,12 @@ Keep the token set, the zero-radius hairline-ink rule, the two-type-voice system
 - [ ] All surfaces are flat newsprint panels defined by **1.5px `--ink` borders** and zero radius; **no box-shadow anywhere**; no gradients, no glow, no colored side-stripes, no `backdrop-filter`, no surface translucency.
 - [ ] The **overprint signature** is present: each plan bar is an `.overprint-layer` with two stacked dot SVGs (`.ht-blue` + `.ht-red`), the red pass offset by a **fixed 3×2px** and blended with `mix-blend-mode: multiply`; the misregistration is a static offset, never animated.
 - [ ] **Halftone dot radius encodes plan share** (Pro biggest → Free smallest); the `%` label, value text, and a `role="img"` `aria-label` make the encoding redundant.
-- [ ] All colors are OKLCH, warm-tinted (hue ≈ 85); `--spot-red` (L 0.54) is decorative-only and `--spot-red-ink` (L 0.48, ≈8.5:1) is used for every red text role.
+- [ ] All colors are OKLCH, warm-tinted (hue ≈ 85); `--spot-red` (L 0.54) is decorative-only (≈4.7:1 on newsprint) and `--spot-red-ink` (L 0.48, ≈6.1:1) is used for every red text role.
 - [ ] Editorial serif italic carries every display figure; system monospace carries every datum; no external fonts.
 - [ ] Every semantic delta carries an ▲/▼ arrow + text + accessible label (+ visually-hidden "good"/"bad"); status badges always carry text + dot; meaning is never color alone.
 - [ ] Charts are real inline SVG (no charting dependency); the trend chart has a blue MRR line over a halftone dot wash and a red active-users line; sparklines are tiny halftone-dot fields.
 - [ ] Every interactive element has a ≥3:1 blue focus ring (`--spot-blue-ink`, 3px + 2px offset), ≥44×44 target at 375/768/1280, and a real role/label; avatars expose the full name.
-- [ ] All text meets WCAG 2.2 AA (≥4.5:1) against its opaque newsprint parent (ink 13.7:1, muted 12.5:1, deltas 8.5–12.0:1, on-blue-on-primary 13.6:1, avatars ≈14.5–15.1:1).
+- [ ] All text meets WCAG 2.2 AA (≥4.5:1) against its opaque newsprint parent (ink 12.3:1, muted 7.1:1, deltas 6.1–7.1:1, on-blue-on-primary 6.5:1, avatars ≈7.0–8.2:1).
 - [ ] The decorative nameplate ornament is `aria-hidden`/`pointer-events: none` and skewed ~3°; it **straightens to 0° under 760px**; no document horizontal overflow at 375/768/1280.
 - [ ] Normal UI transitions ≤0.16s and the skeleton hatch pulse is 1.5s, both gated behind `prefers-reduced-motion: no-preference`; reduced motion shows a complete static dashboard (frozen overprint, static hatch).
 - [ ] Loading (hatched skeleton with opacity pulse), error (inline pale-red banner + Retry + Dismiss), empty (anomaly segment), and goal/status indicator are all shown; the content matches the locked `fixtures.ts` baseline (diff-identical to slate).

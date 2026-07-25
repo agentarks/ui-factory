@@ -58,7 +58,8 @@
 			htGrid.push({ x, y });
 		}
 	}
-	// Map plan percent (6..44) to a halftone dot radius (0.9..3.4px).
+	// Map plan percent to a halftone dot radius via r = 0.9 + (percent/50)·2.5
+	// (so the locked data renders ~1.2–3.1px: Free 6% → 1.2, Pro 44% → 3.1).
 	const htRadius = (percent: number) => 0.9 + (Math.min(percent, 50) / 50) * 2.5;
 	// Deliberate overprint misregistration: spot 2 is offset by a fixed 3×2px from
 	// spot 1 so the two inks "clash" like a physical riso pass. The offset is a
@@ -510,15 +511,15 @@
 		--surface: oklch(0.955 0.011 85);
 		--surface-2: oklch(0.925 0.013 85);
 		--surface-3: oklch(0.89 0.015 85);
-		--ink: oklch(0.28 0.02 85); /* dark warm ink (≈8.7:1 on newsprint) */
-		--muted: oklch(0.42 0.018 85); /* secondary ink (≈5.4:1) */
-		--faint: oklch(0.46 0.018 85); /* tertiary (≈4.7:1) */
+		--ink: oklch(0.28 0.02 85); /* dark warm ink */
+		--muted: oklch(0.42 0.018 85); /* secondary ink */
+		--faint: oklch(0.46 0.018 85); /* tertiary */
 		--rule: oklch(0.7 0.02 85); /* broadsheet rules */
 		--rule-strong: oklch(0.55 0.02 85);
-		--spot-blue: oklch(0.46 0.12 250); /* federal blue — good/pos/primary (≈7.9:1 on newsprint) */
-		--spot-blue-ink: oklch(0.42 0.12 250); /* darker blue for small text (≈8.7:1) */
+		--spot-blue: oklch(0.46 0.12 250); /* federal blue — good/pos/primary */
+		--spot-blue-ink: oklch(0.42 0.12 250); /* darker blue for small text */
 		--spot-red: oklch(0.54 0.2 25); /* fluorescent red — decorative overprint */
-		--spot-red-ink: oklch(0.48 0.19 25); /* darkened red for AA text (≈5.3:1 on newsprint) */
+		--spot-red-ink: oklch(0.48 0.19 25); /* darkened red for AA text */
 		--on-blue: oklch(0.97 0.008 85); /* near-newsprint on blue fills */
 		--err-bg: oklch(0.93 0.028 25);
 		--err-border: oklch(0.62 0.18 25);
@@ -640,7 +641,7 @@
 	.logo .dot {
 		width: 18px;
 		height: 18px;
-		border-radius: 2px;
+		border-radius: 0;
 		background: var(--spot-blue);
 		display: grid;
 		place-items: center;
@@ -650,7 +651,7 @@
 		content: '';
 		width: 7px;
 		height: 7px;
-		border-radius: 1px;
+		border-radius: 0;
 		background: var(--on-blue);
 		opacity: 0.9;
 	}
