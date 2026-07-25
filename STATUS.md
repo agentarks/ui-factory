@@ -4,7 +4,7 @@
 
 **Phase:** Dashboard chapter — concept
 
-**Objective:** The Kanban chapter is complete (10 published styles). Next chapter is **Dashboards**: 4 dashboard page types (SaaS, Operational, Marketing, Finance) × 5 distinct directions each (20 designs), reusing one shared visual-direction library. SaaS is built first; it locks the SaaS baseline, then the five SaaS directions are built one at a time through the loop.
+**Objective:** The Kanban chapter is complete (10 published styles). Next chapter is **Dashboards**: 4 dashboard page types (SaaS, Operational, Marketing, Finance). Each type gets an **open concept brainstorm of distinct directions** (no pre-locked direction library); the user picks freely, and winning directions may be reused across types. The concept gate is ten distinct directions on that type's locked baseline, like Kanban. SaaS is built first; it locks the SaaS baseline, then the chosen SaaS directions are built one at a time through the loop.
 
 ## Completed
 
@@ -50,8 +50,8 @@
 
 ## Next
 
-- Charter the Dashboard chapter in `docs/catalog-roadmap.md` (4 types × 5 shared directions; SaaS baseline locked). Then run the SaaS chapter through `ui-factory-design-loop`: generate concept treatments of the five locked directions on the SaaS subject, pick one per direction, and build each SaaS style one at a time (workbench → reviewed → production-ready → published), starting with the SaaS Flat/Material reference style.
-- After SaaS, define and build the Operational, Marketing, and Finance chapters in that order, one type at a time.
+- Charter the Dashboard chapter in `docs/catalog-roadmap.md` (4 types; open concept brainstorm per type; no pre-locked direction library; SaaS baseline locked). Then run the SaaS chapter through `ui-factory-design-loop`: generate an open concept brainstorm of ten distinct directions on the SaaS subject, let the user pick freely, and build each chosen SaaS style one at a time (workbench → reviewed → production-ready → published).
+- After SaaS, define and build the Operational, Marketing, and Finance chapters in that order, one type at a time. Reuse winning directions across types where the user chooses.
 
 ## Decisions
 
