@@ -51,13 +51,13 @@
 		const n = data.length;
 		const pts = data.map((v, i) => {
 			const t = n > 1 ? i / (n - 1) : 0;
-			const ang = Math.PI + t * Math.PI; // 180° → 360°: left, over the top, to right
+			const ang = Math.PI - t * Math.PI; // 180° → 0°: left, cresting over the top at 90°, to right
 			const rr = r + ((v - min) / range) * amp;
 			return [cx + rr * Math.cos(ang), cy - rr * Math.sin(ang)];
 		});
 		const line = 'M' + pts.map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' L');
-		// Baseline arc (the orbit track) at the base radius.
-		const base = `M${cx + r * Math.cos(Math.PI)},${cy - r * Math.sin(Math.PI)} A${r},${r} 0 0 1 ${
+		// Baseline arc (the orbit track) at the base radius; sweep flag 0 bows it UP.
+		const base = `M${cx + r * Math.cos(Math.PI)},${cy - r * Math.sin(Math.PI)} A${r},${r} 0 0 0 ${
 			cx + r * Math.cos(2 * Math.PI)
 		},${cy - r * Math.sin(2 * Math.PI)}`;
 		const last = pts[pts.length - 1];
@@ -1641,11 +1641,14 @@
 				border-color 0.16s cubic-bezier(0.4, 0, 0.2, 1),
 				color 0.16s cubic-bezier(0.4, 0, 0.2, 1);
 		}
+	}
 
-		.kpi:hover {
-			border-color: var(--border-strong);
-			background: var(--surface-2);
-		}
+	/* KPI hover is an affordance, not motion: it applies instantly under
+	   reduced-motion (only the transition is gated above), matching the catalog
+	   convention that hover state is always available. */
+	.kpi:hover {
+		border-color: var(--border-strong);
+		background: var(--surface-2);
 	}
 
 	/* ---------- Responsive ---------- */

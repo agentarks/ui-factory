@@ -188,6 +188,53 @@ test('opens the dashboard-saas-orbital design and its isolated preview states', 
 	expect(sig!.noGradientOnCanvas, 'no background gradient on canvas').toBe('none');
 	expect(sig!.noGradientOnPanel, 'no background gradient on panels').toBe('none');
 
+	// Orbit-arc sparkline geometry regression (BLOCKER): the per-KPI sparkline is
+	// rendered as an SVG path along a ring inside viewBox 0 0 120 56. The data line
+	// must actually trace a visible arc — every point within the viewBox
+	// (0 <= y <= 56) and cresting near the TOP (min y well below cy≈52), not clipped
+	// to the bottom edge by a downward-bulging arc.
+	const orbitGeo = await page.evaluate(() => {
+		const lines = Array.from(document.querySelectorAll('.orbit-line'));
+		const parsed = lines.map((el) => {
+			const d = el.getAttribute('d') ?? '';
+			// Extract the coordinate pairs from the "Mx,y Lx,y Lx,y …" path.
+			const nums = d.replace(/[ML,]/g, ' ').trim().split(/\s+/).map(Number);
+			const pts: { x: number; y: number }[] = [];
+			for (let i = 0; i + 1 < nums.length; i += 2) {
+				pts.push({ x: nums[i], y: nums[i + 1] });
+			}
+			const ys = pts.map((p) => p.y);
+			const xs = pts.map((p) => p.x);
+			return {
+				count: pts.length,
+				minY: ys.length ? Math.min(...ys) : NaN,
+				maxY: ys.length ? Math.max(...ys) : NaN,
+				minX: xs.length ? Math.min(...xs) : NaN,
+				maxX: xs.length ? Math.max(...xs) : NaN
+			};
+		});
+		// Also confirm the dashed base track arc bows UP (its arc command uses sweep
+		// flag 0). Read the sweep flag from the path command string.
+		const base = document.querySelector('.orbit-base');
+		const baseD = base?.getAttribute('d') ?? '';
+		const baseSweepFlag = /A[\d.,\s]+0\s+([01])\s/.exec(baseD)?.[1] ?? '?';
+		return { parsed, baseSweepFlag };
+	});
+	expect(orbitGeo.parsed.length, 'orbit-arc sparklines render').toBeGreaterThanOrEqual(4);
+	for (const [i, g] of orbitGeo.parsed.entries()) {
+		expect(g.count, `sparkline ${i} has multiple points`).toBeGreaterThan(2);
+		expect(g.minY, `sparkline ${i} min y within viewBox (>= 0)`).toBeGreaterThanOrEqual(0);
+		expect(g.maxY, `sparkline ${i} max y within viewBox (<= 56)`).toBeLessThanOrEqual(56);
+		expect(g.minX, `sparkline ${i} min x within viewBox (>= 0)`).toBeGreaterThanOrEqual(0);
+		expect(g.maxX, `sparkline ${i} max x within viewBox (<= 120)`).toBeLessThanOrEqual(120);
+		// Crest near the TOP: min y well below cy (~52). A clipped-to-the-bottom
+		// arc would have minY near 52. Require >=15px of vertical crest above cy.
+		expect(g.minY, `sparkline ${i} crests near the top (min y well below cy ~52)`).toBeLessThan(37);
+		// And it must not be a flat stub — a meaningful vertical span proves an arc.
+		expect(g.maxY - g.minY, `sparkline ${i} spans a meaningful vertical range`).toBeGreaterThan(10);
+	}
+	expect(orbitGeo.baseSweepFlag, 'base track arc bows up (sweep flag 0)').toBe('0');
+
 	// Table-driven WCAG AA contrast audit: every semantic text role against its
 	// actual opaque parent surface (deep-space / panel), compositing any
 	// translucency. Includes the amber/green deltas and status badges.
