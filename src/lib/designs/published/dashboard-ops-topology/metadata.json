@@ -1,0 +1,15 @@
+{
+	"schemaVersion": 1,
+	"slug": "dashboard-ops-topology",
+	"version": "1.0.0",
+	"title": "Operational · Topology Schematic",
+	"summary": "A light warm-tinted blueprint dependency-graph operations dashboard for Aurora: a topology DAG of six services with animated dashed edges flowing client → dependency and heartbeat pulses on degraded nodes, over four headline metrics, a dual-series live-metrics chart, an incidents list, and an SLO / error-budget indicator.",
+	"pageType": "dashboard",
+	"applicationTypes": ["operations", "monitoring", "observability"],
+	"visualStyles": ["topology", "schematic", "data-viz"],
+	"theme": "light",
+	"density": "comfortable",
+	"platforms": ["web", "desktop", "tablet", "mobile"],
+	"status": "production-ready",
+	"tags": ["dashboard", "operational", "topology", "dependency-graph", "blueprint", "oklch"]
+}
