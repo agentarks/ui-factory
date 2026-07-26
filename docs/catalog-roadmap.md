@@ -3,7 +3,7 @@
 The catalog compares **distinct visual directions on a fixed page subject**. It is built in chapters per page type: fix the page, vary the visual language, and keep every direction at a WCAG 2.2 AA baseline.
 
 - **Kanban chapter — COMPLETE** (10 styles; see below).
-- **Dashboard chapter — next** (4 dashboard page types; each gets an open concept brainstorm of distinct directions — no pre-locked library; see the [Dashboard chapter](#dashboard-chapter) section).
+- **Dashboard chapter — under way** (SaaS type COMPLETE with 4 styles; Operational type ACTIVE; Marketing and Finance pending; see the [Dashboard chapter](#dashboard-chapter) section).
 
 ## Kanban chapter — COMPLETE
 
@@ -61,22 +61,24 @@ Order is advisory; re-prioritize if a particular style is needed sooner.
 
 Four dashboard page types. **Each type gets an open concept brainstorm of distinct visual directions** — the user picks freely from the brainstorm, and winning directions may be reused across the other types. There is no pre-locked direction library. Each type locks its own baseline content (copy-and-re-skin, same model as Kanban); only the visual language changes.
 
+**Status:** SaaS type COMPLETE (4 styles published); Operational type ACTIVE (baseline defined below); Marketing and Finance pending.
+
 - `pageType`: `dashboard`.
 - The concept gate is **ten distinct directions on that type's locked baseline** (like Kanban); the user picks from the open brainstorm rather than from a pre-set list.
 
 ### The four dashboard types
 
-| Type                     | Subject                                     | Baseline locked by                       |
-| ------------------------ | ------------------------------------------- | ---------------------------------------- |
-| SaaS / product-analytics | KPIs, trends, plan breakdown, top accounts  | _(first built; locks the SaaS baseline)_ |
-| Operational / monitoring | Services, health, incidents, live metrics   | _(defined when its chapter starts)_      |
-| Marketing / growth       | Campaigns, acquisition, cohorts, conversion | _(defined when its chapter starts)_      |
-| Finance / business       | P&L, cashflow, forecasts, headcount         | _(defined when its chapter starts)_      |
+| Type                     | Subject                                     | Baseline locked by                                    |
+| ------------------------ | ------------------------------------------- | ----------------------------------------------------- |
+| SaaS / product-analytics | KPIs, trends, plan breakdown, top accounts  | locked by `dashboard-saas-slate` (4 styles published) |
+| Operational / monitoring | Services, health, incidents, live metrics   | defined below — Operational chapter ACTIVE            |
+| Marketing / growth       | Campaigns, acquisition, cohorts, conversion | _(defined when its chapter starts)_                   |
+| Finance / business       | P&L, cashflow, forecasts, headcount         | _(defined when its chapter starts)_                   |
 
 ### Build order
 
-1. **SaaS** first — validates the dashboard adaptation of the loop (charts/KPIs/tables are heavier than Kanban cards) and locks the SaaS baseline.
-2. **Operational**, then **Marketing**, then **Finance** — phased, one type at a time. Each type locks its own baseline before its styles are built.
+1. **SaaS** — COMPLETE (4 styles: `dashboard-saas-slate`, `-flowfield`, `-orbital`, `-riso`). Validated the dashboard adaptation of the loop and locked the SaaS baseline.
+2. **Operational** — ACTIVE (chapter started; baseline defined below). Then **Marketing**, then **Finance** — phased, one type at a time. Each type locks its own baseline before its styles are built.
 
 Order is advisory; re-prioritize if a type is needed sooner.
 
@@ -90,3 +92,16 @@ A product-analytics dashboard for **"Aurora"** (same product universe as the Kan
 - Breakdown: revenue by plan (Pro / Team / Enterprise / Free).
 - Table: Top accounts (5 rows) — account · plan · MRR · status (healthy/at-risk/new) · owner.
 - Demonstrated states per style: loading skeleton (KPIs + chart), error (chart failed → Retry), empty (a filtered segment with no data), and a goal/status indicator.
+
+**SaaS chapter status: COMPLETE — 4 styles published** (`dashboard-saas-slate` [baseline locker], `dashboard-saas-flowfield`, `dashboard-saas-orbital`, `dashboard-saas-riso`). The SaaS spread spans light-reference / generative / dark-theatrical / editorial.
+
+### Operational baseline (locked)
+
+A service-health / operations dashboard for **"Aurora"** (same product universe; reuses the five members for cohesion). The first Operational style built will lock this baseline in its `fixtures.ts` (copy-and-re-skin for later Operational styles), exactly as `dashboard-saas-slate` did for SaaS.
+
+- Header: `Aurora · Operations`, range `Last 60 min`, on-call avatar (LF — Lena Foss).
+- 4 headline metrics (value · Δ vs previous 60 min · sparkline), mixed good/bad: Uptime `99.94%` `−0.04 pp`↓ (bad — below the 99.9% SLO); Request rate `4,820 req/s` `+312`↑; Error rate `0.42%` `+0.18 pp`↑ (bad); p95 latency `184 ms` `−7 ms`↓ (good).
+- Live metrics chart: request rate + error rate over 12 five-minute intervals (two locked 12-point series).
+- Services table (6 rows) — service · status (healthy / degraded / down) · uptime · throughput (req/s or ops/s) · error % · p95 ms: API Gateway · Web App · Postgres (degraded) · Redis · Workers (degraded) · CDN.
+- Incidents (3) — id · service · severity · age · status · summary: INC-2041 active (Postgres, SEV-2, 14m, "Elevated query latency in us-east"); INC-2040 resolved (Web App, SEV-3, 2h, "Deploy rolled back"); INC-2039 monitored (Workers, SEV-3, 5h, "Queue backlog cleared").
+- Demonstrated states per style: loading skeleton (metrics + services), error (live-metrics feed interrupted → Retry), empty (a filtered region/segment with no incidents), and an SLO / error-budget indicator (99.9% uptime SLO).
