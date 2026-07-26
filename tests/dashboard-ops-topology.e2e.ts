@@ -187,6 +187,53 @@ test('opens the dashboard-ops-topology design and its isolated preview states', 
 	expect(topo!.noGradientOnCanvas, 'no background gradient on canvas').toBe('none');
 	expect(topo!.noGradientOnPanel, 'no background gradient on panels').toBe('none');
 
+	// Regression: no overlapping or overflowing text inside any topology node.
+	// (Guards the row-53 throughput/p95 collision: every node's <text> elements,
+	// grouped by baseline y, must not overlap horizontally and must fit in NODE_W.)
+	const nodeTextLayout = await page.evaluate(() => {
+		const NODE_W = 148;
+		const violations: string[] = [];
+		const nodes = Array.from(document.querySelectorAll<SVGGElement>('.topo .node'));
+		for (const node of nodes) {
+			const svc = node.getAttribute('data-svc') ?? '?';
+			const texts = Array.from(node.querySelectorAll<SVGTextElement>('text'));
+			const boxes = texts.map((t) => {
+				const b = (t as unknown as SVGGraphicsElement).getBBox();
+				return {
+					cls: t.getAttribute('class') ?? '',
+					y: parseFloat(t.getAttribute('y') ?? '0'),
+					x: b.x,
+					right: b.x + b.width
+				};
+			});
+			for (const bx of boxes) {
+				if (bx.right > NODE_W + 0.5 || bx.x < -0.5)
+					violations.push(
+						`${svc}/${bx.cls} overflows card (x=${bx.x.toFixed(1)}, right=${bx.right.toFixed(1)})`
+					);
+			}
+			const byRow = new Map<number, typeof boxes>();
+			for (const bx of boxes) {
+				const arr = byRow.get(bx.y) ?? [];
+				arr.push(bx);
+				byRow.set(bx.y, arr);
+			}
+			for (const [, arr] of byRow) {
+				arr.sort((a, b) => a.x - b.x);
+				for (let i = 1; i < arr.length; i++) {
+					if (arr[i - 1].right > arr[i].x + 0.5)
+						violations.push(
+							`${svc} row y=${arr[i].y}: '${arr[i - 1].cls}' right ${arr[i - 1].right.toFixed(1)} overlaps '${arr[i].cls}' x ${arr[i].x.toFixed(1)}`
+						);
+				}
+			}
+		}
+		return { violations, nodeCount: nodes.length };
+	});
+	expect(nodeTextLayout).not.toBeNull();
+	expect(nodeTextLayout!.nodeCount, 'nodes measured for text layout').toBe(6);
+	expect(nodeTextLayout!.violations, 'no overlapping or overflowing text in any node').toEqual([]);
+
 	// Table-driven WCAG AA contrast audit: every semantic text role against its
 	// actual opaque parent surface (cream canvas / panel / node card), reading
 	// `color` for HTML and `fill` for SVG <text>. Includes red deltas, red

@@ -293,10 +293,8 @@
 								>{statusWord(svc.status)}</text
 							>
 							<text class="nstat" x={NODE_W - 10} y="37" text-anchor="end">{svc.uptime}</text>
-							<text class="nmeta" x="10" y="53">{svc.throughput} {svc.unit} · p95 {svc.p95}ms</text>
-							<text class="nmeta r" x={NODE_W - 10} y="53" text-anchor="end"
-								>err {svc.errorPct}</text
-							>
+							<text class="nmeta" x="10" y="53">{svc.throughput} {svc.unit}</text>
+							<text class="nmeta r" x={NODE_W - 10} y="53" text-anchor="end">p95 {svc.p95}ms</text>
 						</g>
 					{/each}
 				</svg>
