@@ -100,7 +100,7 @@ A product-analytics dashboard for **"Aurora"** (same product universe as the Kan
 A service-health / operations dashboard for **"Aurora"** (same product universe; reuses the five members for cohesion). The first Operational style built will lock this baseline in its `fixtures.ts` (copy-and-re-skin for later Operational styles), exactly as `dashboard-saas-slate` did for SaaS.
 
 - Header: `Aurora · Operations`, range `Last 60 min`, on-call avatar (LF — Lena Foss).
-- 4 headline metrics (value · Δ vs previous 60 min · sparkline), mixed good/bad: Uptime `99.94%` `−0.04 pp`↓ (bad — below the 99.9% SLO); Request rate `4,820 req/s` `+312`↑; Error rate `0.42%` `+0.18 pp`↑ (bad); p95 latency `184 ms` `−7 ms`↓ (good).
+- 4 headline metrics (value · Δ vs previous 60 min · sparkline), mixed good/bad: Uptime `99.94%` `−0.04 pp`↓ (bad — declining toward the 99.9% SLO; error budget at risk); Request rate `4,820 req/s` `+312`↑; Error rate `0.42%` `+0.18 pp`↑ (bad); p95 latency `184 ms` `−7 ms`↓ (good).
 - Live metrics chart: request rate + error rate over 12 five-minute intervals (two locked 12-point series).
 - Services table (6 rows) — service · status (healthy / degraded / down) · uptime · throughput (req/s or ops/s) · error % · p95 ms: API Gateway · Web App · Postgres (degraded) · Redis · Workers (degraded) · CDN.
 - Incidents (3) — id · service · severity · age · status · summary: INC-2041 active (Postgres, SEV-2, 14m, "Elevated query latency in us-east"); INC-2040 resolved (Web App, SEV-3, 2h, "Deploy rolled back"); INC-2039 monitored (Workers, SEV-3, 5h, "Queue backlog cleared").
