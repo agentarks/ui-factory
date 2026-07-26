@@ -117,7 +117,7 @@ export const headline: HeadlineMetric[] = [
 		delta: '0.04 pp',
 		tone: 'down',
 		good: false,
-		caption: 'below 99.9% SLO',
+		caption: '−0.04 pp vs 99.9% SLO',
 		spark: [100, 100, 99.99, 99.98, 99.97, 99.96, 99.95, 99.94, 99.93, 99.94, 99.94, 99.94]
 	},
 	{

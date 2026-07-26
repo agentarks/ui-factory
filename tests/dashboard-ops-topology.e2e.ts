@@ -307,6 +307,46 @@ test('opens the dashboard-ops-topology design and its isolated preview states', 
 		expect(ratio, `${role} text contrast >= 4.5:1`).toBeGreaterThanOrEqual(4.5);
 	}
 
+	// MAJOR regression lock (WCAG 1.4.11): the error-banner border is the only
+	// thing differentiating the pale-red error block from the cream canvas, so
+	// it must clear >=3:1 as a visible UI-component boundary against BOTH its
+	// own surface and the canvas.
+	const errBoundary = await page.evaluate(() => {
+		const ctx = document.createElement('canvas').getContext('2d');
+		if (!ctx) return null;
+		const lum = (css: string) => {
+			ctx.clearRect(0, 0, 2, 2);
+			ctx.fillStyle = '#000';
+			ctx.fillStyle = css;
+			ctx.fillRect(0, 0, 2, 2);
+			const d = ctx.getImageData(0, 0, 1, 1).data;
+			const ch = (v: number) => {
+				const s = v / 255;
+				return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+			};
+			return 0.2126 * ch(d[0]) + 0.7152 * ch(d[1]) + 0.0722 * ch(d[2]);
+		};
+		const ratio = (a: number, b: number) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+		const root = document.querySelector('.ops-root');
+		const bar = document.querySelector('.errbar');
+		if (!(root instanceof HTMLElement) || !(bar instanceof HTMLElement)) return null;
+		const bcs = getComputedStyle(bar);
+		const rcs = getComputedStyle(root);
+		const borderL = lum(bcs.borderTopColor);
+		const errBgL = lum(bcs.backgroundColor);
+		const canvasL = lum(rcs.backgroundColor);
+		return { vsErrBg: ratio(borderL, errBgL), vsCanvas: ratio(borderL, canvasL) };
+	});
+	expect(errBoundary).not.toBeNull();
+	expect(
+		errBoundary!.vsErrBg,
+		'error border >=3:1 against err-bg (WCAG 1.4.11)'
+	).toBeGreaterThanOrEqual(3);
+	expect(
+		errBoundary!.vsCanvas,
+		'error border >=3:1 against canvas (WCAG 1.4.11)'
+	).toBeGreaterThanOrEqual(3);
+
 	// Deltas never rely on color alone: each carries an up/down arrow glyph.
 	const deltaArrows = await page.evaluate(() => {
 		const deltas = Array.from(document.querySelectorAll('.delta'));

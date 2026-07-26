@@ -7,7 +7,7 @@
 
 ## Canonical page reference
 
-An operations dashboard for **Aurora**: a sticky header (`Aurora · Operations`, a "Last 60 min" range pill, the **on-call avatar LF** for Lena Foss, and an ink "Pause stream" primary); an inline metrics-pipeline error banner (Retry + Dismiss); four headline metric cards (Uptime `99.94%` `−0.04 pp` ↓ **bad** — below the 99.9% SLO; Request rate `4,820 req/s` `+312` ↑ good; Error rate `0.42%` `+0.18 pp` ↑ **bad**; p95 latency `184 ms` `−7 ms` ↓ good), each with a 12-point sparkline; the **topology DAG hero** (six services — API Gateway, Web App, Postgres [degraded], Redis, Workers [degraded], CDN — as nodes with edges flowing client → dependency; Postgres and Workers pulse; the edges into Postgres and Workers are red/at-risk); a dual-series live-metrics chart (request rate + error rate, 12 five-min buckets); a three-row incidents table (INC-2041 Postgres SEV-2 active; INC-2040 Web App SEV-3 resolved; INC-2039 Workers SEV-3 monitored); and a rail with the SLO/error-budget indicator (62% remaining, at-risk), a loading skeleton (recent deployments), and an empty/filtered segment (no incidents in eu-west).
+An operations dashboard for **Aurora**: a sticky header (`Aurora · Operations`, a "Last 60 min" range pill, the **on-call avatar LF** for Lena Foss, and an ink "Pause stream" primary); an inline metrics-pipeline error banner (Retry + Dismiss); four headline metric cards (Uptime `99.94%` `−0.04 pp` ↓ **bad** — declining toward the 99.9% SLO; Request rate `4,820 req/s` `+312` ↑ good; Error rate `0.42%` `+0.18 pp` ↑ **bad**; p95 latency `184 ms` `−7 ms` ↓ good), each with a 12-point sparkline; the **topology DAG hero** (six services — API Gateway, Web App, Postgres [degraded], Redis, Workers [degraded], CDN — as nodes with edges flowing client → dependency; Postgres and Workers pulse; the edges into Postgres and Workers are red/at-risk); a dual-series live-metrics chart (request rate + error rate, 12 five-min buckets); a three-row incidents table (INC-2041 Postgres SEV-2 active; INC-2040 Web App SEV-3 resolved; INC-2039 Workers SEV-3 monitored); and a rail with the SLO/error-budget indicator (62% remaining, at-risk), a loading skeleton (recent deployments), and an empty/filtered segment (no incidents in eu-west).
 
 ## Design principles
 
@@ -38,7 +38,7 @@ An operations dashboard for **Aurora**: a sticky header (`Aurora · Operations`,
 | `--spark-up`      | `oklch(0.46 0.1 200)`    | Favourable sparkline strokes (request rate, p95)                                  |
 | `--spark-down`    | `oklch(0.47 0.16 25)`    | Unfavourable sparkline strokes (uptime, error rate)                               |
 | `--err-bg`        | `oklch(0.93 0.022 25)`   | Error banner surface                                                              |
-| `--err-border`    | `oklch(0.7 0.13 25)`     | Error banner border                                                               |
+| `--err-border`    | `oklch(0.6 0.15 25)`     | Error banner border (≥3:1 against `--err-bg` and canvas, WCAG 1.4.11)             |
 | `--chart-grid`    | `oklch(0.89 0.008 220)`  | Live-metrics chart grid lines                                                     |
 
 - **Neutrals are warm-tinted** (hue ≈ 220) at very low chroma (≤ 0.04 for ink, ≤ 0.009 for surfaces). No pure grey/black/white anywhere — ink floors at L 0.40, canvas tops at L 0.95.
@@ -72,7 +72,7 @@ This specimen is a single operations dashboard with no route navigation. When ex
 ## Components and states
 
 - **Header** (sticky, opaque): logo mark (ink rounded square) + "Aurora" + "Operations" breadcrumb; "Last 60 min" range pill (clock icon); 1px vertical divider; **On call** label + LF avatar; ink "Pause stream" primary (pause icon).
-- **KPI card:** monospace eyebrow label · mono value · directional delta (▲/▼, `--good-ink`/`--bad-ink`, with text + accessible label) · monospace caption ("below 99.9% SLO" / "up is unfavorable"). A 72×24 sparkline (computed from each metric's 12-point series) sits beside the value.
+- **KPI card:** monospace eyebrow label · mono value · directional delta (▲/▼, `--good-ink`/`--bad-ink`, with text + accessible label) · monospace caption ("−0.04 pp vs 99.9% SLO" / "up is unfavorable"). A 72×24 sparkline (computed from each metric's 12-point series, stroke keyed on `good` so favourable trends read teal and unfavourable read red) sits beside the value.
 - **Topology DAG hero:** real inline SVG. A `<pattern>` blueprint grid field; seven `<path class="edge">` edges with `stroke-dasharray: 4 4` (animated `stroke-dashoffset` under no-preference motion) and computed arrowhead `<polygon>`s; six `<g class="node">` groups each with a status dot, label, status word, uptime, throughput, p95, and error %. Degraded nodes get a `<rect class="pulse">` behind the card. At-risk edges (into Postgres, into Workers) render in `--bad` with a faster flow; healthy edges render in `--ink`. A legend + region segmented control sit in the panel header.
 - **Live-metrics chart:** inline SVG (viewBox 760×240). Subtle grid, dual monospace axes (left = req/s, right = %), an ink request-rate polyline with an end dot, a dashed red error-rate polyline with an end dot, and interval ticks.
 - **Incidents table:** three hairline rows — mono ID · service · severity pill (SEV-2 in `--bad-ink`) · right-aligned mono age · status badge (active/resolved/monitored, **always text + dot**) · summary sentence. A filter search + All/Open/Resolved segmented control sit in the panel header (visual-specimen `aria-pressed`; no real filtering).
@@ -85,7 +85,7 @@ This specimen is a single operations dashboard with no route navigation. When ex
 These are **visual state demonstrations** (the specimen is static; controls reflect state but perform no real behavior):
 
 - **Loading (shown):** the **Recent deployments** mini panel shows skeleton bars (`.sk`) with an opacity pulse (1.5s) and a "Fetching deploy timeline…" note. The pulse animates only under `prefers-reduced-motion: no-preference`.
-- **Error (shown):** an inline banner under the header — red icon, "Metrics pipeline delayed." strong label, explanation, **Dismiss** and **Retry** buttons (`role="status" aria-live="polite"`). No side-stripe; a full pale-red panel with a 1px red border.
+- **Error (shown):** an inline banner under the header — red icon, "Metrics pipeline delayed." strong label, explanation, **Dismiss** and **Retry** buttons (`role="status" aria-live="polite"`). No side-stripe; a full pale-red panel with a 1px `--err-border` rule that clears ≥3:1 against both the panel surface and the canvas (WCAG 1.4.11).
 - **Empty/filtered (shown):** the **eu-west incidents** mini panel shows an empty state — check icon, "No incidents in eu-west", supporting copy. This is the region-filter-with-no-matches specimen referenced in the locked baseline.
 - **Validation:** when wiring real forms (region filters, ack incident), reuse the inline message-under-field pattern with the `--bad-ink` label.
 
@@ -111,7 +111,7 @@ These are **visual state demonstrations** (the specimen is static; controls refl
 - **Each topology node exposes a full sentence** via `aria-label` ("Postgres: degraded, uptime 99.91%, throughput 880 qps, error rate 0.62%, p95 224 milliseconds") — node dots/colour never carry meaning alone. Health/severity/status are always text + shape + accessible label.
 - **Deltas never rely on colour alone** — each carries an ▲/▼ arrow glyph + text and an accessible label ("Uptime: 0.04 pp down, unfavorable"). Incident statuses and severities always carry text.
 - **Visible focus:** `outline: 3px solid var(--ink)` with `outline-offset: 2px` on every interactive element — ink reads ≥3:1 against all light surfaces. The `.seg` container uses `overflow: visible` (end buttons are rounded directly) so the offset ring is never clipped.
-- **WCAG 2.2 AA** is met by construction and verified by a real-pixel contrast audit across every text role (ink ~8:1, muted ~5.8:1, bad-ink text ≥4.5:1, good-ink text ≥4.5:1, avatar initials 7.5–8.7:1).
+- **WCAG 2.2 AA** is met by construction and verified by a real-pixel contrast audit across every text role (ink ~8:1, muted ~5.8:1, bad-ink text ≥4.5:1, good-ink text ≥4.5:1, avatar initials ~7.4–8.2:1).
 - **Motion is decorative:** the topology remains fully legible without the dash flow or the pulse (the static DAG with arrowheads, labels, and red edges conveys the same facts). Reduced-motion users get the complete static dashboard.
 
 ## Extending the design to new pages
@@ -168,7 +168,7 @@ Keep the token set, the hairline-first elevation rule (no box-shadow), the faint
 - [ ] Every health/severity/status/delta cue carries text + shape + accessible label — never colour alone; topology nodes expose full-sentence `aria-label`s; deltas carry ▲/▼ + an accessible label; incident statuses and severities always carry text.
 - [ ] Charts are real inline SVG (no charting dependency); the live-metrics chart is dual-series (ink request-rate line + red-dashed error-rate line) with dual axes; KPI sparklines are tiny SVG polylines computed from data.
 - [ ] Every interactive element has a ≥3:1 ink focus ring (3px + 2px offset), ≥44×44 target at 375/768/1280, and a real role/label; the on-call avatar exposes the full name; `.seg` containers use `overflow: visible` so the offset ring is never clipped.
-- [ ] All text meets WCAG 2.2 AA (≥4.5:1) against its actual surface (ink ~8:1, muted ~5.8:1, bad-ink ≥4.5:1, good-ink ≥4.5:1, avatar initials 7.5–8.7:1).
+- [ ] All text meets WCAG 2.2 AA (≥4.5:1) against its actual surface (ink ~8:1, muted ~5.8:1, bad-ink ≥4.5:1, good-ink ≥4.5:1, avatar initials ~7.4–8.2:1).
 - [ ] Layout is responsive: KPI row wraps, grid collapses, **topology SVG swaps to a vertical list on mobile**, incidents table scrolls; no document horizontal overflow at 375/768/1280.
 - [ ] Normal UI transitions ≤0.16s; the dash-flow (0.9s/0.7s), heartbeat pulse (1.8s), and skeleton opacity pulse (1.5s) are all gated behind `prefers-reduced-motion: no-preference` (reduced-motion shows a fully static, complete dashboard).
 - [ ] Loading (skeleton with opacity pulse), error (inline pale-red banner + Retry + Dismiss), empty/filtered (no incidents in eu-west), and the SLO/error-budget indicator (62% at-risk) states are all shown; the content matches the locked `fixtures.ts` baseline.

@@ -192,7 +192,7 @@
 							<polyline
 								points={spark(m.spark, 72, 22)}
 								fill="none"
-								stroke="var(--spark-{m.tone})"
+								stroke="var(--spark-{m.good ? 'up' : 'down'})"
 								stroke-width="1.5"
 								stroke-linecap="round"
 								stroke-linejoin="round"
@@ -560,7 +560,9 @@
 		--spark-up: oklch(0.46 0.1 200);
 		--spark-down: oklch(0.47 0.16 25);
 		--err-bg: oklch(0.93 0.022 25);
-		--err-border: oklch(0.7 0.13 25);
+		--err-border: oklch(
+			0.6 0.15 25
+		); /* darkened from 0.7 to clear >=3:1 (WCAG 1.4.11) against err-bg and canvas */
 		--chart-grid: oklch(0.89 0.008 220);
 
 		min-height: 100vh;
